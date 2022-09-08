@@ -1,2 +1,101 @@
 # terraform-cloudgov
-Terraform modules for cloud.gov managed services
+
+Terraform modules for cloud.gov managed services commonly used by [18f/rails-template](https://github.com/18f/rails-template) based apps
+
+## Module Examples
+
+### database
+
+Creates an RDS database based on the `rds_plan_name` variable
+
+```
+module "database" {
+  source = "github.com/18f/terraform-cloudgov//database"
+
+  cf_user          = var.cf_user
+  cf_password      = var.cf_password
+  cf_org_name      = local.cf_org_name
+  cf_space_name    = local.cf_space_name
+  env              = "staging"
+  app_name         = "application_name"
+  rds_plan_name    = "micro-psql"
+}
+```
+
+### redis
+
+Creates a Elasticache redis instance
+
+```
+module "redis" {
+  source = "github.com/18f/terraform-cloudgov//redis"
+
+  cf_user          = var.cf_user
+  cf_password      = var.cf_password
+  cf_org_name      = local.cf_org_name
+  cf_space_name    = local.cf_space_name
+  env              = "staging"
+  app_name         = "application_name"
+  redis_plan_name  = "redis-dev"
+}
+```
+
+### s3
+
+Creates an s3 bucket and outputs the bucket_id
+
+```
+module "s3" {
+  source = "github.com/18f/terraform-cloudgov//s3"
+
+  cf_user          = var.cf_user
+  cf_password      = var.cf_password
+  cf_org_name      = local.cf_org_name
+  cf_space_name    = local.cf_space_name
+  s3_service_name  = "${local.app_name}-s3-${local.env}"
+}
+```
+
+### domain
+
+Connects a custom domain name or domain name with CDN to an already running application.
+
+Note that the domain must be created in cloud.gov by an OrgManager before this module is included.
+
+`cf create-domain CLOUD_GOV_ORG TKTK-production-domain-name`
+
+```
+module "domain" {
+  source = "github.com/18f/terraform-cloudgov//domain"
+
+  cf_user          = var.cf_user
+  cf_password      = var.cf_password
+  cf_org_name      = local.cf_org_name
+  cf_space_name    = local.cf_space_name
+  env              = "staging"
+  app_name         = "application_name"
+  cdn_plan_name    = "domain"
+  domain_name      = "TKTK-production-domain-name"
+}
+```
+
+### clamav
+
+Creates an application and associated network routing to run ClamAV via API to scan user uploads.
+
+The scanning app requires at least 3GB of memory, and your app_name must be deployed before this module is included.
+
+```
+module "clamav" {
+  source = "github.com/18f/terraform-cloudgov//clamav"
+
+  cf_user       = var.cf_user
+  cf_password   = var.cf_password
+  cf_org_name   = local.cf_org_name
+  cf_space_name = local.cf_space_name
+  env           = "staging"
+  app_name      = "application_name"
+  clamav_image  = "ajilaag/clamav-rest:TAG_NAME"
+  max_file_size = "30M"
+}
+```
