@@ -99,3 +99,29 @@ module "clamav" {
   max_file_size = "30M"
 }
 ```
+
+### cg_space
+
+Creates a new cloud.gov space, such as when creating an egress space.
+
+`managers`, `developers`, and `deployers` are all optional, but you probably want to set at least one of them, depending on your use case.
+
+```
+module "egress_space" {
+  source = "github.com/18f/terraform-cloudgov//cg_space"
+
+  cf_user       = var.cf_user
+  cf_password   = var.cf_password
+  cf_org_name   = local.cf_org_name
+  cf_space_name = "${local.cf_space_name}-egress"
+  managers = [
+    "space.manager@gsa.gov"
+  ]
+  developers = [
+    "space.developer@gsa.gov"
+  ]
+  deployers = [
+    var.cf_user
+  ]
+}
+```
