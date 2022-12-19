@@ -1,14 +1,6 @@
-###
-# Target org
-###
-
 data "cloudfoundry_org" "org" {
   name = var.cf_org_name
 }
-
-###
-# New Space
-###
 
 resource "cloudfoundry_space" "space" {
   name = var.cf_space_name

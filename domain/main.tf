@@ -1,18 +1,10 @@
-###
-# Target space/org
-###
-
 data "cloudfoundry_space" "space" {
   org_name = var.cf_org_name
   name     = var.cf_space_name
 }
 
-###
-# Route mapping and CDN instance
-###
-
 data "cloudfoundry_app" "app" {
-  name_or_id = "${var.app_name}-${var.env}"
+  name_or_id = var.app_name_or_id
   space      = data.cloudfoundry_space.space.id
 }
 
@@ -38,7 +30,7 @@ data "cloudfoundry_service" "external_domain" {
 }
 
 resource "cloudfoundry_service_instance" "external_domain_instance" {
-  name             = "${var.app_name}-domain-${var.env}"
+  name             = data.cloudfoundry_app.name
   space            = data.cloudfoundry_space.space.id
   service_plan     = data.cloudfoundry_service.external_domain.service_plans[var.cdn_plan_name]
   recursive_delete = var.recursive_delete
