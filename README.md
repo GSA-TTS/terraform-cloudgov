@@ -12,8 +12,6 @@ Creates an RDS database based on the `rds_plan_name` variable
 module "database" {
   source = "github.com/18f/terraform-cloudgov//database"
 
-  cf_user          = var.cf_user
-  cf_password      = var.cf_password
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
   env              = "staging"
@@ -30,8 +28,6 @@ Creates a Elasticache redis instance
 module "redis" {
   source = "github.com/18f/terraform-cloudgov//redis"
 
-  cf_user          = var.cf_user
-  cf_password      = var.cf_password
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
   env              = "staging"
@@ -48,8 +44,6 @@ Creates an s3 bucket and outputs the bucket_id
 module "s3" {
   source = "github.com/18f/terraform-cloudgov//s3"
 
-  cf_user          = var.cf_user
-  cf_password      = var.cf_password
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
   s3_service_name  = "${local.app_name}-s3-${local.env}"
@@ -68,8 +62,6 @@ Note that the domain must be created in cloud.gov by an OrgManager before this m
 module "domain" {
   source = "github.com/18f/terraform-cloudgov//domain"
 
-  cf_user          = var.cf_user
-  cf_password      = var.cf_password
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
   env              = "staging"
@@ -89,8 +81,6 @@ The scanning app requires at least 3GB of memory, and your app_name must be depl
 module "clamav" {
   source = "github.com/18f/terraform-cloudgov//clamav"
 
-  cf_user       = var.cf_user
-  cf_password   = var.cf_password
   cf_org_name   = local.cf_org_name
   cf_space_name = local.cf_space_name
   env           = "staging"
@@ -110,8 +100,6 @@ Creates a new cloud.gov space, such as when creating an egress space.
 module "egress_space" {
   source = "github.com/18f/terraform-cloudgov//cg_space"
 
-  cf_user       = var.cf_user
-  cf_password   = var.cf_password
   cf_org_name   = local.cf_org_name
   cf_space_name = "${local.cf_space_name}-egress"
   managers = [
