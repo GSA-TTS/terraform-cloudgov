@@ -1,7 +1,3 @@
-###
-# Target space/org
-###
-
 data "cloudfoundry_space" "space" {
   org_name = var.cf_org_name
   name     = var.cf_space_name
@@ -16,18 +12,14 @@ data "cloudfoundry_app" "app" {
   space      = data.cloudfoundry_space.space.id
 }
 
-###
-# ClamAV API app
-###
-
 resource "cloudfoundry_route" "clamav_route" {
   space    = data.cloudfoundry_space.space.id
   domain   = data.cloudfoundry_domain.internal.id
-  hostname = "${var.app_name}-clamapi-${var.env}"
+  hostname = var.name
 }
 
 resource "cloudfoundry_app" "clamav_api" {
-  name         = "${var.app_name}-clamav-api-${var.env}"
+  name         = var.name
   space        = data.cloudfoundry_space.space.id
   memory       = var.clamav_memory
   disk_quota   = 2048

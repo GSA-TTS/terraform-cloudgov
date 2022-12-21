@@ -8,14 +8,9 @@ variable "cf_space_name" {
   description = "cloud.gov space name (staging or prod)"
 }
 
-variable "env" {
+variable "name" {
   type        = string
-  description = "deployment environment (staging, production)"
-}
-
-variable "app_name" {
-  type        = string
-  description = "base application name that will use this redis instance"
+  description = "name for the redis service instance"
 }
 
 variable "recursive_delete" {

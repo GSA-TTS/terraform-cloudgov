@@ -8,14 +8,9 @@ variable "cf_space_name" {
   description = "cloud.gov space name (staging or prod)"
 }
 
-variable "app_name" {
+variable "name" {
   type        = string
-  description = "base application name to be scanned by clamav"
-}
-
-variable "env" {
-  type        = string
-  description = "deployment environment (staging, production)"
+  description = "name of the clamav scanning application"
 }
 
 variable "clamav_image" {

@@ -14,8 +14,7 @@ module "database" {
 
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
-  env              = "staging"
-  app_name         = "application_name"
+  name             = "database_name"
   rds_plan_name    = "micro-psql"
 }
 ```
@@ -30,8 +29,7 @@ module "redis" {
 
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
-  env              = "staging"
-  app_name         = "application_name"
+  name             = "redis_name"
   redis_plan_name  = "redis-dev"
 }
 ```
@@ -46,7 +44,7 @@ module "s3" {
 
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
-  s3_service_name  = "${local.app_name}-s3-${local.env}"
+  name             = "${local.app_name}-s3-${local.env}"
 }
 ```
 
@@ -64,10 +62,9 @@ module "domain" {
 
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
-  env              = "staging"
-  app_name         = "application_name"
+  app_name_or_id   = "app_name"
   cdn_plan_name    = "domain"
-  domain_name      = "TKTK-production-domain-name"
+  domain_name      = "my-production-domain-name"
 }
 ```
 
@@ -83,8 +80,7 @@ module "clamav" {
 
   cf_org_name   = local.cf_org_name
   cf_space_name = local.cf_space_name
-  env           = "staging"
-  app_name      = "application_name"
+  name          = "my_clamav_name"
   clamav_image  = "ajilaag/clamav-rest:TAG_NAME"
   max_file_size = "30M"
 }
