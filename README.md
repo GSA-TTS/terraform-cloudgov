@@ -10,7 +10,7 @@ Creates an RDS database based on the `rds_plan_name` variable
 
 ```
 module "database" {
-  source = "github.com/18f/terraform-cloudgov//database"
+  source = "github.com/18f/terraform-cloudgov//database?ref=v0.2.1"
 
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
@@ -25,7 +25,7 @@ Creates a Elasticache redis instance
 
 ```
 module "redis" {
-  source = "github.com/18f/terraform-cloudgov//redis"
+  source = "github.com/18f/terraform-cloudgov//redis?ref=v0.2.1"
 
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
@@ -40,7 +40,7 @@ Creates an s3 bucket and outputs the bucket_id
 
 ```
 module "s3" {
-  source = "github.com/18f/terraform-cloudgov//s3"
+  source = "github.com/18f/terraform-cloudgov//s3?ref=v0.2.1"
 
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
@@ -54,11 +54,11 @@ Connects a custom domain name or domain name with CDN to an already running appl
 
 Note that the domain must be created in cloud.gov by an OrgManager before this module is included.
 
-`cf create-domain CLOUD_GOV_ORG TKTK-production-domain-name`
+`cf create-domain CLOUD_GOV_ORG my-production-domain-name`
 
 ```
 module "domain" {
-  source = "github.com/18f/terraform-cloudgov//domain"
+  source = "github.com/18f/terraform-cloudgov//domain?ref=v0.2.1"
 
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
@@ -76,13 +76,14 @@ The scanning app requires at least 3GB of memory, and your app_name must be depl
 
 ```
 module "clamav" {
-  source = "github.com/18f/terraform-cloudgov//clamav"
+  source = "github.com/18f/terraform-cloudgov//clamav?ref=v0.2.1"
 
-  cf_org_name   = local.cf_org_name
-  cf_space_name = local.cf_space_name
-  name          = "my_clamav_name"
-  clamav_image  = "ajilaag/clamav-rest:TAG_NAME"
-  max_file_size = "30M"
+  cf_org_name    = local.cf_org_name
+  cf_space_name  = local.cf_space_name
+  app_name_or_id = "app_name"
+  name           = "my_clamav_name"
+  clamav_image   = "ajilaag/clamav-rest:TAG_NAME"
+  max_file_size  = "30M"
 }
 ```
 
@@ -94,7 +95,7 @@ Creates a new cloud.gov space, such as when creating an egress space.
 
 ```
 module "egress_space" {
-  source = "github.com/18f/terraform-cloudgov//cg_space"
+  source = "github.com/18f/terraform-cloudgov//cg_space?ref=v0.2.1"
 
   cf_org_name   = local.cf_org_name
   cf_space_name = "${local.cf_space_name}-egress"

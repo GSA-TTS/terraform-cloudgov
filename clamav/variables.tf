@@ -8,6 +8,11 @@ variable "cf_space_name" {
   description = "cloud.gov space name (staging or prod)"
 }
 
+variable "app_name_or_id" {
+  type        = string
+  description = "base application name to allow routing to the clamav app"
+}
+
 variable "name" {
   type        = string
   description = "name of the clamav scanning application"
