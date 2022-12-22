@@ -8,7 +8,7 @@ data "cloudfoundry_domain" "internal" {
 }
 
 data "cloudfoundry_app" "app" {
-  name_or_id = "${var.app_name}-${var.env}"
+  name_or_id = var.app_name_or_id
   space      = data.cloudfoundry_space.space.id
 }
 
