@@ -10,7 +10,7 @@ Creates an RDS database based on the `rds_plan_name` variable
 
 ```
 module "database" {
-  source = "github.com/18f/terraform-cloudgov//database?ref=v0.2.1"
+  source = "github.com/18f/terraform-cloudgov//database?ref=v0.3.0"
 
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
@@ -25,7 +25,7 @@ Creates a Elasticache redis instance
 
 ```
 module "redis" {
-  source = "github.com/18f/terraform-cloudgov//redis?ref=v0.2.1"
+  source = "github.com/18f/terraform-cloudgov//redis?ref=v0.3.0"
 
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
@@ -40,7 +40,7 @@ Creates an s3 bucket and outputs the bucket_id
 
 ```
 module "s3" {
-  source = "github.com/18f/terraform-cloudgov//s3?ref=v0.2.1"
+  source = "github.com/18f/terraform-cloudgov//s3?ref=v0.3.0"
 
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
@@ -58,7 +58,7 @@ Note that the domain must be created in cloud.gov by an OrgManager before this m
 
 ```
 module "domain" {
-  source = "github.com/18f/terraform-cloudgov//domain?ref=v0.2.1"
+  source = "github.com/18f/terraform-cloudgov//domain?ref=v0.3.0"
 
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
@@ -97,7 +97,7 @@ Creates a new cloud.gov space, such as when creating an egress space.
 
 ```
 module "egress_space" {
-  source = "github.com/18f/terraform-cloudgov//cg_space?ref=v0.2.1"
+  source = "github.com/18f/terraform-cloudgov//cg_space?ref=v0.3.0"
 
   cf_org_name   = local.cf_org_name
   cf_space_name = "${local.cf_space_name}-egress"
