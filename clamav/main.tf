@@ -37,6 +37,6 @@ resource "cloudfoundry_network_policy" "clamav_routing" {
   policy {
     source_app      = data.cloudfoundry_app.app.id
     destination_app = cloudfoundry_app.clamav_api.id
-    port            = "9443"
+    port            = "61443"
   }
 }
