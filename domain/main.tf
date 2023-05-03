@@ -9,7 +9,7 @@ data "cloudfoundry_app" "app" {
 }
 
 ###########################################################################
-# Route must be manually created by an OrgManager before terraform is run:
+# Domain must be manually created by an OrgManager before terraform is run:
 #
 # cf create-domain <%= cloud_gov_organization %> TKTK-production-domain-name
 ###########################################################################

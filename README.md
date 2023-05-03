@@ -50,7 +50,7 @@ module "s3" {
 
 ### domain
 
-Connects a custom domain name or domain name with CDN to an already running application and outputs the `instance_id` for the domain service for use elsewhere.
+Connects a custom domain name or domain name with CDN to an already running application and outputs the `instance_id` (for the domain service) and the `route_id` (for the origin route) for use elsewhere.
 
 Note that the domain must be created in cloud.gov by an OrgManager before this module is included.
 
