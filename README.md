@@ -6,7 +6,7 @@ Terraform modules for cloud.gov managed services commonly used by [18f/rails-tem
 
 ### database
 
-Creates an RDS database based on the `rds_plan_name` variable
+Creates an RDS database based on the `rds_plan_name` variable and outputs the `instance_id` for use elsewhere.
 
 ```
 module "database" {
@@ -21,7 +21,7 @@ module "database" {
 
 ### redis
 
-Creates a Elasticache redis instance
+Creates a Elasticache redis instance and outputs the `instance_id` for use elsewhere.
 
 ```
 module "redis" {
@@ -36,7 +36,7 @@ module "redis" {
 
 ### s3
 
-Creates an s3 bucket and outputs the bucket_id
+Creates an s3 bucket and outputs the `bucket_id` for use elsewhere.
 
 ```
 module "s3" {
@@ -50,7 +50,7 @@ module "s3" {
 
 ### domain
 
-Connects a custom domain name or domain name with CDN to an already running application.
+Connects a custom domain name or domain name with CDN to an already running application and outputs the `instance_id` for the domain service for use elsewhere.
 
 Note that the domain must be created in cloud.gov by an OrgManager before this module is included.
 
@@ -70,7 +70,7 @@ module "domain" {
 
 ### clamav
 
-Creates an application and associated network routing to run ClamAV via API to scan user uploads.
+Creates an application and associated network routing to run ClamAV via API to scan user uploads and outputs the `app_id`, the `route_id`, and the `endpoint` for use elsewhere.
 
 Notes:
 * The scanning app requires at least `3GB` of memory, and your `app_name` must be deployed before this module is included.
@@ -91,7 +91,7 @@ module "clamav" {
 
 ### cg_space
 
-Creates a new cloud.gov space, such as when creating an egress space.
+Creates a new cloud.gov space, such as when creating an egress space, and outputs the `space_id` for use elsewhere.
 
 `managers`, `developers`, and `deployers` are all optional, but you probably want to set at least one of them, depending on your use case.
 
