@@ -74,7 +74,7 @@ Creates an application and associated network routing to run ClamAV via API to s
 
 Notes:
 * The scanning app requires at least `3GB` of memory, and your `app_name` must be deployed before this module is included.
-* Module `>= v0.4.0` requires `TAG_NAME` being `>= 20230228`.
+* Module `>= v0.3.0` requires `TAG_NAME` being `>= 20230228`.
 
 ```
 module "clamav" {
