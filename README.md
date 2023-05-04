@@ -86,6 +86,7 @@ module "clamav" {
   name           = "my_clamav_name"
   clamav_image   = "ajilaag/clamav-rest:TAG_NAME"
   max_file_size  = "30M"
+  https_proxy    = local.https_proxy # to reach database.clamav.net:443
 }
 ```
 

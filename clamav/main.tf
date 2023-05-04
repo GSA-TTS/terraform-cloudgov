@@ -29,6 +29,10 @@ resource "cloudfoundry_app" "clamav_api" {
     route = cloudfoundry_route.clamav_route.id
   }
   environment = {
+    # Only set "https_proxy" if a value was supplied.
+    # Otherwise, ensure that a harmless envvar gets set instead.
+    # This avoids confusing the app with an https_proxy that's set to ""!
+    "${var.https_proxy != "" ? "https_proxy" : "https_proxy_is_not_set"}"   = var.https_proxy
     MAX_FILE_SIZE = var.max_file_size
   }
 }

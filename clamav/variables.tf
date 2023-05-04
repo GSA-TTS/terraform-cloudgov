@@ -33,3 +33,9 @@ variable "max_file_size" {
   type        = string
   description = "Maximum file size the API will accept for scanning"
 }
+
+variable "https_proxy" {
+  type        = string
+  description = "https_proxy to use for outbound connections, eg to database.freshclam.net"
+  default     = ""
+}
