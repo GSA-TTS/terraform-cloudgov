@@ -19,6 +19,12 @@ variable "recursive_delete" {
   default     = false
 }
 
+variable "name" {
+  type        = string
+  description = "name of the service instance"
+  default     = ""
+}
+
 variable "cdn_plan_name" {
   type        = string
   description = "name of the service plan name to create"

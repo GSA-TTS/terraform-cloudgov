@@ -1,5 +1,5 @@
 output "instance_id" {
-  value = cloudfoundry_app.external_domain_instance.id
+  value = cloudfoundry_service_instance.external_domain_instance.id
 }
 
 output "route_id" {
