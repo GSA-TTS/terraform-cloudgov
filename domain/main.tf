@@ -1,3 +1,7 @@
+locals {
+  service_name = (var.name == "" ? "${data.cloudfoundry_app.app.name}-${var.domain_name}" : var.name)
+}
+
 data "cloudfoundry_space" "space" {
   org_name = var.cf_org_name
   name     = var.cf_space_name
@@ -30,7 +34,7 @@ data "cloudfoundry_service" "external_domain" {
 }
 
 resource "cloudfoundry_service_instance" "external_domain_instance" {
-  name             = data.cloudfoundry_app.name
+  name             = local.service_name
   space            = data.cloudfoundry_space.space.id
   service_plan     = data.cloudfoundry_service.external_domain.service_plans[var.cdn_plan_name]
   recursive_delete = var.recursive_delete
