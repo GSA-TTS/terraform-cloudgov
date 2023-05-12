@@ -13,9 +13,12 @@ data "cloudfoundry_app" "app" {
 }
 
 ###########################################################################
-# Domain must be manually created by an OrgManager before terraform is run:
+# There are two prerequisites for running this module:
 #
-# cf create-domain <%= cloud_gov_organization %> TKTK-production-domain-name
+# 1) Domain must be manually created by an OrgManager:
+#     cf create-domain <%= cloud_gov_organization %> TKTK-production-domain-name
+# 2) ACME challenge record must be created.
+#     See https://cloud.gov/docs/services/external-domain-service/#how-to-create-an-instance-of-this-service
 ###########################################################################
 data "cloudfoundry_domain" "origin_url" {
   name = var.domain_name
