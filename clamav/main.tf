@@ -24,6 +24,7 @@ resource "cloudfoundry_app" "clamav_api" {
   memory       = var.clamav_memory
   disk_quota   = 2048
   timeout      = 600
+  strategy     = "rolling"
   docker_image = var.clamav_image
   routes {
     route = cloudfoundry_route.clamav_route.id
@@ -40,14 +41,7 @@ resource "cloudfoundry_app" "clamav_api" {
 resource "cloudfoundry_network_policy" "clamav_routing" {
   policy {
     source_app      = data.cloudfoundry_app.app.id
-    # We use the "id_bg" attribute here to ensure the network policy is updated
-    # during blue-green deploys of the app. Docs:
-    # https://registry.terraform.io/providers/cloudfoundry-community/cloudfoundry/latest/docs/resources/app#update-resource-using-blue-green-app-id
-    # Note that this will probably not be necessary once the app resource
-    # supports CAPI v3; v3 has a native "--strategy rolling" flag for deploys
-    # which doesn't change the app GUID. That makes the "venerable" blue-green
-    # method obsolete.
-    destination_app = cloudfoundry_app.clamav_api.id_bg
+    destination_app = cloudfoundry_app.clamav_api.id
     port            = "61443"
   }
 }
