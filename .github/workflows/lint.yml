@@ -2,14 +2,15 @@ name: Lint
 
 on:
   push:
-    branches:
-      - '!main'
+    branches-ignore:
+      - main
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     name: Validate terraform configuration
     strategy:
+      fail-fast: false
       matrix:
         path: ["cg_space", "clamav", "database", "domain", "redis", "s3"]
     steps:
@@ -25,6 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Check formatting of terraform files
     strategy:
+      fail-fast: false
       matrix:
         path: ["cg_space", "clamav", "database", "domain", "redis", "s3"]
     steps:
