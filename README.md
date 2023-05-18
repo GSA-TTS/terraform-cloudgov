@@ -1,6 +1,6 @@
 # terraform-cloudgov
 
-Terraform modules for cloud.gov managed services commonly used by [18f/rails-template](https://github.com/18f/rails-template) based apps
+Terraform modules for cloud.gov managed services commonly used by apps running on cloud.gov. This was originally extracted from [18f/rails-template](https://github.com/18f/rails-template) based apps.
 
 ## Module Examples
 
@@ -113,3 +113,7 @@ module "egress_space" {
   ]
 }
 ```
+
+## Testing
+
+We are experimenting with incorporating [`terraform test`](https://developer.hashicorp.com/terraform/language/modules/testing-experiment) into the modules. These tests will run on any open PR.

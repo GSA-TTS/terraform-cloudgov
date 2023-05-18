@@ -12,6 +12,7 @@ jobs:
     name: Integration test
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         module: ["s3"]
     steps:
