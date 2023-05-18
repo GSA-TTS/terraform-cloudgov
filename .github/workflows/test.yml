@@ -12,9 +12,9 @@ jobs:
     name: Integration test
     strategy:
       fail-fast: false
-      max-parallel: 1
+      max-parallel: 2
       matrix:
-        module: ["s3"]
+        module: ["s3", "database", "redis"]
     steps:
       - name: Checkout
         uses: actions/checkout@v3

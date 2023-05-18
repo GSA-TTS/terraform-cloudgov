@@ -22,4 +22,5 @@ variable "recursive_delete" {
 variable "redis_plan_name" {
   type        = string
   description = "name of the service plan name to create"
+  # See options at https://cloud.gov/docs/services/aws-elasticache/#plans
 }
