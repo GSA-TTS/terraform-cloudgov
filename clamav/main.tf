@@ -33,8 +33,11 @@ resource "cloudfoundry_app" "clamav_api" {
     # Only set "https_proxy" if a value was supplied.
     # Otherwise, ensure that a harmless envvar gets set instead.
     # This avoids confusing the app with an https_proxy that's set to ""!
-    "${var.https_proxy != "" ? "https_proxy" : "https_proxy_is_not_set"}" = var.https_proxy
-    MAX_FILE_SIZE                                                         = var.max_file_size
+    "${var.https_proxy != "" ? "PROXY_SERVER" : "https_proxy_is_not_set"}"         = var.https_proxy
+    "${var.proxy_port != "" ? "PROXY_PORT" : "proxy_port_is_not_set"}"             = var.proxy_port
+    "${var.proxy_username != "" ? "PROXY_USERNAME" : "proxy_username_is_not_set"}" = var.proxy_username
+    "${var.proxy_password != "" ? "PROXY_PASSWORD" : "proxy_password_is_not_set"}" = var.proxy_password
+    MAX_FILE_SIZE                                                                  = var.max_file_size
   }
 }
 

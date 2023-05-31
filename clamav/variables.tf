@@ -39,3 +39,21 @@ variable "https_proxy" {
   description = "https_proxy to use for outbound connections, eg to database.freshclam.net"
   default     = ""
 }
+
+variable "proxy_port" {
+  type        = string
+  description = "port for use with https_proxy, eg 61443"
+  default     = ""
+}
+
+variable "proxy_username" {
+  type        = string
+  description = "username for https_proxy, eg a-username"
+  default     = ""
+}
+
+variable "proxy_password" {
+  type        = string
+  description = "password for https_proxy, eg a-password"
+  default     = ""
+}
