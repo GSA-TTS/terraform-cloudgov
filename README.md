@@ -84,9 +84,12 @@ module "clamav" {
   cf_space_name  = local.cf_space_name
   app_name_or_id = "app_name"
   name           = "my_clamav_name"
-  clamav_image   = "ajilaag/clamav-rest:TAG_NAME"
+  clamav_image   = "ghcr.io/gsa-tts/clamav-rest/clamav:TAG_NAME"
   max_file_size  = "30M"
-  https_proxy    = local.https_proxy # to reach database.clamav.net:443
+  proxy_server   = local.proxy_server # https proxy to reach database.clamav.net:443, if necessary
+  proxy_port     = local.proxy_port
+  proxy_username = local.proxy_username
+  proxy_password = local.proxy_password
 }
 ```
 
