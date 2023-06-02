@@ -30,10 +30,10 @@ resource "cloudfoundry_app" "clamav_api" {
     route = cloudfoundry_route.clamav_route.id
   }
   environment = {
-    # Only set "https_proxy" if a value was supplied.
+    # Only set the proxy environment variables if a value was supplied.
     # Otherwise, ensure that a harmless envvar gets set instead.
-    # This avoids confusing the app with an https_proxy that's set to ""!
-    "${var.https_proxy != "" ? "PROXY_SERVER" : "https_proxy_is_not_set"}"         = var.https_proxy
+    # This avoids confusing the app with variables that are set to ""!
+    "${var.proxy_server != "" ? "PROXY_SERVER" : "proxy_server_is_not_set"}"       = var.proxy_server
     "${var.proxy_port != "" ? "PROXY_PORT" : "proxy_port_is_not_set"}"             = var.proxy_port
     "${var.proxy_username != "" ? "PROXY_USERNAME" : "proxy_username_is_not_set"}" = var.proxy_username
     "${var.proxy_password != "" ? "PROXY_PASSWORD" : "proxy_password_is_not_set"}" = var.proxy_password
