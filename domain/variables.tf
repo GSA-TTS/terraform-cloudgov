@@ -32,5 +32,11 @@ variable "cdn_plan_name" {
 
 variable "domain_name" {
   type        = string
-  description = "DNS name users will be accessing site"
+  description = "Domain name users will use to access the application"
+}
+
+variable "host_name" {
+  type        = string
+  description = "Host name users will use to access the application"
+  default     = null
 }
