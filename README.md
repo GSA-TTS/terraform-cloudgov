@@ -58,13 +58,14 @@ Note that the domain must be created in cloud.gov by an OrgManager before this m
 
 ```
 module "domain" {
-  source = "github.com/18f/terraform-cloudgov//domain?ref=v0.6.0"
+  source = "github.com/18f/terraform-cloudgov//domain?ref=v0.7.0"
 
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
   app_name_or_id   = "app_name"
   cdn_plan_name    = "domain"
   domain_name      = "my-production-domain-name"
+  host_name        = "my-production-host-name"
 }
 ```
 

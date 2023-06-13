@@ -1,5 +1,6 @@
 locals {
   service_name = (var.name == "" ? "${data.cloudfoundry_app.app.name}-${var.domain_name}" : var.name)
+  endpoint     = (var.host_name != null ? "${var.host_name}.${var.domain_name}" : var.domain_name)
 }
 
 data "cloudfoundry_space" "space" {
@@ -25,8 +26,9 @@ data "cloudfoundry_domain" "origin_url" {
 }
 
 resource "cloudfoundry_route" "origin_route" {
-  domain = data.cloudfoundry_domain.origin_url.id
-  space  = data.cloudfoundry_space.space.id
+  domain   = data.cloudfoundry_domain.origin_url.id
+  hostname = var.host_name
+  space    = data.cloudfoundry_space.space.id
   target {
     app = data.cloudfoundry_app.app.id
   }
@@ -41,5 +43,5 @@ resource "cloudfoundry_service_instance" "external_domain_instance" {
   space            = data.cloudfoundry_space.space.id
   service_plan     = data.cloudfoundry_service.external_domain.service_plans[var.cdn_plan_name]
   recursive_delete = var.recursive_delete
-  json_params      = "{\"domains\": \"${var.domain_name}\"}"
+  json_params      = "{\"domains\": \"${local.endpoint}\"}"
 }
