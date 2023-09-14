@@ -1,6 +1,6 @@
 # terraform-cloudgov
 
-Terraform modules for cloud.gov managed services commonly used by [18f/rails-template](https://github.com/18f/rails-template) based apps
+Terraform modules for working with cloud.gov commonly used by [18f/rails-template](https://github.com/18f/rails-template) based apps
 
 ## Module Examples
 
@@ -117,3 +117,7 @@ module "egress_space" {
   ]
 }
 ```
+
+## Staying up to date
+
+Note that [Terraform doesn't support version constraints for github module sources](https://developer.hashicorp.com/terraform/language/modules/sources#github). To use the latest available versions of these modules using a version constraint, use our [semver module](./semver). 
