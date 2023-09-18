@@ -13,7 +13,10 @@ terraform {
 # Fixture constraints
 locals {
   module_versions = {
-    greaterthan = ">0.5.0",
+    # This test will break after we tag something higher than 1.0.0; fix and
+    # expand these tests then!
+    # https://github.com/npm/node-semver#tilde-ranges-123-12-1
+    greaterthan = "~0", 
   }
 
   latest_tag = trimprefix(jsondecode(data.http.latest_version.response_body).tag_name, "v")
@@ -39,7 +42,6 @@ resource "test_assertions" "greater-than-is-latest" {
   equal "target_version" {
     description = "greater than should always be the latest in the repo"
     got  = module.version["greaterthan"].target_version
-    # want = "0.7.0" # Need to programmatically derive this
     want = local.latest_tag
   }
 }

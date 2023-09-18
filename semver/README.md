@@ -8,8 +8,8 @@ Find a tag for this repository matching NPM-style version constraints
 # Specify a version constraint for each module we plan to use
 locals {
   module_versions = {
-    database = ">0.5.0",
-    s3       = ">0.6.0"
+    database = "^0.x", # major version 0
+    s3       = "^0.x"  # major version 0
   }
 }
 
@@ -32,4 +32,3 @@ module "s3" {
   # [...]
 }
 ```
-
