@@ -25,3 +25,9 @@ variable "s3_plan_name" {
   default     = "basic"
   # See options at https://cloud.gov/docs/services/s3/#plans
 }
+
+variable "tags" {
+  description = "A list of tags to add to the resource"
+  type        = list(string)
+  default     = []
+}
