@@ -40,3 +40,9 @@ variable "host_name" {
   description = "Host name users will use to access the application"
   default     = null
 }
+
+variable "tags" {
+  description = "A list of tags to add to the resource"
+  type        = list(string)
+  default     = []
+}

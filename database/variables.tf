@@ -24,3 +24,9 @@ variable "rds_plan_name" {
   description = "service plan to use"
   # See options at https://cloud.gov/docs/services/relational-database/#plans
 }
+
+variable "tags" {
+  description = "A list of tags to add to the resource"
+  type        = list(string)
+  default     = []
+}
