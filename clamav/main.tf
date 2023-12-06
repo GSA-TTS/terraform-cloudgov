@@ -26,7 +26,6 @@ resource "cloudfoundry_app" "clamav_api" {
   timeout      = 600
   strategy     = "rolling"
   docker_image = var.clamav_image
-  tags         = var.tags
   routes {
     route = cloudfoundry_route.clamav_route.id
   }
