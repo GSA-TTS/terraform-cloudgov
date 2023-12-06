@@ -23,3 +23,9 @@ variable "redis_plan_name" {
   type        = string
   description = "name of the service plan name to create"
 }
+
+variable "tags" {
+  description = "A list of tags to add to the resource"
+  type        = list(string)
+  default     = []
+}

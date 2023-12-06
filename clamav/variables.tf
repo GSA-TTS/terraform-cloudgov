@@ -57,3 +57,9 @@ variable "proxy_password" {
   description = "password for proxy_server, eg a-password"
   default     = ""
 }
+
+variable "tags" {
+  description = "A list of tags to add to the resource"
+  type        = list(string)
+  default     = []
+}

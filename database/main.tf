@@ -12,4 +12,5 @@ resource "cloudfoundry_service_instance" "rds" {
   space            = data.cloudfoundry_space.space.id
   service_plan     = data.cloudfoundry_service.rds.service_plans[var.rds_plan_name]
   recursive_delete = var.recursive_delete
+  tags             = var.tags
 }
