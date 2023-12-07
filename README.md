@@ -4,7 +4,7 @@ Terraform modules for working with cloud.gov commonly used by [18f/rails-templat
 
 ## Usage
 
-Specify acceptable versions of these modules using an [NPM-style version constraint](https://github.com/npm/node-semver#versions), using our [semver module](./semver). ([Terraform doesn't support version constraints for github-hosted modules](https://developer.hashicorp.com/terraform/language/modules/sources#github).) 
+Specify acceptable versions of these modules using an [NPM-style version constraint](https://github.com/npm/node-semver#versions), using our [semver module](./semver). ([Terraform doesn't support version constraints for github-hosted modules](https://developer.hashicorp.com/terraform/language/modules/sources#github).)
 
 ```terraform
 # Specify a (NPM-style) version constraint for the modules you use
@@ -39,6 +39,7 @@ module "database" {
   cf_space_name    = local.cf_space_name
   name             = "database_name"
   rds_plan_name    = "micro-psql"
+  tags             = ["tag1", "tag2"]
 }
 ```
 
@@ -54,6 +55,7 @@ module "redis" {
   cf_space_name    = local.cf_space_name
   name             = "redis_name"
   redis_plan_name  = "redis-dev"
+  tags             = ["tag1", "tag2"]
 }
 ```
 
@@ -68,6 +70,7 @@ module "s3" {
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
   name             = "${local.app_name}-s3-${local.env}"
+  tags             = ["tag1", "tag2"]
 }
 ```
 
@@ -89,6 +92,7 @@ module "domain" {
   cdn_plan_name    = "domain"
   domain_name      = "my-production-domain-name"
   host_name        = "my-production-host-name"
+  tags             = ["tag1", "tag2"]
 }
 ```
 
