@@ -114,6 +114,7 @@ module "clamav" {
   name           = "my_clamav_name"
   clamav_image   = "ghcr.io/gsa-tts/clamav-rest/clamav:TAG_NAME"
   max_file_size  = "30M"
+  instances      = 2
   proxy_server   = local.proxy_server # https proxy to reach database.clamav.net:443, if necessary
   proxy_port     = local.proxy_port
   proxy_username = local.proxy_username

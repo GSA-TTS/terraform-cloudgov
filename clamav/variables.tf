@@ -57,3 +57,9 @@ variable "proxy_password" {
   description = "password for proxy_server, eg a-password"
   default     = ""
 }
+
+variable "instances" {
+  type        = number
+  description = "the number of instances that the clamav module should operate (default 1)"
+  default     = 1
+}
