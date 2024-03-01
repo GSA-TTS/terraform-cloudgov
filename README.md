@@ -2,29 +2,6 @@
 
 Terraform modules for working with cloud.gov commonly used by [18f/rails-template](https://github.com/18f/rails-template) based apps
 
-## Usage
-
-Specify acceptable versions of these modules using an [NPM-style version constraint](https://github.com/npm/node-semver#versions), using our [semver module](./semver). ([Terraform doesn't support version constraints for github-hosted modules](https://developer.hashicorp.com/terraform/language/modules/sources#github).)
-
-```terraform
-# Specify a (NPM-style) version constraint for the modules you use
-locals {
-  module_versions = {
-    database = "^0.x", # major version 0
-    s3       = "^0.x"  # major version 0
-  }
-}
-
-# Find the most recent versions matching those constraints...
-module "version" {
-  for_each           = local.module_versions
-  source             = "github.com/18f/terraform-cloudgov//semver"
-  version_constraint = each.value
-}
-
-# ...then refer to the source for those modules using the calculated versions, as demonstrated below
-```
-
 ## Module Examples
 
 ### database
@@ -33,7 +10,7 @@ Creates an RDS database based on the `rds_plan_name` variable and outputs the `i
 
 ```
 module "database" {
-  source = "github.com/18f/terraform-cloudgov//database?ref=v${module.version["database"].target_version}"
+  source = "github.com/18f/terraform-cloudgov//database?ref=v1.0.0"
 
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
@@ -49,7 +26,7 @@ Creates a Elasticache redis instance and outputs the `instance_id` for use elsew
 
 ```
 module "redis" {
-  source = "github.com/18f/terraform-cloudgov//redis?ref=v${module.version["redis"].target_version}"
+  source = "github.com/18f/terraform-cloudgov//redis?ref=v1.0.0"
 
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
@@ -65,7 +42,7 @@ Creates an s3 bucket and outputs the `bucket_id` for use elsewhere.
 
 ```
 module "s3" {
-  source = "github.com/18f/terraform-cloudgov//s3?ref=v${module.version["s3"].target_version}"
+  source = "github.com/18f/terraform-cloudgov//s3?ref=v1.0.0"
 
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
@@ -84,7 +61,7 @@ Note that the domain must be created in cloud.gov by an OrgManager before this m
 
 ```
 module "domain" {
-  source = "github.com/18f/terraform-cloudgov//domain?ref=v${module.version["domain"].target_version}"
+  source = "github.com/18f/terraform-cloudgov//domain?ref=v1.0.0"
 
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
@@ -106,7 +83,7 @@ Notes:
 
 ```
 module "clamav" {
-  source = "github.com/18f/terraform-cloudgov//clamav?ref=v${module.version["clamav"].target_version}"
+  source = "github.com/18f/terraform-cloudgov//clamav?ref=v1.0.0"
 
   cf_org_name    = local.cf_org_name
   cf_space_name  = local.cf_space_name
@@ -130,7 +107,7 @@ Creates a new cloud.gov space, such as when creating an egress space, and output
 
 ```
 module "egress_space" {
-  source = "github.com/18f/terraform-cloudgov//cg_space?ref=v${module.version["cg_space"].target_version}"
+  source = "github.com/18f/terraform-cloudgov//cg_space?ref=v1.0.0"
 
   cf_org_name   = local.cf_org_name
   cf_space_name = "${local.cf_space_name}-egress"
