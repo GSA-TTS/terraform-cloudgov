@@ -13,4 +13,5 @@ resource "cloudfoundry_service_instance" "redis" {
   service_plan     = data.cloudfoundry_service.redis.service_plans[var.redis_plan_name]
   recursive_delete = var.recursive_delete
   tags             = var.tags
+  json_params      = var.json_params
 }

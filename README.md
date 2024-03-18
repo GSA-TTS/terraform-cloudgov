@@ -40,6 +40,11 @@ module "database" {
   name             = "database_name"
   rds_plan_name    = "micro-psql"
   tags             = ["tag1", "tag2"]
+  json_params      = jsonencode(
+    {
+      "storage" : 10,
+    }
+  )
 }
 ```
 
@@ -56,6 +61,11 @@ module "redis" {
   name             = "redis_name"
   redis_plan_name  = "redis-dev"
   tags             = ["tag1", "tag2"]
+  json_params      = jsonencode(
+    {
+      "engineVersion" : "6.2",
+    }
+  )
 }
 ```
 
@@ -71,6 +81,11 @@ module "s3" {
   cf_space_name    = local.cf_space_name
   name             = "${local.app_name}-s3-${local.env}"
   tags             = ["tag1", "tag2"]
+  json_params      = jsonencode(
+    {
+      "object_ownership" : "ObjectWriter",
+    }
+  )
 }
 ```
 
