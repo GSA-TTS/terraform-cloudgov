@@ -33,14 +33,7 @@ variable "tags" {
 
 variable "json_params" {
   description = "A JSON string of arbitrary parameters"
-  type = map(object({
-    storage                 = number
-    backup_retention_period = number
-    binary_log_format       = string
-    enable_pg_cron          = bool
-    enable_functions        = bool
-    storage_type            = string
-  }))
+  type = string
   default = null
   # See options at https://cloud.gov/docs/services/relational-database/#setting-optional-parameters-1
 }
