@@ -35,7 +35,7 @@ variable "tags" {
 variable "json_params" {
   description = "A JSON string of arbitrary parameters"
   type        = map(string)
-  default     = false
+  default     = null
   # See options at https://cloud.gov/docs/services/s3/#setting-optional-parameters
 }
 

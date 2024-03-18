@@ -33,6 +33,6 @@ variable "tags" {
 variable "json_params" {
   description = "A JSON string of arbitrary parameters"
   type        = map(object)
-  default     = false
+  default     = null
   # See options at https://cloud.gov/docs/services/aws-elasticache/#setting-optional-parameters
 }
