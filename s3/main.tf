@@ -8,9 +8,9 @@ data "cloudfoundry_service" "s3" {
 }
 
 resource "cloudfoundry_service_instance" "bucket" {
-  name             = var.name
-  space            = data.cloudfoundry_space.space.id
-  service_plan     = data.cloudfoundry_service.s3.service_plans[var.s3_plan_name]
-  tags             = var.tags
-  json_params      = var.json_params
+  name         = var.name
+  space        = data.cloudfoundry_space.space.id
+  service_plan = data.cloudfoundry_service.s3.service_plans[var.s3_plan_name]
+  tags         = var.tags
+  json_params  = var.json_params
 }
