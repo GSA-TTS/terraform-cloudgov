@@ -1,5 +1,5 @@
 locals {
-  service_name = (var.name == "" ? "${data.cloudfoundry_app.app.name}-${var.domain_name}" : var.name)
+  service_name = (var.name == "" ? "${data.cloudfoundry_app.app[0].name}-${var.domain_name}" : var.name)
   endpoint     = (var.host_name != null ? "${var.host_name}.${var.domain_name}" : var.domain_name)
   target_apps  = (var.app_name_or_id != null ? [var.app_name_or_id] : var.app_names_or_ids)
 }
@@ -34,7 +34,7 @@ resource "cloudfoundry_route" "origin_route" {
 
   dynamic "target" {
     for_each = data.cloudfoundry_app.app
-    content = {
+    content {
       app = target.id
     }
   }

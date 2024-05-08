@@ -22,7 +22,7 @@ variable "app_names_or_ids" {
 
 variable "name" {
   type        = string
-  description = "name of the service instance"
+  description = "name of the service instance. Required if not passing in app names or ids"
   default     = ""
 }
 
