@@ -13,12 +13,6 @@ variable "app_name_or_id" {
   description = "base application name to be accessed at this domain name"
 }
 
-variable "recursive_delete" {
-  type        = bool
-  description = "when true, deletes service bindings attached to the resource (not recommended for production)"
-  default     = false
-}
-
 variable "name" {
   type        = string
   description = "name of the service instance"

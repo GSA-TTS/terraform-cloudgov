@@ -39,10 +39,9 @@ data "cloudfoundry_service" "external_domain" {
 }
 
 resource "cloudfoundry_service_instance" "external_domain_instance" {
-  name             = local.service_name
-  space            = data.cloudfoundry_space.space.id
-  service_plan     = data.cloudfoundry_service.external_domain.service_plans[var.cdn_plan_name]
-  recursive_delete = var.recursive_delete
-  json_params      = "{\"domains\": \"${local.endpoint}\"}"
-  tags             = var.tags
+  name         = local.service_name
+  space        = data.cloudfoundry_space.space.id
+  service_plan = data.cloudfoundry_service.external_domain.service_plans[var.cdn_plan_name]
+  json_params  = "{\"domains\": \"${local.endpoint}\"}"
+  tags         = var.tags
 }

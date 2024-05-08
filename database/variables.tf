@@ -13,12 +13,6 @@ variable "name" {
   description = "Name of the database service instance"
 }
 
-variable "recursive_delete" {
-  type        = bool
-  description = "when true, deletes service bindings attached to the resource (not recommended for production)"
-  default     = false
-}
-
 variable "rds_plan_name" {
   type        = string
   description = "service plan to use"
@@ -33,7 +27,7 @@ variable "tags" {
 
 variable "json_params" {
   description = "A JSON string of arbitrary parameters"
-  type = string
-  default = null
+  type        = string
+  default     = null
   # See options at https://cloud.gov/docs/services/relational-database/#setting-optional-parameters-1
 }
