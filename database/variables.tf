@@ -13,12 +13,6 @@ variable "name" {
   description = "Name of the database service instance"
 }
 
-variable "recursive_delete" {
-  type        = bool
-  description = "when true, deletes service bindings attached to the resource (not recommended for production)"
-  default     = false
-}
-
 variable "rds_plan_name" {
   type        = string
   description = "service plan to use"

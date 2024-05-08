@@ -8,12 +8,6 @@ variable "cf_space_name" {
   description = "cloud.gov space name (staging or prod)"
 }
 
-variable "recursive_delete" {
-  type        = bool
-  description = "when true, deletes service bindings attached to the resource (not recommended for production)"
-  default     = false
-}
-
 variable "name" {
   type        = string
   description = "name of the cloud.gov service instance"
