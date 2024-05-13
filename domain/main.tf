@@ -1,6 +1,7 @@
 locals {
-  service_name = (var.name == "" ? "${data.cloudfoundry_app.app.name}-${var.domain_name}" : var.name)
   endpoint     = (var.host_name != null ? "${var.host_name}.${var.domain_name}" : var.domain_name)
+  target_apps  = (var.app_name_or_id != null ? [var.app_name_or_id] : var.app_names_or_ids)
+  service_name = (var.name == "" ? "${data.cloudfoundry_app.app[local.target_apps[0]].name}-${var.domain_name}" : var.name)
 }
 
 data "cloudfoundry_space" "space" {
@@ -9,7 +10,8 @@ data "cloudfoundry_space" "space" {
 }
 
 data "cloudfoundry_app" "app" {
-  name_or_id = var.app_name_or_id
+  for_each   = toset(local.target_apps)
+  name_or_id = each.key
   space      = data.cloudfoundry_space.space.id
 }
 
@@ -29,8 +31,12 @@ resource "cloudfoundry_route" "origin_route" {
   domain   = data.cloudfoundry_domain.origin_url.id
   hostname = var.host_name
   space    = data.cloudfoundry_space.space.id
-  target {
-    app = data.cloudfoundry_app.app.id
+
+  dynamic "target" {
+    for_each = data.cloudfoundry_app.app
+    content {
+      app = target.value.id
+    }
   }
 }
 

@@ -10,12 +10,19 @@ variable "cf_space_name" {
 
 variable "app_name_or_id" {
   type        = string
-  description = "base application name to be accessed at this domain name"
+  description = "base application name or id to be accessed at this domain name. Overrides var.app_names_or_ids if used"
+  default     = null
+}
+
+variable "app_names_or_ids" {
+  type        = list(string)
+  description = "base application names or ids to be accessed at this domain name. Overridden by var.app_name_or_id if used"
+  default     = []
 }
 
 variable "name" {
   type        = string
-  description = "name of the service instance"
+  description = "name of the service instance. Required if not passing in app names or ids"
   default     = ""
 }
 
