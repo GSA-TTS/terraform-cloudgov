@@ -31,3 +31,18 @@ run "test_bucket_creation" {
     error_message = "Service instance name should match the name variable"
   }
 }
+
+run "test_json_params" {
+  command = plan
+
+  variables {
+    json_params = jsonencode({
+      object_ownership = "BucketOwnerEnforced"
+    })
+  }
+
+  assert {
+    condition     = cloudfoundry_service_instance.bucket.json_params == "{\"object_ownership\":\"BucketOwnerEnforced\"}"
+    error_message = "Service instance json_params should be configurable"
+  }
+}
