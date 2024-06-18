@@ -10,7 +10,7 @@ variables {
   name          = "terraform-cloudgov-s3-test"
 }
 
-run "test_creation" {
+run "test_bucket_creation" {
   assert {
     condition     = can(regex("^\\w{8}-\\w{4}-\\w{4}-\\w{4}-\\w{12}$", output.bucket_id))
     error_message = "Bucket ID should be a GUID"
@@ -22,7 +22,12 @@ run "test_creation" {
   }
 
   assert {
-    condition     = cloudfoundry_service_instance.bucket.service_plan == data.cloudfoundry_service.s3.service_plans["basic-sandbox"]
-    error_message = "Service Plan should be 'basic-sandbox'"
+    condition     = cloudfoundry_service_instance.bucket.service_plan == data.cloudfoundry_service.s3.service_plans[var.s3_plan_name]
+    error_message = "Service Plan should match the s3_plan_name variable"
+  }
+
+  assert {
+    condition     = cloudfoundry_service_instance.bucket.name == var.name
+    error_message = "Service instance name should match the name variable"
   }
 }
