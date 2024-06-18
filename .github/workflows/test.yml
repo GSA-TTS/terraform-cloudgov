@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       max-parallel: 2
       matrix:
-        module: ["s3", "database", "redis"]
+        module: ["s3", "database", "redis", "cg_space", "domain"]
     steps:
       - uses: actions/checkout@v4
 
