@@ -4,9 +4,9 @@ provider "cloudfoundry" {
 }
 
 variables {
-  cf_org_name   = "sandbox-gsa"
-  cf_space_name = "ryan.ahearn"
-  s3_plan_name  = "basic-sandbox"
+  cf_org_name   = "gsa-tts-devtools-prototyping"
+  cf_space_name = "terraform-cloudgov-ci-tests"
+  s3_plan_name  = "basic"
   name          = "terraform-cloudgov-s3-test"
 }
 
