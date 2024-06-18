@@ -19,8 +19,8 @@ jobs:
 
       - name: terraform test ${{ matrix.module }}
         uses: dflook/terraform-test@v1
+        env:
+          CF_USER: ${{ secrets.CF_USER }}
+          CF_PASSWORD: ${{ secrets.CF_PASSWORD }}
         with:
           path: ${{ matrix.module }}
-          variables: |
-            cf_user = "${{ secrets.CF_USER }}"
-            cf_password = "${{ secrets.CF_PASSWORD }}"

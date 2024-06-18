@@ -145,10 +145,7 @@ module "egress_space" {
 
 [Terraform tests](https://developer.hashicorp.com/terraform/language/tests) are in progress of being written. To run for any module with a `tests` directory:
 
+1. Set `CF_USER` and `CF_PASSWORD` env variables with SpaceDeployer credentials that can access the space(s) being used for tests
 1. cd to module root. Example: `cd s3`
 1. Run `terraform init`
-1. Run `terraform test -var cf_user="SERVICE_DEPLOYER_USERNAME" -var cf_password="SERVICE_DEPLOYER_PASSWORD"`
-
-### tf-cg-test-support
-
-This module is used to help setup the cloudfoundry provider for each test. It is not a useful module on its own
+1. Run `terraform test`

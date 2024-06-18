@@ -1,7 +1,6 @@
 provider "cloudfoundry" {
-  api_url  = "https://api.fr.cloud.gov"
-  user     = run.setup.cf_user
-  password = run.setup.cf_password
+  api_url = "https://api.fr.cloud.gov"
+  # cf_user and cf_password are passed in via CF_USER and CF_PASSWORD env vars
 }
 
 variables {
@@ -9,12 +8,6 @@ variables {
   cf_space_name = "ryan.ahearn"
   s3_plan_name  = "basic-sandbox"
   name          = "terraform-cloudgov-s3-test"
-}
-
-run "setup" {
-  module {
-    source = "../tf-cg-test-support"
-  }
 }
 
 run "test_creation" {
