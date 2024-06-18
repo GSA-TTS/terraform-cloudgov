@@ -8,6 +8,7 @@ variables {
   cf_space_name = "terraform-cloudgov-ci-tests"
   s3_plan_name  = "basic"
   name          = "terraform-cloudgov-s3-test"
+  tags          = ["terraform-cloudgov", "tests"]
 }
 
 run "test_bucket_creation" {
@@ -29,6 +30,11 @@ run "test_bucket_creation" {
   assert {
     condition     = cloudfoundry_service_instance.bucket.name == var.name
     error_message = "Service instance name should match the name variable"
+  }
+
+  assert {
+    condition     = cloudfoundry_service_instance.bucket.tags == var.tags
+    error_message = "Service instance tags should match the tags variable"
   }
 }
 
