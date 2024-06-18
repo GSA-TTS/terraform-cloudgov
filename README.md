@@ -123,6 +123,10 @@ Creates a new cloud.gov space, such as when creating an egress space, and output
 
 `managers`, `developers`, and `deployers` are all optional, but you probably want to set at least one of them, depending on your use case.
 
+* `managers` are granted the [Space Manager](https://docs.cloudfoundry.org/concepts/roles.html#activeroles) role
+* `developers` are granted the [Space Developer](https://docs.cloudfoundry.org/concepts/roles.html#activeroles) role
+* `deployers` are granted both manager and developer roles
+
 ```
 module "egress_space" {
   source = "github.com/18f/terraform-cloudgov//cg_space?ref=v1.0.0"
