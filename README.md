@@ -153,3 +153,5 @@ module "egress_space" {
 1. cd to module root. Example: `cd s3`
 1. Run `terraform init`
 1. Run `terraform test`
+
+When updating code, try to cover every input and output variable with at least one test to verify it is connected properly.

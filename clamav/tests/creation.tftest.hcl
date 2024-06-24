@@ -76,17 +76,17 @@ run "test_app_creation" {
   }
 
   assert {
-    condition     = [for policy in cloudfoundry_network_policy.clamav_routing.policy : policy.source_app][0] == data.cloudfoundry_app.app.id
+    condition     = [for policy in cloudfoundry_network_policy.clamav_routing.policy : policy.source_app] == [data.cloudfoundry_app.app.id]
     error_message = "Routing policy allows traffic from the source app"
   }
 
   assert {
-    condition     = [for policy in cloudfoundry_network_policy.clamav_routing.policy : policy.destination_app][0] == cloudfoundry_app.clamav_api.id
+    condition     = [for policy in cloudfoundry_network_policy.clamav_routing.policy : policy.destination_app] == [cloudfoundry_app.clamav_api.id]
     error_message = "Routing policy allows traffic to the clamav app"
   }
 
   assert {
-    condition     = [for policy in cloudfoundry_network_policy.clamav_routing.policy : policy.port][0] == "61443"
+    condition     = [for policy in cloudfoundry_network_policy.clamav_routing.policy : policy.port] == ["61443"]
     error_message = "Routing policy opens up traffic on the internal https port"
   }
 }
