@@ -123,6 +123,10 @@ Creates a new cloud.gov space, such as when creating an egress space, and output
 
 `managers`, `developers`, and `deployers` are all optional, but you probably want to set at least one of them, depending on your use case.
 
+* `managers` are granted the [Space Manager](https://docs.cloudfoundry.org/concepts/roles.html#activeroles) role
+* `developers` are granted the [Space Developer](https://docs.cloudfoundry.org/concepts/roles.html#activeroles) role
+* `deployers` are granted both manager and developer roles
+
 ```
 module "egress_space" {
   source = "github.com/18f/terraform-cloudgov//cg_space?ref=v1.0.0"
@@ -140,3 +144,18 @@ module "egress_space" {
   ]
 }
 ```
+
+## Testing
+
+
+> **Warning**
+Tests provision resources in the real world when not using `mock_provider`! Take care that `CF_USER`/`CF_PASSWORD` are set to an account in a suitable non-production space. If other providers, such as the AWS provider, are used, ensure the same care is taken with their credentials in your shell before running `terraform test`.
+
+[Terraform tests](https://developer.hashicorp.com/terraform/language/tests) are in progress of being written. To run for any module with a `tests` directory:
+
+1. Set `CF_USER` and `CF_PASSWORD` env variables with SpaceDeployer credentials that can access the space(s) being used for tests
+1. cd to module root. Example: `cd s3`
+1. Run `terraform init`
+1. Run `terraform test`
+
+When updating code, try to cover every input and output variable with at least one test to verify it is connected properly.
