@@ -46,3 +46,21 @@ resource "cloudfoundry_space_users" "space_permissions" {
   managers   = local.manager_ids
   developers = local.developer_ids
 }
+
+###
+# Space Security Groups
+###
+
+data "cloudfoundry_asg" "asgs" {
+  for_each = var.asg_names
+  name     = each.key
+}
+
+locals {
+  asg_ids = [for asg in data.cloudfoundry_asg.asgs : asg.id]
+}
+
+resource "cloudfoundry_space_asgs" "running_security_groups" {
+  space        = cloudfoundry_space.space.id
+  running_asgs = local.asg_ids
+}
