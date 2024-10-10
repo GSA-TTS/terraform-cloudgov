@@ -26,7 +26,7 @@ variable "egress_memory" {
 
 variable "gitref" {
   type        = string
-  description = "gitref for the specific version of cg-egress-proxy that you want to use. Branch name should start with `refs/heads` while a git sha are given without a prefix"
+  description = "gitref for the specific version of cg-egress-proxy that you want to use. Branch name should start with `refs/heads` while a git sha should be given without a prefix"
   default     = "refs/heads/main"
   # You can also specify a specific commit, eg "7487f882903b9e834a5133a883a88b16fb8b16c9"
 }
