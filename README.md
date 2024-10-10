@@ -1,6 +1,6 @@
 # terraform-cloudgov
 
-Terraform modules for working with cloud.gov commonly used by [18f/rails-template](https://github.com/18f/rails-template) based apps
+Terraform modules for working with cloud.gov commonly used by [GSA-TTS/rails-template](https://github.com/GSA-TTS/rails-template) based apps
 
 ## Module Examples
 
@@ -10,7 +10,7 @@ Creates an RDS database based on the `rds_plan_name` variable and outputs the `i
 
 ```
 module "database" {
-  source = "github.com/18f/terraform-cloudgov//database?ref=v1.0.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//database?ref=v1.1.0"
 
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
@@ -32,7 +32,7 @@ Creates a Elasticache redis instance and outputs the `instance_id` for use elsew
 
 ```
 module "redis" {
-  source = "github.com/18f/terraform-cloudgov//redis?ref=v1.0.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//redis?ref=v1.1.0"
 
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
@@ -54,7 +54,7 @@ Creates an s3 bucket and outputs the `bucket_id` for use elsewhere.
 
 ```
 module "s3" {
-  source = "github.com/18f/terraform-cloudgov//s3?ref=v1.0.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//s3?ref=v1.1.0"
 
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
@@ -79,7 +79,7 @@ Note that the domain must be created in cloud.gov by an OrgManager before this m
 
 ```
 module "domain" {
-  source = "github.com/18f/terraform-cloudgov//domain?ref=v1.0.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//domain?ref=v1.1.0"
 
   cf_org_name      = local.cf_org_name
   cf_space_name    = local.cf_space_name
@@ -101,7 +101,7 @@ Notes:
 
 ```
 module "clamav" {
-  source = "github.com/18f/terraform-cloudgov//clamav?ref=v1.0.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//clamav?ref=v1.1.0"
 
   cf_org_name    = local.cf_org_name
   cf_space_name  = local.cf_space_name
@@ -129,7 +129,7 @@ Creates a new cloud.gov space, such as when creating an egress space, and output
 
 ```
 module "egress_space" {
-  source = "github.com/18f/terraform-cloudgov//cg_space?ref=v1.0.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//cg_space?ref=v1.1.0"
 
   cf_org_name   = local.cf_org_name
   cf_space_name = "${local.cf_space_name}-egress"
@@ -142,6 +142,30 @@ module "egress_space" {
   deployers = [
     var.cf_user
   ]
+}
+```
+
+### egress_proxy
+
+Creates and configures an instance of cg-egress-proxy to proxy traffic from your apps.
+
+Prerequities:
+
+* existing client_space with already deployed apps
+* existing public-egress space to deploy the proxy into
+
+```
+module "egress_proxy" {
+  source = "github.com/GSA-TTS/terraform-cloudgov//egress_proxy?ref=v1.1.0"
+
+  cf_org_name   = local.cf_org_name
+  cf_space_name = "${local.cf_space_name}-egress"
+  client_space  = local.cf_space_name
+  name          = "egress-proxy"
+  allowlist = {
+    "source_app_name" = ["host.com:443", "otherhost.com:443"]
+  }
+  # see egress_proxy/variables.tf for full list of optional arguments
 }
 ```
 
