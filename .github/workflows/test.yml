@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       max-parallel: 2
       matrix:
-        module: ["s3", "database", "redis", "cg_space", "domain", "clamav", "egress_proxy"]
+        module: ["s3", "database", "redis", "cg_space", "domain", "clamav"]
     steps:
       - uses: actions/checkout@v4
 
@@ -24,3 +24,17 @@ jobs:
           CF_PASSWORD: ${{ secrets.CF_PASSWORD }}
         with:
           path: ${{ matrix.module }}
+
+  test-egress-proxy:
+    runs-on: ubuntu-latest
+    name: Egress proxy integration test
+    env:
+      TERRAFORM_PRE_RUN: |
+        apt-get update
+        apt-get install -y zip
+    steps:
+      - uses: actions/checkout@v4
+      - name: terraform test egress_proxy
+        uses: dflook/terraform-test@v1
+        with:
+          path: egress_proxy
