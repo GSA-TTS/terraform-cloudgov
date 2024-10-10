@@ -142,6 +142,10 @@ module "egress_space" {
   deployers = [
     var.cf_user
   ]
+  asg_names = [
+    "trusted_local_networks_egress",
+    "public_networks_egress"
+  ]
 }
 ```
 

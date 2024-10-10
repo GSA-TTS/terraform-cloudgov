@@ -22,6 +22,7 @@ mock_provider "cloudfoundry" {
 variables {
   cf_org_name   = "gsa-tts-devtools-prototyping"
   cf_space_name = "terraform-cloudgov-ci-tests-egress"
+  asg_names     = ["trusted_local_networks_egress"]
 }
 
 run "test_space_creation" {
