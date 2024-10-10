@@ -34,6 +34,11 @@ run "test_space_creation" {
     condition     = cloudfoundry_space.space.name == var.cf_space_name
     error_message = "Space name should match the cf_space_name variable"
   }
+
+  assert {
+    condition     = cloudfoundry_space.space.name == output.space_name
+    error_message = "Space name output must match the new space"
+  }
 }
 
 run "test_manager_only" {
