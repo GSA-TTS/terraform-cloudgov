@@ -28,8 +28,8 @@ data "cloudfoundry_domain" "internal" {
 resource "cloudfoundry_route" "egress_route" {
   space    = data.cloudfoundry_space.egress_space.id
   domain   = data.cloudfoundry_domain.internal.id
-  hostname = "${var.cf_org_name}-${replace(var.cf_space_name, ".", "-")}-${var.name}"
-  # Yields something like: orgname-spacename-name.apps.internal
+  hostname = substr("${var.cf_org_name}-${replace(var.cf_space_name, ".", "-")}-${var.name}", -63, -1)
+  # Yields something like: orgname-spacename-name.apps.internal, limited to the last 63 characters
 }
 
 resource "random_uuid" "username" {}

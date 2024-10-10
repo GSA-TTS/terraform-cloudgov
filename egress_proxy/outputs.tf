@@ -1,5 +1,5 @@
 output "https_proxy" {
-  value = local.https_proxy
+  value     = local.https_proxy
   sensitive = true
 }
 
@@ -12,7 +12,7 @@ output "username" {
 }
 
 output "password" {
-  value = local.password
+  value     = local.password
   sensitive = true
 }
 

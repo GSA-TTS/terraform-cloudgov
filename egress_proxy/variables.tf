@@ -32,9 +32,9 @@ variable "gitref" {
 }
 
 variable "allowports" {
-  type = list(number)
+  type        = list(number)
   description = "Valid ports to proxy to"
-  default = [443]
+  default     = [443]
 }
 
 variable "allowlist" {
