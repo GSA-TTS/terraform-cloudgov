@@ -8,6 +8,12 @@ variable "cf_space_name" {
   description = "cloud.gov space name to create"
 }
 
+variable "asg_names" {
+  type        = set(string)
+  description = "list of security group names to apply to the Space"
+  default     = []
+}
+
 variable "managers" {
   type        = set(string)
   description = "list of cloud.gov users to be assigned to the SpaceManager role"
@@ -24,4 +30,10 @@ variable "deployers" {
   type        = set(string)
   description = "list of cloud.gov users to be assigned both SpaceManager and SpaceDeveloper roles"
   default     = []
+}
+
+variable "allow_ssh" {
+  type        = bool
+  description = "(Optional) Allows SSH to application containers via the CF CLI. Defaults to true."
+  default     = true
 }

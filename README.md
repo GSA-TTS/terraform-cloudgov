@@ -142,8 +142,16 @@ module "egress_space" {
   deployers = [
     var.cf_user
   ]
+  asg_names = [
+    "trusted_local_networks_egress",
+    "public_networks_egress"
+  ]
+  allow_ssh = false
 }
 ```
+
+> [!WARNING]
+> Any updates to a cg_space module for an already created space will have undesirable cascading effects on services in the space if you are using `depends_on [ module.space_module ]`. Comment out any `depends_on` lines once the space has been initially created.
 
 ### egress_proxy
 
