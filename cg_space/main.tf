@@ -3,8 +3,9 @@ data "cloudfoundry_org" "org" {
 }
 
 resource "cloudfoundry_space" "space" {
-  name = var.cf_space_name
-  org  = data.cloudfoundry_org.org.id
+  name      = var.cf_space_name
+  org       = data.cloudfoundry_org.org.id
+  allow_ssh = var.allow_ssh
 }
 
 ###

@@ -146,6 +146,7 @@ module "egress_space" {
     "trusted_local_networks_egress",
     "public_networks_egress"
   ]
+  allow_ssh = false
 }
 ```
 

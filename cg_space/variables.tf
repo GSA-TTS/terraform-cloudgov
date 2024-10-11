@@ -31,3 +31,9 @@ variable "deployers" {
   description = "list of cloud.gov users to be assigned both SpaceManager and SpaceDeveloper roles"
   default     = []
 }
+
+variable "allow_ssh" {
+  type        = bool
+  description = "(Optional) Allows SSH to application containers via the CF CLI. Defaults to true."
+  default     = true
+}
