@@ -8,6 +8,12 @@ variable "cf_space_name" {
   description = "cloud.gov space name to create"
 }
 
+variable "allow_ssh" {
+  type        = bool
+  description = "whether to allow ssh access to apps running in this space"
+  default     = false
+}
+
 variable "managers" {
   type        = set(string)
   description = "list of cloud.gov users to be assigned to the SpaceManager role"

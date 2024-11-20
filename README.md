@@ -129,10 +129,11 @@ Creates a new cloud.gov space, such as when creating an egress space, and output
 
 ```
 module "egress_space" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//cg_space?ref=v1.1.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//cg_space?ref=v2.0.0"
 
   cf_org_name   = local.cf_org_name
   cf_space_name = "${local.cf_space_name}-egress"
+  allow_ssh     = false
   managers = [
     "space.manager@gsa.gov"
   ]
