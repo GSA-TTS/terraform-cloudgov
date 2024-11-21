@@ -101,11 +101,11 @@ Notes:
 
 ```
 module "clamav" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//clamav?ref=v1.1.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//clamav?ref=v2.0.0-beta.1"
 
   cf_org_name    = local.cf_org_name
-  cf_space_name  = local.cf_space_name
-  app_name_or_id = "app_name"
+  cf_space       = data.cloudfoundry_space.app_space
+  app_name       = "app_name"
   name           = "my_clamav_name"
   clamav_image   = "ghcr.io/gsa-tts/clamav-rest/clamav:TAG_NAME"
   max_file_size  = "30M"
@@ -129,7 +129,7 @@ Creates a new cloud.gov space, such as when creating an egress space, and output
 
 ```
 module "egress_space" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//cg_space?ref=v2.0.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//cg_space?ref=v2.0.0-beta.1"
 
   cf_org_name   = local.cf_org_name
   cf_space_name = "${local.cf_space_name}-egress"

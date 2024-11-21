@@ -1,35 +1,35 @@
-data "cloudfoundry_space" "space" {
-  org_name = var.cf_org_name
-  name     = var.cf_space_name
-}
-
 data "cloudfoundry_domain" "internal" {
   name = "apps.internal"
 }
 
 data "cloudfoundry_app" "app" {
-  name_or_id = var.app_name_or_id
-  space      = data.cloudfoundry_space.space.id
+  name       = var.app_name
+  org_name   = var.cf_org_name
+  space_name = var.cf_space.name
 }
 
 resource "cloudfoundry_route" "clamav_route" {
-  space    = data.cloudfoundry_space.space.id
-  domain   = data.cloudfoundry_domain.internal.id
-  hostname = var.name
+  space  = var.cf_space.id
+  domain = data.cloudfoundry_domain.internal.id
+  host   = var.name
 }
 
 resource "cloudfoundry_app" "clamav_api" {
-  name         = var.name
-  space        = data.cloudfoundry_space.space.id
-  memory       = var.clamav_memory
-  disk_quota   = 2048
-  timeout      = 600
-  strategy     = "rolling"
-  instances    = var.instances
-  docker_image = var.clamav_image
-  routes {
-    route = cloudfoundry_route.clamav_route.id
-  }
+  name       = var.name
+  space_name = var.cf_space.name
+  org_name   = var.cf_org_name
+
+  memory                          = var.clamav_memory
+  disk_quota                      = "2048M"
+  health_check_invocation_timeout = 600
+  strategy                        = "rolling"
+  instances                       = var.instances
+  docker_image                    = var.clamav_image
+  routes = [
+    {
+      route = cloudfoundry_route.clamav_route.url
+    }
+  ]
   environment = {
     # Only set the proxy environment variables if a value was supplied.
     # Otherwise, ensure that a harmless envvar gets set instead.
@@ -43,6 +43,7 @@ resource "cloudfoundry_app" "clamav_api" {
 }
 
 resource "cloudfoundry_network_policy" "clamav_routing" {
+  provider = cloudfoundry-community
   policy {
     source_app      = data.cloudfoundry_app.app.id
     destination_app = cloudfoundry_app.clamav_api.id

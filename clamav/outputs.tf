@@ -7,5 +7,5 @@ output "route_id" {
 }
 
 output "endpoint" {
-  value = cloudfoundry_route.clamav_route.endpoint
+  value = cloudfoundry_route.clamav_route.url
 }
