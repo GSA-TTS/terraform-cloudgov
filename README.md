@@ -31,17 +31,16 @@ Creates a Elasticache redis instance and outputs the `instance_id` for use elsew
 
 ```
 module "redis" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//redis?ref=v1.1.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//redis?ref=v2.0.0-beta.1"
 
-  cf_org_name      = local.cf_org_name
-  cf_space_name    = local.cf_space_name
-  name             = "redis_name"
-  redis_plan_name  = "redis-dev"
-  tags             = ["tag1", "tag2"]
+  cf_space_id     = data.cloudfoundry_space.app_space.id
+  name            = "redis_name"
+  redis_plan_name = "redis-dev"
+  tags            = ["tag1", "tag2"]
   # See options at https://cloud.gov/docs/services/aws-elasticache/#setting-optional-parameters
-  json_params      = jsonencode(
+  json_params     = jsonencode(
     {
-      "engineVersion" : "6.2",
+      "engineVersion" : "7.0",
     }
   )
 }
