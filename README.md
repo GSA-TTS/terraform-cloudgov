@@ -74,19 +74,19 @@ Connects a custom domain name or domain name with CDN to an already running appl
 
 Note that the domain must be created in cloud.gov by an OrgManager before this module is included.
 
-`cf create-domain CLOUD_GOV_ORG my-production-domain-name`
+`cf create-domain CLOUD_GOV_ORG my-production-domain.name`
 
 ```
 module "domain" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//domain?ref=v1.1.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//domain?ref=v2.0.0-beta.1"
 
-  cf_org_name      = local.cf_org_name
-  cf_space_name    = local.cf_space_name
-  app_name_or_id   = "app_name"
-  cdn_plan_name    = "domain"
-  domain_name      = "my-production-domain-name"
-  host_name        = "my-production-host-name"
-  tags             = ["tag1", "tag2"]
+  cf_org_name   = local.cf_org_name
+  cf_space      = data.cloudfoundry_space.app_space
+  app_names     = ["app_name"]
+  cdn_plan_name = "domain"
+  domain_name   = "my-production-domain.name"
+  host_name     = "my-production-host-name"
+  tags          = ["tag1", "tag2"]
 }
 ```
 
