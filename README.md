@@ -52,14 +52,13 @@ Creates an s3 bucket and outputs the `bucket_id` for use elsewhere.
 
 ```
 module "s3" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//s3?ref=v1.1.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//s3?ref=v2.0.0-beta.1"
 
-  cf_org_name      = local.cf_org_name
-  cf_space_name    = local.cf_space_name
-  name             = "${local.app_name}-s3-${local.env}"
-  tags             = ["tag1", "tag2"]
+  cf_space_id = data.cloudfoundry_space.app_space.id
+  name        = "${local.app_name}-s3-${local.env}"
+  tags        = ["tag1", "tag2"]
   # See options at https://cloud.gov/docs/services/s3/#setting-optional-parameters
-  json_params      = jsonencode(
+  json_params = jsonencode(
     {
       "object_ownership" : "ObjectWriter",
     }

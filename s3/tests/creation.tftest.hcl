@@ -4,11 +4,11 @@ provider "cloudfoundry" {
 }
 
 variables {
-  cf_org_name   = "gsa-tts-devtools-prototyping"
-  cf_space_name = "terraform-cloudgov-ci-tests"
-  s3_plan_name  = "basic"
-  name          = "terraform-cloudgov-s3-test"
-  tags          = ["terraform-cloudgov", "tests"]
+  # this is the ID of the terraform-cloudgov-ci-tests space
+  cf_space_id  = "15836eb6-a57e-4579-bca7-99764c5a01a4"
+  s3_plan_name = "basic-sandbox"
+  name         = "terraform-cloudgov-s3-test"
+  tags         = ["terraform-cloudgov", "tests"]
 }
 
 run "test_bucket_creation" {
@@ -23,7 +23,7 @@ run "test_bucket_creation" {
   }
 
   assert {
-    condition     = cloudfoundry_service_instance.bucket.service_plan == data.cloudfoundry_service.s3.service_plans[var.s3_plan_name]
+    condition     = cloudfoundry_service_instance.bucket.service_plan == data.cloudfoundry_service_plans.s3.service_plans.0.id
     error_message = "Service Plan should match the s3_plan_name variable"
   }
 
@@ -33,12 +33,12 @@ run "test_bucket_creation" {
   }
 
   assert {
-    condition     = cloudfoundry_service_instance.bucket.tags == var.tags
+    condition     = cloudfoundry_service_instance.bucket.tags == tolist(var.tags)
     error_message = "Service instance tags should match the tags variable"
   }
 }
 
-run "test_json_params" {
+run "test_parameters" {
   command = plan
 
   variables {
@@ -48,7 +48,7 @@ run "test_json_params" {
   }
 
   assert {
-    condition     = cloudfoundry_service_instance.bucket.json_params == "{\"object_ownership\":\"BucketOwnerEnforced\"}"
-    error_message = "Service instance json_params should be configurable"
+    condition     = cloudfoundry_service_instance.bucket.parameters == "{\"object_ownership\":\"BucketOwnerEnforced\"}"
+    error_message = "Service instance parameters should be configurable"
   }
 }
