@@ -10,15 +10,14 @@ Creates an RDS database based on the `rds_plan_name` variable and outputs the `i
 
 ```
 module "database" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//database?ref=v1.1.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//database?ref=v2.0.0-beta.1"
 
-  cf_org_name      = local.cf_org_name
-  cf_space_name    = local.cf_space_name
-  name             = "database_name"
-  rds_plan_name    = "micro-psql"
-  tags             = ["tag1", "tag2"]
+  cf_space_id   = data.cloudfoundry_space.app_space.id
+  name          = "database_name"
+  rds_plan_name = "micro-psql"
+  tags          = ["tag1", "tag2"]
   # See options at https://cloud.gov/docs/services/relational-database/#setting-optional-parameters-1
-  json_params      = jsonencode(
+  json_params   = jsonencode(
     {
       "storage" : 10,
     }
