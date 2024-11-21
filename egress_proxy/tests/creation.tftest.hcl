@@ -1,11 +1,29 @@
-mock_provider "cloudfoundry" {}
+mock_provider "cloudfoundry" {
+  mock_data "cloudfoundry_domain" {
+    defaults = {
+      id = "fea49b46-907f-4fe9-8700-ff6e2b438cd3"
+    }
+  }
+  mock_resource "cloudfoundry_route" {
+    defaults = {
+      url = "egress-proxy.apps.internal"
+    }
+  }
+}
+mock_provider "cloudfoundry-community" {}
 
 variables {
-  cf_org_name   = "gsa-tts-devtools-prototyping"
-  cf_space_name = "terraform-cloudgov-ci-tests-egress"
-  client_space  = "terraform-cloudgov-ci-tests"
-  name          = "terraform-egress-app"
-  allowlist     = { "continuous_monitoring-staging" = ["raw.githubusercontent.com:443"] }
+  cf_org_name = "gsa-tts-devtools-prototyping"
+  cf_egress_space = {
+    id   = "5178d8f5-d19a-4782-ad07-467822480c68"
+    name = "terraform-cloudgov-ci-tests-egress"
+  }
+  cf_client_space = {
+    id   = "e243575e-376a-4b70-b891-23c3fa1a0680"
+    name = "terraform-cloudgov-ci-tests"
+  }
+  name      = "terraform-egress-app"
+  allowlist = { "continuous_monitoring-staging" = ["raw.githubusercontent.com:443"] }
 }
 
 run "test_proxy_creation" {
@@ -15,8 +33,8 @@ run "test_proxy_creation" {
   }
 
   assert {
-    condition     = output.domain == cloudfoundry_route.egress_route.endpoint
-    error_message = "Output domain must match the route endpoint"
+    condition     = output.domain == cloudfoundry_route.egress_route.url
+    error_message = "Output domain must match the route url"
   }
 
   assert {

@@ -26,9 +26,9 @@ data "cloudfoundry_domain" "internal" {
 }
 
 resource "cloudfoundry_route" "egress_route" {
-  space    = data.cloudfoundry_space.egress_space.id
-  domain   = data.cloudfoundry_domain.internal.id
-  hostname = substr("${var.cf_org_name}-${replace(var.cf_space_name, ".", "-")}-${var.name}", -63, -1)
+  space  = var.cf_egress_space.id
+  domain = data.cloudfoundry_domain.internal.id
+  host   = substr("${var.cf_org_name}-${replace(var.cf_egress_space.name, ".", "-")}-${var.name}", -63, -1)
   # Yields something like: orgname-spacename-name.apps.internal, limited to the last 63 characters
 }
 
@@ -36,11 +36,6 @@ resource "random_uuid" "username" {}
 resource "random_password" "password" {
   length  = 16
   special = false
-}
-
-data "cloudfoundry_space" "egress_space" {
-  org_name = var.cf_org_name
-  name     = var.cf_space_name
 }
 
 # This zips up just the depoyable files from the specified gitref in the
@@ -54,19 +49,23 @@ data "external" "proxyzip" {
 }
 
 resource "cloudfoundry_app" "egress_app" {
-  name             = var.name
-  space            = data.cloudfoundry_space.egress_space.id
+  name       = var.name
+  space_name = var.cf_egress_space.name
+  org_name   = var.cf_org_name
+
+
   path             = "${path.module}/${data.external.proxyzip.result.path}"
   source_code_hash = filesha256("${path.module}/${data.external.proxyzip.result.path}")
-  buildpack        = "binary_buildpack"
+  buildpacks       = ["binary_buildpack"]
   command          = "./caddy run --config Caddyfile"
   memory           = var.egress_memory
   instances        = var.instances
   strategy         = "rolling"
 
-  routes {
-    route = cloudfoundry_route.egress_route.id
-  }
+  routes = [{
+    route = cloudfoundry_route.egress_route.url
+  }]
+
   environment = {
     PROXY_PORTS : join(" ", var.allowports)
     PROXY_ALLOW : local.allowacl
@@ -80,18 +79,15 @@ resource "cloudfoundry_app" "egress_app" {
 ### Set up network policies so that the clients can reach the proxy
 ###
 
-data "cloudfoundry_space" "client_space" {
-  org_name = var.cf_org_name
-  name     = var.client_space
-}
-
 data "cloudfoundry_app" "clients" {
   for_each   = local.clients
-  name_or_id = each.key
-  space      = data.cloudfoundry_space.client_space.id
+  name       = each.key
+  space_name = var.cf_client_space.name
+  org_name   = var.cf_org_name
 }
 
 resource "cloudfoundry_network_policy" "client_routing" {
+  provider = cloudfoundry-community
   for_each = local.clients
   policy {
     source_app      = data.cloudfoundry_app.clients[each.key].id
@@ -104,8 +100,8 @@ resource "cloudfoundry_network_policy" "client_routing" {
 ### Create a credential service for bound clients to use when make requests of the proxy
 ###
 locals {
-  https_proxy = "https://${random_uuid.username.result}:${random_password.password.result}@${cloudfoundry_route.egress_route.endpoint}:61443"
-  domain      = cloudfoundry_route.egress_route.endpoint
+  https_proxy = "https://${random_uuid.username.result}:${random_password.password.result}@${cloudfoundry_route.egress_route.url}:61443"
+  domain      = cloudfoundry_route.egress_route.url
   username    = random_uuid.username.result
   password    = random_password.password.result
   protocol    = "https"
@@ -113,15 +109,16 @@ locals {
   app_id      = cloudfoundry_app.egress_app.id
 }
 
-resource "cloudfoundry_user_provided_service" "credentials" {
+resource "cloudfoundry_service_instance" "credentials" {
   name  = "${var.name}-creds"
-  space = data.cloudfoundry_space.client_space.id
-  credentials = {
+  space = var.cf_client_space.id
+  type  = "user-provided"
+  credentials = jsonencode({
     "uri"      = local.https_proxy
     "domain"   = local.domain
     "username" = local.username
     "password" = local.password
     "protocol" = local.protocol
     "port"     = local.port
-  }
+  })
 }

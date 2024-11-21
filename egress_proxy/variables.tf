@@ -3,14 +3,20 @@ variable "cf_org_name" {
   description = "cloud.gov organization name"
 }
 
-variable "cf_space_name" {
-  type        = string
-  description = "cloud.gov space name for egress (eg staging-egress or prod-egress)"
+variable "cf_egress_space" {
+  type = object({
+    id   = string
+    name = string
+  })
+  description = "cloud.gov space egress"
 }
 
-variable "client_space" {
-  type        = string
-  description = "cloud.gov space name for client apps (eg staging or prod)"
+variable "cf_client_space" {
+  type = object({
+    id   = string
+    name = string
+  })
+  description = "cloud.gov space for client apps"
 }
 
 variable "name" {
