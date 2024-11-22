@@ -11,6 +11,10 @@ locals {
   # that refined information.
   allowacl = templatefile("${path.module}/acl.tftpl", { list = var.allowlist })
   denyacl  = templatefile("${path.module}/acl.tftpl", { list = var.denylist })
+
+  # Yields something like: orgname-spacename-name.apps.internal, limited to the last 63 characters
+  route_host = substr("${var.cf_org_name}-${replace(var.cf_egress_space.name, ".", "-")}-${var.name}", -63, -1)
+  egress_route = "${local.route_host}.apps.internal"
 }
 
 
@@ -44,6 +48,10 @@ resource "cloudfoundry_app" "egress_app" {
   instances        = var.instances
   strategy         = "rolling"
 
+  routes = [{
+    route = local.egress_route
+  }]
+
   environment = {
     PROXY_PORTS : join(" ", var.allowports)
     PROXY_ALLOW : local.allowacl
@@ -54,28 +62,11 @@ resource "cloudfoundry_app" "egress_app" {
 }
 
 ###
-### Set up the authenticated egress application in the target space on apps.internal
-###
-data "cloudfoundry_domain" "internal" {
-  name = "apps.internal"
-}
-
-resource "cloudfoundry_route" "egress_route" {
-  space  = var.cf_egress_space.id
-  domain = data.cloudfoundry_domain.internal.id
-  host   = substr("${var.cf_org_name}-${replace(var.cf_egress_space.name, ".", "-")}-${var.name}", -63, -1)
-  # Yields something like: orgname-spacename-name.apps.internal, limited to the last 63 characters
-  destinations = [{
-    app_id = cloudfoundry_app.egress_app.id
-  }]
-}
-
-###
 ### Create a credential service for bound clients to use when make requests of the proxy
 ###
 locals {
-  https_proxy = "https://${random_uuid.username.result}:${random_password.password.result}@${cloudfoundry_route.egress_route.url}:61443"
-  domain      = cloudfoundry_route.egress_route.url
+  https_proxy = "https://${random_uuid.username.result}:${random_password.password.result}@${local.egress_route}:61443"
+  domain      = local.egress_route
   username    = random_uuid.username.result
   password    = random_password.password.result
   protocol    = "https"
