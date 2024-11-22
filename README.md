@@ -101,7 +101,7 @@ module "clamav" {
   source = "github.com/GSA-TTS/terraform-cloudgov//clamav?ref=v2.0.0-beta.1"
 
   cf_org_name    = local.cf_org_name
-  cf_space       = data.cloudfoundry_space.app_space
+  cf_space_name  = local.cf_space_name
   app_name       = "app_name"
   name           = "my_clamav_name"
   clamav_image   = "ghcr.io/gsa-tts/clamav-rest/clamav:TAG_NAME"

@@ -1,23 +1,9 @@
-mock_provider "cloudfoundry" {
-  mock_data "cloudfoundry_domain" {
-    defaults = {
-      id = "7dbc73bb-28d3-481f-afcc-a81545825bd0"
-    }
-  }
-  mock_resource "cloudfoundry_route" {
-    defaults = {
-      url = "terraform-cloudgov-clamav-test.apps.internal"
-    }
-  }
-}
+mock_provider "cloudfoundry" {}
 mock_provider "cloudfoundry-community" {}
 
 variables {
-  cf_org_name = "gsa-tts-devtools-prototyping"
-  cf_space = {
-    id   = "e243575e-376a-4b70-b891-23c3fa1a0680"
-    name = "terraform-cloudgov-ci-tests"
-  }
+  cf_org_name   = "gsa-tts-devtools-prototyping"
+  cf_space_name = "terraform-cloudgov-ci-tests"
   app_name      = "terraform_cloudgov_app"
   name          = "terraform-cloudgov-clamav-test"
   clamav_image  = "ghcr.io/gsa-tts/clamav-rest/clamav:TAG"
@@ -28,11 +14,6 @@ run "test_app_creation" {
   assert {
     condition     = cloudfoundry_app.clamav_api.id == output.app_id
     error_message = "App ID output must match the clamav app ID"
-  }
-
-  assert {
-    condition     = cloudfoundry_route.clamav_route.id == output.route_id
-    error_message = "Route ID output must match the ID of the route to the clamav app"
   }
 
   assert {

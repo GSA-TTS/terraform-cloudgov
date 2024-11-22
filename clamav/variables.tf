@@ -3,12 +3,9 @@ variable "cf_org_name" {
   description = "cloud.gov organization name"
 }
 
-variable "cf_space" {
-  type = object({
-    id   = string
-    name = string
-  })
-  description = "cloud.gov space resource"
+variable "cf_space_name" {
+  type        = string
+  description = "cloud.gov space name"
 }
 
 variable "app_name" {

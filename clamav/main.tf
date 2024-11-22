@@ -1,22 +1,16 @@
-data "cloudfoundry_domain" "internal" {
-  name = "apps.internal"
+locals {
+  endpoint = "${var.name}.apps.internal"
 }
 
 data "cloudfoundry_app" "app" {
   name       = var.app_name
   org_name   = var.cf_org_name
-  space_name = var.cf_space.name
-}
-
-resource "cloudfoundry_route" "clamav_route" {
-  space  = var.cf_space.id
-  domain = data.cloudfoundry_domain.internal.id
-  host   = var.name
+  space_name = var.cf_space_name
 }
 
 resource "cloudfoundry_app" "clamav_api" {
   name       = var.name
-  space_name = var.cf_space.name
+  space_name = var.cf_space_name
   org_name   = var.cf_org_name
 
   memory                          = var.clamav_memory
@@ -27,7 +21,7 @@ resource "cloudfoundry_app" "clamav_api" {
   docker_image                    = var.clamav_image
   routes = [
     {
-      route = cloudfoundry_route.clamav_route.url
+      route = local.endpoint
     }
   ]
   environment = {
