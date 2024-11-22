@@ -28,6 +28,10 @@ output "app_id" {
   value = cloudfoundry_app.egress_app.id
 }
 
-output "credential_service_id" {
-  value = cloudfoundry_service_instance.credentials.id
+output "credential_service_ids" {
+  value = { for k, v in cloudfoundry_service_instance.credentials : k => v.id }
+}
+
+output "credential_service_name" {
+  value = values(cloudfoundry_service_instance.credentials)[0].name
 }

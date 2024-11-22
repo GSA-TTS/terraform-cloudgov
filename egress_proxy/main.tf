@@ -13,7 +13,7 @@ locals {
   denyacl  = templatefile("${path.module}/acl.tftpl", { list = var.denylist })
 
   # Yields something like: orgname-spacename-name.apps.internal, limited to the last 63 characters
-  route_host = substr("${var.cf_org_name}-${replace(var.cf_egress_space.name, ".", "-")}-${var.name}", -63, -1)
+  route_host   = substr("${var.cf_org_name}-${replace(var.cf_egress_space.name, ".", "-")}-${var.name}", -63, -1)
   egress_route = "${local.route_host}.apps.internal"
 }
 
@@ -74,9 +74,10 @@ locals {
 }
 
 resource "cloudfoundry_service_instance" "credentials" {
-  name  = "${var.name}-creds"
-  space = var.cf_client_space.id
-  type  = "user-provided"
+  for_each = var.cf_client_spaces
+  name     = "${var.name}-credentials"
+  space    = each.value
+  type     = "user-provided"
   credentials = jsonencode({
     "uri"      = local.https_proxy
     "domain"   = local.domain

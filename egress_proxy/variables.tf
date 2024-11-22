@@ -11,12 +11,9 @@ variable "cf_egress_space" {
   description = "cloud.gov space egress"
 }
 
-variable "cf_client_space" {
-  type = object({
-    id   = string
-    name = string
-  })
-  description = "cloud.gov space for client apps"
+variable "cf_client_spaces" {
+  type        = map(string)
+  description = "map of cloud.gov space names to spaces ids for client apps"
 }
 
 variable "name" {

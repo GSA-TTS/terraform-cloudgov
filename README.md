@@ -156,10 +156,10 @@ Prerequities:
 module "egress_proxy" {
   source = "github.com/GSA-TTS/terraform-cloudgov//egress_proxy?ref=v2.0.0-beta.1"
 
-  cf_org_name     = local.cf_org_name
-  cf_egress_space = data.cloudfoundry_space.egress_space
-  cf_client_space = data.cloudfoundry_space.app_space
-  name            = "egress-proxy"
+  cf_org_name      = local.cf_org_name
+  cf_egress_space  = data.cloudfoundry_space.egress_space
+  cf_client_spaces = {(data.cloudfoundry_space.app_space.name) = data.cloudfoundy_space.app_space.id}
+  name             = "egress-proxy"
   allowlist = {
     "source_app_name" = ["host.com:443", "otherhost.com:443"]
   }
