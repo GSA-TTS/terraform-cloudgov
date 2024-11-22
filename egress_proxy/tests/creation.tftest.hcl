@@ -9,8 +9,12 @@ mock_provider "cloudfoundry" {
       url = "egress-proxy.apps.internal"
     }
   }
+  mock_resource "cloudfoundry_app" {
+    defaults = {
+      id = "28329663-10fd-4c5d-9b6b-25e3fb108929"
+    }
+  }
 }
-mock_provider "cloudfoundry-community" {}
 
 variables {
   cf_org_name = "gsa-tts-devtools-prototyping"
@@ -60,5 +64,10 @@ run "test_proxy_creation" {
   assert {
     condition     = output.port == 61443
     error_message = "port only supports 61443 internal https listener"
+  }
+
+  assert {
+    condition     = output.credential_service_id == cloudfoundry_service_instance.credentials.id
+    error_message = "Output credential_service_id is the user-provided-service's guid"
   }
 }

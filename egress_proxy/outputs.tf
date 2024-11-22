@@ -7,6 +7,10 @@ output "domain" {
   value = local.domain
 }
 
+output "port" {
+  value = local.port
+}
+
 output "username" {
   value = local.username
 }
@@ -21,9 +25,9 @@ output "protocol" {
 }
 
 output "app_id" {
-  value = local.app_id
+  value = cloudfoundry_app.egress_app.id
 }
 
-output "port" {
-  value = local.port
+output "credential_service_id" {
+  value = cloudfoundry_service_instance.credentials.id
 }

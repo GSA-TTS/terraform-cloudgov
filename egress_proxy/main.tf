@@ -1,8 +1,4 @@
 locals {
-
-  # Make a clean list of the client apps for iteration purposes
-  clients = toset(keys(merge(var.allowlist, var.denylist)))
-
   # Generate Caddy-compatible allow and deny ACLs, one target per line.
   #
   # For now, there's just one consolidated allowlist and denylist, no matter
@@ -17,20 +13,6 @@ locals {
   denyacl  = templatefile("${path.module}/acl.tftpl", { list = var.denylist })
 }
 
-###
-### Set up the authenticated egress application in the target space on apps.internal
-###
-
-data "cloudfoundry_domain" "internal" {
-  name = "apps.internal"
-}
-
-resource "cloudfoundry_route" "egress_route" {
-  space  = var.cf_egress_space.id
-  domain = data.cloudfoundry_domain.internal.id
-  host   = substr("${var.cf_org_name}-${replace(var.cf_egress_space.name, ".", "-")}-${var.name}", -63, -1)
-  # Yields something like: orgname-spacename-name.apps.internal, limited to the last 63 characters
-}
 
 resource "random_uuid" "username" {}
 resource "random_password" "password" {
@@ -62,10 +44,6 @@ resource "cloudfoundry_app" "egress_app" {
   instances        = var.instances
   strategy         = "rolling"
 
-  routes = [{
-    route = cloudfoundry_route.egress_route.url
-  }]
-
   environment = {
     PROXY_PORTS : join(" ", var.allowports)
     PROXY_ALLOW : local.allowacl
@@ -76,24 +54,20 @@ resource "cloudfoundry_app" "egress_app" {
 }
 
 ###
-### Set up network policies so that the clients can reach the proxy
+### Set up the authenticated egress application in the target space on apps.internal
 ###
-
-data "cloudfoundry_app" "clients" {
-  for_each   = local.clients
-  name       = each.key
-  space_name = var.cf_client_space.name
-  org_name   = var.cf_org_name
+data "cloudfoundry_domain" "internal" {
+  name = "apps.internal"
 }
 
-resource "cloudfoundry_network_policy" "client_routing" {
-  provider = cloudfoundry-community
-  for_each = local.clients
-  policy {
-    source_app      = data.cloudfoundry_app.clients[each.key].id
-    destination_app = cloudfoundry_app.egress_app.id
-    port            = "61443"
-  }
+resource "cloudfoundry_route" "egress_route" {
+  space  = var.cf_egress_space.id
+  domain = data.cloudfoundry_domain.internal.id
+  host   = substr("${var.cf_org_name}-${replace(var.cf_egress_space.name, ".", "-")}-${var.name}", -63, -1)
+  # Yields something like: orgname-spacename-name.apps.internal, limited to the last 63 characters
+  destinations = [{
+    app_id = cloudfoundry_app.egress_app.id
+  }]
 }
 
 ###
@@ -106,7 +80,6 @@ locals {
   password    = random_password.password.result
   protocol    = "https"
   port        = 61443
-  app_id      = cloudfoundry_app.egress_app.id
 }
 
 resource "cloudfoundry_service_instance" "credentials" {
