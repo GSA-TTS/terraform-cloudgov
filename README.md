@@ -154,7 +154,7 @@ Prerequities:
 
 ```
 module "egress_proxy" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//egress_proxy?ref=v1.1.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//egress_proxy?ref=v2.0.0-beta.1"
 
   cf_org_name     = local.cf_org_name
   cf_egress_space = data.cloudfoundry_space.egress_space

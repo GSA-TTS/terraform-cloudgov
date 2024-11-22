@@ -25,9 +25,9 @@ variable "name" {
 }
 
 variable "egress_memory" {
-  type        = number
-  description = "Memory in MB to allocate to egress proxy app"
-  default     = 64
+  type        = string
+  description = "Memory to allocate to egress proxy app, including unit"
+  default     = "64M"
 }
 
 variable "gitref" {
