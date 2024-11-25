@@ -1,20 +1,4 @@
-mock_provider "cloudfoundry" {
-  mock_data "cloudfoundry_domain" {
-    defaults = {
-      id = "fea49b46-907f-4fe9-8700-ff6e2b438cd3"
-    }
-  }
-  mock_resource "cloudfoundry_route" {
-    defaults = {
-      url = "egress-proxy.apps.internal"
-    }
-  }
-  mock_resource "cloudfoundry_app" {
-    defaults = {
-      id = "28329663-10fd-4c5d-9b6b-25e3fb108929"
-    }
-  }
-}
+mock_provider "cloudfoundry" {}
 
 variables {
   cf_org_name = "gsa-tts-devtools-prototyping"
@@ -22,9 +6,8 @@ variables {
     id   = "5178d8f5-d19a-4782-ad07-467822480c68"
     name = "terraform-cloudgov-ci-tests-egress"
   }
-  cf_client_spaces = { "client-space" = "e243575e-376a-4b70-b891-23c3fa1a0680" }
-  name             = "terraform-egress-app"
-  allowlist        = { "continuous_monitoring-staging" = ["raw.githubusercontent.com:443"] }
+  name      = "terraform-egress-app"
+  allowlist = ["raw.githubusercontent.com:443"]
 }
 
 run "test_proxy_creation" {
@@ -49,27 +32,17 @@ run "test_proxy_creation" {
   }
 
   assert {
-    condition     = output.protocol == "https"
-    error_message = "protocol only supports https"
-  }
-
-  assert {
     condition     = output.app_id == cloudfoundry_app.egress_app.id
     error_message = "Output app_id is the egress_app's ID"
   }
 
   assert {
-    condition     = output.port == 61443
-    error_message = "port only supports 61443 internal https listener"
+    condition     = output.https_port == 61443
+    error_message = "https_port only supports 61443 internal https listener"
   }
 
   assert {
-    condition     = output.credential_service_ids == { "client-space" = cloudfoundry_service_instance.credentials["client-space"].id }
-    error_message = "Output credential_service_ids is a map of client_space_ids to credential_instance_ids"
-  }
-
-  assert {
-    condition     = output.credential_service_name == "${var.name}-credentials"
-    error_message = "Output credential_service_name is the single name shared by all of the credential services"
+    condition     = output.http_port == 8080
+    error_message = "http_port reports port 8080 for plaintext"
   }
 }
