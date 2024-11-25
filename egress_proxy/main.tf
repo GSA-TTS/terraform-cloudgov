@@ -66,6 +66,7 @@ resource "cloudfoundry_app" "egress_app" {
 ###
 locals {
   https_proxy = "https://${random_uuid.username.result}:${random_password.password.result}@${local.egress_route}:61443"
+  http_proxy  = "http://${random_uuid.username.result}:${random_password.password.result}@${local.egress_route}:8080"
   domain      = local.egress_route
   username    = random_uuid.username.result
   password    = random_password.password.result
@@ -80,6 +81,7 @@ resource "cloudfoundry_service_instance" "credentials" {
   type     = "user-provided"
   credentials = jsonencode({
     "uri"      = local.https_proxy
+    "http_uri" = local.http_proxy
     "domain"   = local.domain
     "username" = local.username
     "password" = local.password
