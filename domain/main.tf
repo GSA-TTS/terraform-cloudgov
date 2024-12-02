@@ -1,6 +1,6 @@
 locals {
   service_name  = (var.name == "" ? "${var.app_names[0]}-${var.domain_name}" : var.name)
-  tags          = setunion(["terraform-cloudgov"], var.tags)
+  tags          = setunion(["terraform-cloudgov-managed"], var.tags)
   connect_route = length(var.app_names) > 0
   endpoint      = (local.connect_route ? cloudfoundry_route.origin_route_connected.0.url : cloudfoundry_route.origin_route.0.url)
 }

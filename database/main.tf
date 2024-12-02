@@ -1,5 +1,5 @@
 locals {
-  tags = setunion(["terraform-cloudgov"], var.tags)
+  tags = setunion(["terraform-cloudgov-managed"], var.tags)
 }
 
 data "cloudfoundry_service_plans" "rds" {

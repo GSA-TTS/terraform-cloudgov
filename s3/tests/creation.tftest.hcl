@@ -8,7 +8,7 @@ variables {
   cf_space_id  = "15836eb6-a57e-4579-bca7-99764c5a01a4"
   s3_plan_name = "basic-sandbox"
   name         = "terraform-cloudgov-s3-test"
-  tags         = ["terraform-cloudgov", "tests"]
+  tags         = ["terraform-cloudgov-managed", "tests"]
 }
 
 run "test_bucket_creation" {

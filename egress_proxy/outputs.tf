@@ -32,3 +32,16 @@ output "password" {
 output "app_id" {
   value = cloudfoundry_app.egress_app.id
 }
+
+output "json_credentials" {
+  value = jsonencode({
+    "https_uri"  = local.https_proxy
+    "http_uri"   = local.http_proxy
+    "domain"     = local.domain
+    "username"   = local.username
+    "password"   = local.password
+    "https_port" = local.https_port
+    "http_port"  = local.http_port
+  })
+  sensitive = true
+}

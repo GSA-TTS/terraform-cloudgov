@@ -40,7 +40,7 @@ variables {
   domain_name   = "apps.internal"
   name          = "terraform-cloudgov-domain-test"
   app_names     = ["test-app-does-not-exist"]
-  tags          = ["terraform-cloudgov", "tests"]
+  tags          = ["terraform-cloudgov-managed", "tests"]
 }
 
 run "test_domain_creation" {
