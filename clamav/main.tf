@@ -2,12 +2,6 @@ locals {
   endpoint = "${var.name}.apps.internal"
 }
 
-data "cloudfoundry_app" "app" {
-  name       = var.app_name
-  org_name   = var.cf_org_name
-  space_name = var.cf_space_name
-}
-
 resource "cloudfoundry_app" "clamav_api" {
   name       = var.name
   space_name = var.cf_space_name
@@ -33,14 +27,5 @@ resource "cloudfoundry_app" "clamav_api" {
     "${var.proxy_username != "" ? "PROXY_USERNAME" : "proxy_username_is_not_set"}" = var.proxy_username
     "${var.proxy_password != "" ? "PROXY_PASSWORD" : "proxy_password_is_not_set"}" = var.proxy_password
     MAX_FILE_SIZE                                                                  = var.max_file_size
-  }
-}
-
-resource "cloudfoundry_network_policy" "clamav_routing" {
-  provider = cloudfoundry-community
-  policy {
-    source_app      = data.cloudfoundry_app.app.id
-    destination_app = cloudfoundry_app.clamav_api.id
-    port            = "61443"
   }
 }

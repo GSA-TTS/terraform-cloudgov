@@ -1,10 +1,8 @@
 mock_provider "cloudfoundry" {}
-mock_provider "cloudfoundry-community" {}
 
 variables {
   cf_org_name   = "gsa-tts-devtools-prototyping"
   cf_space_name = "terraform-cloudgov-ci-tests"
-  app_name      = "terraform_cloudgov_app"
   name          = "terraform-cloudgov-clamav-test"
   clamav_image  = "ghcr.io/gsa-tts/clamav-rest/clamav:TAG"
   max_file_size = "30M"
@@ -59,21 +57,6 @@ run "test_app_creation" {
   assert {
     condition     = lookup(cloudfoundry_app.clamav_api.environment, "PROXY_PASSWORD", null) == null
     error_message = "Does not set the PROXY_PASSWORD environment by default"
-  }
-
-  assert {
-    condition     = [for policy in cloudfoundry_network_policy.clamav_routing.policy : policy.source_app] == [data.cloudfoundry_app.app.id]
-    error_message = "Routing policy allows traffic from the source app"
-  }
-
-  assert {
-    condition     = [for policy in cloudfoundry_network_policy.clamav_routing.policy : policy.destination_app] == [cloudfoundry_app.clamav_api.id]
-    error_message = "Routing policy allows traffic to the clamav app"
-  }
-
-  assert {
-    condition     = [for policy in cloudfoundry_network_policy.clamav_routing.policy : policy.port] == ["61443"]
-    error_message = "Routing policy opens up traffic on the internal https port"
   }
 }
 

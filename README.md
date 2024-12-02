@@ -102,7 +102,6 @@ module "clamav" {
 
   cf_org_name    = local.cf_org_name
   cf_space_name  = local.cf_space_name
-  app_name       = "app_name"
   name           = "my_clamav_name"
   clamav_image   = "ghcr.io/gsa-tts/clamav-rest/clamav:TAG_NAME"
   max_file_size  = "30M"
