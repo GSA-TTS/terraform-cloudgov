@@ -7,6 +7,7 @@ Only certain branches are supported with security updates.
 | Version (branch) | Supported |
 | ---------------- | --------- |
 | main    | :white_check_mark: |
+| v1      | :white_check_mark: |
 | other   | :x:                |
 
 When using this code or reporting vulnerability please be sure to use supported branches and the most recent release tag.

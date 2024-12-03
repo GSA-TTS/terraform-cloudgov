@@ -10,7 +10,7 @@ Creates an RDS database based on the `rds_plan_name` variable and outputs the `i
 
 ```
 module "database" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//database?ref=v2.0.0-beta.1"
+  source = "github.com/GSA-TTS/terraform-cloudgov//database?ref=v2.0.0"
 
   cf_space_id   = data.cloudfoundry_space.app_space.id
   name          = "database_name"
@@ -31,7 +31,7 @@ Creates a Elasticache redis instance and outputs the `instance_id` for use elsew
 
 ```
 module "redis" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//redis?ref=v2.0.0-beta.1"
+  source = "github.com/GSA-TTS/terraform-cloudgov//redis?ref=v2.0.0"
 
   cf_space_id     = data.cloudfoundry_space.app_space.id
   name            = "redis_name"
@@ -52,7 +52,7 @@ Creates an s3 bucket and outputs the `bucket_id` for use elsewhere.
 
 ```
 module "s3" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//s3?ref=v2.0.0-beta.1"
+  source = "github.com/GSA-TTS/terraform-cloudgov//s3?ref=v2.0.0"
 
   cf_space_id = data.cloudfoundry_space.app_space.id
   name        = "${local.app_name}-s3-${local.env}"
@@ -76,7 +76,7 @@ Note that the domain must be created in cloud.gov by an OrgManager before this m
 
 ```
 module "domain" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//domain?ref=v2.0.0-beta.1"
+  source = "github.com/GSA-TTS/terraform-cloudgov//domain?ref=v2.0.0"
 
   cf_org_name   = local.cf_org_name
   cf_space      = data.cloudfoundry_space.app_space
@@ -98,7 +98,7 @@ Notes:
 
 ```
 module "clamav" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//clamav?ref=v2.0.0-beta.1"
+  source = "github.com/GSA-TTS/terraform-cloudgov//clamav?ref=v2.0.0"
 
   cf_org_name    = local.cf_org_name
   cf_space_name  = local.cf_space_name
@@ -125,7 +125,7 @@ Creates a new cloud.gov space, such as when creating an egress space, and output
 
 ```
 module "egress_space" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//cg_space?ref=v2.0.0-beta.1"
+  source = "github.com/GSA-TTS/terraform-cloudgov//cg_space?ref=v2.0.0"
 
   cf_org_name   = local.cf_org_name
   cf_space_name = "${local.cf_space_name}-egress"
@@ -153,7 +153,7 @@ Prerequities:
 
 ```
 module "egress_proxy" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//egress_proxy?ref=v2.0.0-beta.1"
+  source = "github.com/GSA-TTS/terraform-cloudgov//egress_proxy?ref=v2.0.0"
 
   cf_org_name      = local.cf_org_name
   cf_egress_space  = data.cloudfoundry_space.egress_space
