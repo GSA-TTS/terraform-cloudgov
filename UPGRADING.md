@@ -40,7 +40,7 @@ provider "cloudfoundry-community" {
 }
 ```
 
-The v1 modules should properly select the `cloudfoundry-community` provider, but if they don't you may need to [explicitely set the provider](https://developer.hashicorp.com/terraform/language/modules/develop/providers#passing-providers-explicitly):
+The v1 modules should properly select the `cloudfoundry-community` provider, but if they don't you may need to [explicitly set the provider](https://developer.hashicorp.com/terraform/language/modules/develop/providers#passing-providers-explicitly):
 
 ```
 module "database" {
@@ -98,9 +98,9 @@ resource "cloudfoundry_service_instance" "egress_proxy_credentials" {
 }
 ```
 
-### Clamav
+### ClamAV
 
-Clamav no longer sets up network policies between the clamav app and client apps. It is the developer's responsibility to set this up to better handle circular dependencies between the various apps.
+ClamAV no longer sets up network policies between the clamav app and client apps. It is the developer's responsibility to set this up to better handle circular dependencies between the various apps.
 
 ### cg_space
 
