@@ -102,11 +102,31 @@ resource "cloudfoundry_service_instance" "egress_proxy_credentials" {
 
 ClamAV no longer sets up network policies between the clamav app and client apps. It is the developer's responsibility to set this up to better handle circular dependencies between the various apps.
 
+To setup the network policy in your root module, add:
+
+```
+resource "cloudfoundry_network_policy" "clamav_policy" {
+  provider = cloudfoundry-community
+  policy {
+    source_app      = cloudfoundry_app.client_app.id # assumes you're deploying the client app with terraform
+    destination_app = module.clamav_scanner.app_id
+    port            = "61443"
+  }
+}
+```
+
 ### cg_space
 
-Migrating the space roles is a little trickier. Here is a path forward:
+The new cg_space sets up all of the same resources and permissions as the old cg_space, however the way permissions are done is incompatible with the old provider and cannot be cleanly imported the way we can with the other providers.
 
-1. Upgrade the space module source to v2
+This leads to a race condition where:
+
+* The terraform user can't add itself with the new resource first, because it already has the permission that the resource is trying to create, but
+* The terraform user can't remove itself from the old resource first, because then it doesn't have permission to re-add itself with the new resource.
+
+To solve this involves some extra manual action:
+
+1. Upgrade the space module source to v2 in your root module
 1. `terraform apply -target=module.space.cloudfoundry_space_users.space_permissions` to remove the old permissions resources.
 1. Manually add your terraform user as a SpaceDeveloper and a SpaceManager to the space.
     ```
