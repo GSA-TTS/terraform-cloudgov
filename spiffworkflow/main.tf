@@ -14,10 +14,10 @@ locals {
   connector_url = "https://${local.connector_route}:61443"
   frontend_url  = "https://${local.frontend_route}"
 
-  backend_app_id   = cloudfoundry_app.backend.id
-  connector_app_id = cloudfoundry_app.connector.id
-  frontend_app_id  = cloudfoundry_app.frontend.id
-  tags             = setunion(["terraform-cloudgov-managed"], var.tags)
+  backend_app_id      = cloudfoundry_app.backend.id
+  connector_app_id    = cloudfoundry_app.connector.id
+  frontend_app_id     = cloudfoundry_app.frontend.id
+  tags                = setunion(["terraform-cloudgov-managed"], var.tags)
   backend_baseimage   = split(":", var.backend_imageref)[0]
   frontend_baseimage  = split(":", var.frontend_imageref)[0]
   connector_baseimage = split(":", var.connector_imageref)[0]
