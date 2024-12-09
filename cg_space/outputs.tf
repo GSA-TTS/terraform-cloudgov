@@ -5,3 +5,7 @@ output "space_id" {
 output "space_name" {
   value = cloudfoundry_space.space.name
 }
+
+output "space" {
+  value = cloudfoundry_space.space
+}

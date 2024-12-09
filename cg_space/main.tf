@@ -3,46 +3,30 @@ data "cloudfoundry_org" "org" {
 }
 
 resource "cloudfoundry_space" "space" {
-  name = var.cf_space_name
-  org  = data.cloudfoundry_org.org.id
+  name      = var.cf_space_name
+  org       = data.cloudfoundry_org.org.id
+  allow_ssh = var.allow_ssh
 }
 
 ###
 # User roles
 ###
 
-data "cloudfoundry_user" "managers" {
-  for_each = var.managers
-  name     = each.key
-  org_id   = data.cloudfoundry_org.org.id
-}
-
-data "cloudfoundry_user" "developers" {
-  for_each = var.developers
-  name     = each.key
-  org_id   = data.cloudfoundry_org.org.id
-}
-
-data "cloudfoundry_user" "deployers" {
-  for_each = var.deployers
-  name     = each.key
-  org_id   = data.cloudfoundry_org.org.id
-}
-
-
 locals {
-  manager_ids = concat(
-    [for user in data.cloudfoundry_user.managers : user.id],
-    [for user in data.cloudfoundry_user.deployers : user.id]
-  )
-  developer_ids = concat(
-    [for user in data.cloudfoundry_user.developers : user.id],
-    [for user in data.cloudfoundry_user.deployers : user.id]
-  )
+  manager_names   = setunion(var.managers, var.deployers)
+  developer_names = setunion(var.developers, var.deployers)
 }
 
-resource "cloudfoundry_space_users" "space_permissions" {
-  space      = cloudfoundry_space.space.id
-  managers   = local.manager_ids
-  developers = local.developer_ids
+resource "cloudfoundry_space_role" "managers" {
+  for_each = local.manager_names
+  username = each.key
+  space    = cloudfoundry_space.space.id
+  type     = "space_manager"
+}
+
+resource "cloudfoundry_space_role" "developers" {
+  for_each = local.developer_names
+  username = each.key
+  space    = cloudfoundry_space.space.id
+  type     = "space_developer"
 }

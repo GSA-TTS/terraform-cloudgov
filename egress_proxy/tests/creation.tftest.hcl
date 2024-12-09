@@ -1,11 +1,13 @@
 mock_provider "cloudfoundry" {}
 
 variables {
-  cf_org_name   = "gsa-tts-devtools-prototyping"
-  cf_space_name = "terraform-cloudgov-ci-tests-egress"
-  client_space  = "terraform-cloudgov-ci-tests"
-  name          = "terraform-egress-app"
-  allowlist     = { "continuous_monitoring-staging" = ["raw.githubusercontent.com:443"] }
+  cf_org_name = "gsa-tts-devtools-prototyping"
+  cf_egress_space = {
+    id   = "5178d8f5-d19a-4782-ad07-467822480c68"
+    name = "terraform-cloudgov-ci-tests-egress"
+  }
+  name      = "terraform-egress-app"
+  allowlist = ["raw.githubusercontent.com:443"]
 }
 
 run "test_proxy_creation" {
@@ -15,8 +17,8 @@ run "test_proxy_creation" {
   }
 
   assert {
-    condition     = output.domain == cloudfoundry_route.egress_route.endpoint
-    error_message = "Output domain must match the route endpoint"
+    condition     = output.domain == local.egress_route
+    error_message = "Output domain must match the route url"
   }
 
   assert {
@@ -30,17 +32,17 @@ run "test_proxy_creation" {
   }
 
   assert {
-    condition     = output.protocol == "https"
-    error_message = "protocol only supports https"
-  }
-
-  assert {
     condition     = output.app_id == cloudfoundry_app.egress_app.id
     error_message = "Output app_id is the egress_app's ID"
   }
 
   assert {
-    condition     = output.port == 61443
-    error_message = "port only supports 61443 internal https listener"
+    condition     = output.https_port == 61443
+    error_message = "https_port only supports 61443 internal https listener"
+  }
+
+  assert {
+    condition     = output.http_port == 8080
+    error_message = "http_port reports port 8080 for plaintext"
   }
 }

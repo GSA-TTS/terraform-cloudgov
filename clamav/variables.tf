@@ -5,12 +5,7 @@ variable "cf_org_name" {
 
 variable "cf_space_name" {
   type        = string
-  description = "cloud.gov space name (staging or prod)"
-}
-
-variable "app_name_or_id" {
-  type        = string
-  description = "base application name to allow routing to the clamav app"
+  description = "cloud.gov space name"
 }
 
 variable "name" {
@@ -24,9 +19,9 @@ variable "clamav_image" {
 }
 
 variable "clamav_memory" {
-  type        = number
-  description = "Memory in MB to allocate to clamav app"
-  default     = 3072
+  type        = string
+  description = "Memory to allocate to clamav app"
+  default     = "3072M"
 }
 
 variable "max_file_size" {

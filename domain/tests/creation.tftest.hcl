@@ -1,21 +1,46 @@
-mock_provider "cloudfoundry" {
-  mock_data "cloudfoundry_service" {
-    defaults = {
-      service_plans = {
-        "domain"          = "03c93c7b-3e1c-47c5-a6c3-1df151d280dd"
-        "domain-with-cdn" = "7dd54395-1e90-4493-8a6d-45d81469291f"
-      }
-    }
+provider "cloudfoundry" {
+  api_url = "https://api.fr.cloud.gov"
+  # cf_user and cf_password are passed in via CF_USER and CF_PASSWORD env vars
+}
+
+override_data {
+  target = data.cloudfoundry_app.app["test-app-does-not-exist"]
+  values = {
+    id = "f9722bd0-ee5c-4b83-afd9-24e03760a692"
   }
 }
 
+override_data {
+  target = data.cloudfoundry_app.app["test-app-does-not-exist-2"]
+  values = {
+    id = "6e214634-8cf6-435c-858c-b0fd4bba8f48"
+  }
+}
+
+# don't create the connected route because the destination apps don't exist
+override_resource {
+  target = cloudfoundry_route.origin_route_connected
+  values = {
+    url = "www.apps.internal"
+  }
+}
+
+# don't create the external domain instance because the CNAME records don't exist
+override_resource {
+  target = cloudfoundry_service_instance.external_domain_instance
+}
+
 variables {
-  cf_org_name   = "gsa-tts-devtools-prototyping"
-  cf_space_name = "terraform-cloudgov-ci-tests"
+  cf_org_name = "gsa-tts-devtools-prototyping"
+  cf_space = {
+    id   = "15836eb6-a57e-4579-bca7-99764c5a01a4"
+    name = "terraform-cloudgov-ci-tests"
+  }
   cdn_plan_name = "domain"
-  domain_name   = "devtools.tts.gsa.gov"
+  domain_name   = "apps.internal"
   name          = "terraform-cloudgov-domain-test"
-  tags          = ["terraform-cloudgov", "tests"]
+  app_names     = ["test-app-does-not-exist"]
+  tags          = ["terraform-cloudgov-managed", "tests"]
 }
 
 run "test_domain_creation" {
@@ -25,12 +50,12 @@ run "test_domain_creation" {
   }
 
   assert {
-    condition     = cloudfoundry_route.origin_route.id == output.route_id
+    condition     = cloudfoundry_route.origin_route_connected.0.id == output.route_id
     error_message = "Route ID output must match the created route"
   }
 
   assert {
-    condition     = cloudfoundry_service_instance.external_domain_instance.service_plan == data.cloudfoundry_service.external_domain.service_plans[var.cdn_plan_name]
+    condition     = cloudfoundry_service_instance.external_domain_instance.service_plan == data.cloudfoundry_service_plans.external_domain.service_plans.0.id
     error_message = "Service Plan should match the cdn_plan_name variable"
   }
 
@@ -43,10 +68,22 @@ run "test_domain_creation" {
     condition     = cloudfoundry_service_instance.external_domain_instance.tags == var.tags
     error_message = "Service instance tags should match the tags variable"
   }
+}
+
+run "test_no_apps" {
+  variables {
+    host_name = "terraform-ci-test"
+    app_names = []
+  }
 
   assert {
-    condition     = cloudfoundry_service_instance.external_domain_instance.json_params == "{\"domains\": \"${var.domain_name}\"}"
-    error_message = "Service instance json_params should define the endpoint"
+    condition     = cloudfoundry_route.origin_route.0.id == output.route_id
+    error_message = "Route ID should return the correct resource id when apps are not specified"
+  }
+
+  assert {
+    condition     = cloudfoundry_service_instance.external_domain_instance.parameters == "{\"domains\": \"${var.host_name}.${var.domain_name}\"}"
+    error_message = "Service instance parameters should define the endpoint"
   }
 }
 
@@ -56,13 +93,13 @@ run "test_with_hostname" {
   }
 
   assert {
-    condition     = cloudfoundry_route.origin_route.hostname == var.host_name
+    condition     = cloudfoundry_route.origin_route_connected.0.host == var.host_name
     error_message = "Route hostname should be set to value of var.host_name"
   }
 
   assert {
-    condition     = cloudfoundry_service_instance.external_domain_instance.json_params == "{\"domains\": \"${var.host_name}.${var.domain_name}\"}"
-    error_message = "Service instance json_params should define the endpoint"
+    condition     = cloudfoundry_service_instance.external_domain_instance.parameters == "{\"domains\": \"${var.host_name}.${var.domain_name}\"}"
+    error_message = "Service instance parameters should define the endpoint"
   }
 }
 
@@ -72,58 +109,24 @@ run "test_cdn_creation" {
   }
 
   assert {
-    condition     = cloudfoundry_service_instance.external_domain_instance.service_plan == data.cloudfoundry_service.external_domain.service_plans[var.cdn_plan_name]
+    condition     = cloudfoundry_service_instance.external_domain_instance.service_plan == data.cloudfoundry_service_plans.external_domain.service_plans.0.id
     error_message = "Service Plan should match the cdn_plan_name variable"
-  }
-}
-
-run "test_single_app_target" {
-  variables {
-    name           = ""
-    app_name_or_id = "terraform_cloudgov_app"
-  }
-
-  assert {
-    condition     = can(regex("^\\w{8}-${var.domain_name}$", cloudfoundry_service_instance.external_domain_instance.name))
-    error_message = "Service Instance name is built from the first app name and domain_name"
-  }
-
-  assert {
-    condition     = [for t in cloudfoundry_route.origin_route.target : t.app] == [data.cloudfoundry_app.app[var.app_name_or_id].id]
-    error_message = "Sets the route targets to be the app_name_or_id"
   }
 }
 
 run "test_multi_app_target" {
   variables {
-    name             = ""
-    app_names_or_ids = ["terraform_cloudgov_app", "terraform_cloudgov_app_2"]
+    name      = ""
+    app_names = ["test-app-does-not-exist", "test-app-does-not-exist-2"]
   }
 
   assert {
-    condition     = can(regex("^\\w{8}-${var.domain_name}$", cloudfoundry_service_instance.external_domain_instance.name))
+    condition     = can(regex("^[a-z-]{23}-${var.domain_name}$", cloudfoundry_service_instance.external_domain_instance.name))
     error_message = "Service Instance name is built from the first app name and domain_name"
   }
 
   assert {
-    condition     = toset([for name, value in data.cloudfoundry_app.app : value.id]) == toset([for t in cloudfoundry_route.origin_route.target : t.app])
-    error_message = "Target apps is set to the list of app_names_or_ids"
-  }
-}
-
-run "test_conflicting_variables" {
-  variables {
-    app_name_or_id   = "terraform_cloudgov_app"
-    app_names_or_ids = ["terraform_cloudgov_app_2", "terraform_cloudgov_app_3"]
-  }
-
-  assert {
-    condition     = [for t in cloudfoundry_route.origin_route.target : t.app] == [data.cloudfoundry_app.app[var.app_name_or_id].id]
-    error_message = "Sets the route targets to be the app_name_or_id"
-  }
-
-  assert {
-    condition     = cloudfoundry_service_instance.external_domain_instance.name == var.name
-    error_message = "Service Instance name is set to var.name when present"
+    condition     = toset([for name, value in data.cloudfoundry_app.app : value.id]) == toset([for t in cloudfoundry_route.origin_route_connected.0.destinations : t.app_id])
+    error_message = "Target apps is set to the list of app_names"
   }
 }

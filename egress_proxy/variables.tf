@@ -3,14 +3,12 @@ variable "cf_org_name" {
   description = "cloud.gov organization name"
 }
 
-variable "cf_space_name" {
-  type        = string
-  description = "cloud.gov space name for egress (eg staging-egress or prod-egress)"
-}
-
-variable "client_space" {
-  type        = string
-  description = "cloud.gov space name for client apps (eg staging or prod)"
+variable "cf_egress_space" {
+  type = object({
+    id   = string
+    name = string
+  })
+  description = "cloud.gov space egress"
 }
 
 variable "name" {
@@ -19,9 +17,9 @@ variable "name" {
 }
 
 variable "egress_memory" {
-  type        = number
-  description = "Memory in MB to allocate to egress proxy app"
-  default     = 64
+  type        = string
+  description = "Memory to allocate to egress proxy app, including unit"
+  default     = "64M"
 }
 
 variable "gitref" {
@@ -38,23 +36,19 @@ variable "allowports" {
 }
 
 variable "allowlist" {
-  description = "Allowed egress for apps (applied first). A map where keys are app names, and the values are sets of acl strings."
+  description = "Allowed egress for apps (applied first). A set of allowed acl strings."
   # See the upstream documentation for possible acl strings:
   #   https://github.com/caddyserver/forwardproxy/blob/caddy2/README.md#caddyfile-syntax-server-configuration
-  type = map(set(string))
-  default = {
-    # appname    = [ "*.example.com:443", "example2.com:443" ]
-  }
+  type    = set(string)
+  default = [] # [ "*.example.com:443", "example2.com:443" ]
 }
 
 variable "denylist" {
-  description = "Denied egress for apps (applied second). A map where keys are app names, and the values are sets of host:port strings."
+  description = "Denied egress for apps (applied second). A set of disallowed host:port strings."
   # See the upstream documentation for possible acl strings:
   #   https://github.com/caddyserver/forwardproxy/blob/caddy2/README.md#caddyfile-syntax-server-configuration
-  type = map(set(string))
-  default = {
-    # appname    = [ "bad.example.com:443" ]
-  }
+  type    = set(string)
+  default = [] # [ "bad.example.com:443" ]
 }
 
 variable "instances" {

@@ -10,15 +10,14 @@ Creates an RDS database based on the `rds_plan_name` variable and outputs the `i
 
 ```
 module "database" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//database?ref=v1.1.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//database?ref=v2.0.0"
 
-  cf_org_name      = local.cf_org_name
-  cf_space_name    = local.cf_space_name
-  name             = "database_name"
-  rds_plan_name    = "micro-psql"
-  tags             = ["tag1", "tag2"]
+  cf_space_id   = data.cloudfoundry_space.app_space.id
+  name          = "database_name"
+  rds_plan_name = "micro-psql"
+  tags          = ["tag1", "tag2"]
   # See options at https://cloud.gov/docs/services/relational-database/#setting-optional-parameters-1
-  json_params      = jsonencode(
+  json_params   = jsonencode(
     {
       "storage" : 10,
     }
@@ -32,17 +31,16 @@ Creates a Elasticache redis instance and outputs the `instance_id` for use elsew
 
 ```
 module "redis" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//redis?ref=v1.1.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//redis?ref=v2.0.0"
 
-  cf_org_name      = local.cf_org_name
-  cf_space_name    = local.cf_space_name
-  name             = "redis_name"
-  redis_plan_name  = "redis-dev"
-  tags             = ["tag1", "tag2"]
+  cf_space_id     = data.cloudfoundry_space.app_space.id
+  name            = "redis_name"
+  redis_plan_name = "redis-dev"
+  tags            = ["tag1", "tag2"]
   # See options at https://cloud.gov/docs/services/aws-elasticache/#setting-optional-parameters
-  json_params      = jsonencode(
+  json_params     = jsonencode(
     {
-      "engineVersion" : "6.2",
+      "engineVersion" : "7.0",
     }
   )
 }
@@ -54,14 +52,13 @@ Creates an s3 bucket and outputs the `bucket_id` for use elsewhere.
 
 ```
 module "s3" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//s3?ref=v1.1.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//s3?ref=v2.0.0"
 
-  cf_org_name      = local.cf_org_name
-  cf_space_name    = local.cf_space_name
-  name             = "${local.app_name}-s3-${local.env}"
-  tags             = ["tag1", "tag2"]
+  cf_space_id = data.cloudfoundry_space.app_space.id
+  name        = "${local.app_name}-s3-${local.env}"
+  tags        = ["tag1", "tag2"]
   # See options at https://cloud.gov/docs/services/s3/#setting-optional-parameters
-  json_params      = jsonencode(
+  json_params = jsonencode(
     {
       "object_ownership" : "ObjectWriter",
     }
@@ -75,19 +72,19 @@ Connects a custom domain name or domain name with CDN to an already running appl
 
 Note that the domain must be created in cloud.gov by an OrgManager before this module is included.
 
-`cf create-domain CLOUD_GOV_ORG my-production-domain-name`
+`cf create-domain CLOUD_GOV_ORG my-production-domain.name`
 
 ```
 module "domain" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//domain?ref=v1.1.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//domain?ref=v2.0.0"
 
-  cf_org_name      = local.cf_org_name
-  cf_space_name    = local.cf_space_name
-  app_name_or_id   = "app_name"
-  cdn_plan_name    = "domain"
-  domain_name      = "my-production-domain-name"
-  host_name        = "my-production-host-name"
-  tags             = ["tag1", "tag2"]
+  cf_org_name   = local.cf_org_name
+  cf_space      = data.cloudfoundry_space.app_space
+  app_names     = ["app_name"]
+  cdn_plan_name = "domain"
+  domain_name   = "my-production-domain.name"
+  host_name     = "my-production-host-name"
+  tags          = ["tag1", "tag2"]
 }
 ```
 
@@ -101,11 +98,10 @@ Notes:
 
 ```
 module "clamav" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//clamav?ref=v1.1.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//clamav?ref=v2.0.0"
 
   cf_org_name    = local.cf_org_name
   cf_space_name  = local.cf_space_name
-  app_name_or_id = "app_name"
   name           = "my_clamav_name"
   clamav_image   = "ghcr.io/gsa-tts/clamav-rest/clamav:TAG_NAME"
   max_file_size  = "30M"
@@ -129,10 +125,11 @@ Creates a new cloud.gov space, such as when creating an egress space, and output
 
 ```
 module "egress_space" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//cg_space?ref=v1.1.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//cg_space?ref=v2.0.0"
 
   cf_org_name   = local.cf_org_name
   cf_space_name = "${local.cf_space_name}-egress"
+  allow_ssh     = false
   managers = [
     "space.manager@gsa.gov"
   ]
@@ -156,12 +153,12 @@ Prerequities:
 
 ```
 module "egress_proxy" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//egress_proxy?ref=v1.1.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//egress_proxy?ref=v2.0.0"
 
-  cf_org_name   = local.cf_org_name
-  cf_space_name = "${local.cf_space_name}-egress"
-  client_space  = local.cf_space_name
-  name          = "egress-proxy"
+  cf_org_name      = local.cf_org_name
+  cf_egress_space  = data.cloudfoundry_space.egress_space
+  cf_client_spaces = {(data.cloudfoundry_space.app_space.name) = data.cloudfoundy_space.app_space.id}
+  name             = "egress-proxy"
   allowlist = {
     "source_app_name" = ["host.com:443", "otherhost.com:443"]
   }
