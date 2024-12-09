@@ -1,7 +1,9 @@
 locals {
+  route_prefix = (var.route_prefix != "" ? var.route_prefix : random_pet.route_prefix.id)
+
   backend_route   = "${local.frontend_route}/api"
-  connector_route = "${var.route_prefix}-connector.apps.internal"
-  frontend_route  = "${var.route_prefix}.app.cloud.gov"
+  connector_route = "${local.route_prefix}-connector.apps.internal"
+  frontend_route  = "${local.route_prefix}.app.cloud.gov"
 
   username = random_uuid.username.result
   password = random_password.password.result
@@ -49,6 +51,10 @@ resource "random_uuid" "username" {}
 resource "random_password" "password" {
   length  = 16
   special = false
+}
+
+resource "random_pet" "route_prefix" {
+  prefix = "spiffworkflow"
 }
 
 resource "random_password" "backend_flask_secret_key" {

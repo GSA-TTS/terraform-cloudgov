@@ -16,8 +16,8 @@ variable "app_prefix" {
 
 variable "route_prefix" {
   type        = string
-  description = "prefix to use for the application routes (<route_prefix>-connector.app.internal, <route_prefix>.apps.fr.cloud.gov[/api])"
-  default     = "spiffworkflow"
+  description = "prefix to use for the application routes (<route_prefix>-connector.app.internal, <route_prefix>.apps.fr.cloud.gov[/api]); leave empty to generate"
+  default     = ""
 }
 
 variable "rds_plan_name" {
