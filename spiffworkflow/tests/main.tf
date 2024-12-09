@@ -12,9 +12,9 @@ terraform {
 }
 
 module "spiff" {
-  source = "./.."
-  cf_org_name = "gsa-tts-oros-fac"
-  cf_space_name = "sandbox-workflow"
+  source            = "./.."
+  cf_org_name       = "gsa-tts-oros-fac"
+  cf_space_name     = "sandbox-workflow"
   frontend_imageref = "ghcr.io/sartography/spiffworkflow-frontend:main-latest"
-  backend_imageref = "ghcr.io/sartography/spiffworkflow-backend:main-latest"
+  backend_imageref  = "ghcr.io/sartography/spiffworkflow-backend:main-latest"
 }
