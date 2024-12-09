@@ -18,6 +18,9 @@ locals {
   connector_app_id = cloudfoundry_app.connector.id
   frontend_app_id  = cloudfoundry_app.frontend.id
   tags             = setunion(["terraform-cloudgov-managed"], var.tags)
+  backend_baseimage   = split(":", var.backend_imageref)[0]
+  frontend_baseimage  = split(":", var.frontend_imageref)[0]
+  connector_baseimage = split(":", var.connector_imageref)[0]
 }
 
 data "cloudfoundry_service_plans" "rds" {
@@ -58,11 +61,14 @@ resource "random_password" "backend_openid_secret" {
   special = true
 }
 
+data "docker_registry_image" "backend" {
+  name = var.backend_imageref
+}
 resource "cloudfoundry_app" "backend" {
   name                       = "${var.app_prefix}-backend"
   org_name                   = var.cf_org_name
   space_name                 = var.cf_space_name
-  docker_image               = var.backend_imageref
+  docker_image               = "${local.backend_baseimage}@${data.docker_registry_image.backend.sha256_digest}"
   memory                     = var.backend_memory
   instances                  = var.backend_instances
   disk_quota                 = "3G"
@@ -143,11 +149,15 @@ resource "random_password" "connector_flask_secret_key" {
   special = true
 }
 
+data "docker_registry_image" "connector" {
+  name = var.connector_imageref
+}
+
 resource "cloudfoundry_app" "connector" {
   name                       = "${var.app_prefix}-connector"
   org_name                   = var.cf_org_name
   space_name                 = var.cf_space_name
-  docker_image               = var.connector_imageref
+  docker_image               = "${local.connector_baseimage}@${data.docker_registry_image.connector.sha256_digest}"
   memory                     = var.connector_memory
   instances                  = var.connector_instances
   disk_quota                 = "3G"
@@ -173,11 +183,15 @@ resource "cloudfoundry_app" "connector" {
   }
 }
 
+data "docker_registry_image" "frontend" {
+  name = var.frontend_imageref
+}
+
 resource "cloudfoundry_app" "frontend" {
   name              = "${var.app_prefix}-frontend"
   org_name          = var.cf_org_name
   space_name        = var.cf_space_name
-  docker_image      = var.frontend_imageref
+  docker_image      = "${local.frontend_baseimage}@${data.docker_registry_image.frontend.sha256_digest}"
   memory            = var.frontend_memory
   instances         = var.frontend_instances
   strategy          = "rolling"
