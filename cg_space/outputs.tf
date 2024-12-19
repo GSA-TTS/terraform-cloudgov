@@ -9,3 +9,11 @@ output "space_name" {
 output "space" {
   value = cloudfoundry_space.space
 }
+
+output "developer_role_ids" {
+  value = { for username in local.developer_names : username => cloudfoundry_space_role.developers[username].id }
+}
+
+output "manager_role_ids" {
+  value = { for username in local.manager_names : username => cloudfoundry_space_role.managers[username].id }
+}

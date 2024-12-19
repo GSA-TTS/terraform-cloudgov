@@ -78,4 +78,19 @@ run "test_deployer_permissions" {
     condition     = keys(cloudfoundry_space_role.developers) == ["paul.hirsch@gsa.gov", "ryan.ahearn@gsa.gov"]
     error_message = "Should set Space Developers to var.developers + var.deployers"
   }
+
+  assert {
+    condition = output.developer_role_ids == {
+      "paul.hirsch@gsa.gov" = cloudfoundry_space_role.developers["paul.hirsch@gsa.gov"].id,
+      "ryan.ahearn@gsa.gov" = cloudfoundry_space_role.developers["ryan.ahearn@gsa.gov"].id
+    }
+    error_message = "Output includes the developer role ids"
+  }
+
+  assert {
+    condition = output.manager_role_ids == {
+      "ryan.ahearn@gsa.gov" = cloudfoundry_space_role.managers["ryan.ahearn@gsa.gov"].id
+    }
+    error_message = "Output includes the manager role ids"
+  }
 }
