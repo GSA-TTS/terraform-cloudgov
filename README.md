@@ -90,7 +90,7 @@ module "domain" {
 
 ### clamav
 
-Creates an application and associated network routing to run ClamAV via API to scan user uploads and outputs the `app_id`, the `route_id`, and the `endpoint` for use elsewhere.
+Creates an application to run ClamAV via API to scan user uploads and outputs the `app_id`, the `route_id`, and the `endpoint` for use elsewhere.
 
 Notes:
 * The scanning app requires at least `3GB` of memory, and your `app_name` must be deployed before this module is included.
@@ -112,6 +112,8 @@ module "clamav" {
   proxy_password = local.proxy_password
 }
 ```
+
+See <UPGRADING.md> for an example of how to set up network policies to reach the clamav app from the client apps.
 
 ### cg_space
 
@@ -146,25 +148,21 @@ module "egress_space" {
 
 Creates and configures an instance of cg-egress-proxy to proxy traffic from your apps.
 
-Prerequities:
-
-* existing client_space with already deployed apps
-* existing public-egress space to deploy the proxy into
+Prerequite: existing public-egress space to deploy the proxy into
 
 ```
 module "egress_proxy" {
   source = "github.com/GSA-TTS/terraform-cloudgov//egress_proxy?ref=v2.0.0"
 
-  cf_org_name      = local.cf_org_name
-  cf_egress_space  = data.cloudfoundry_space.egress_space
-  cf_client_spaces = {(data.cloudfoundry_space.app_space.name) = data.cloudfoundy_space.app_space.id}
-  name             = "egress-proxy"
-  allowlist = {
-    "source_app_name" = ["host.com:443", "otherhost.com:443"]
-  }
+  cf_org_name     = local.cf_org_name
+  cf_egress_space = data.cloudfoundry_space.egress_space
+  name            = "egress-proxy"
+  allowlist       = [ "list.of.hosts", "to.allow.access" ]
   # see egress_proxy/variables.tf for full list of optional arguments
 }
 ```
+
+See <UPGRADING.md> for an example of how to set up network policies and credential stores to enable your client app to reach the proxy.
 
 ## Testing
 
