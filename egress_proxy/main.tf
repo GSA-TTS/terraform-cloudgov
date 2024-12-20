@@ -4,8 +4,8 @@ locals {
   denyacl  = templatefile("${path.module}/acl.tftpl", { list = var.denylist })
 
   # Yields something like: orgname-spacename-name.apps.internal, limited to the last 63 characters
-  route_host   = substr("${var.cf_org_name}-${replace(var.cf_egress_space.name, ".", "-")}-${var.name}", -63, -1)
-  egress_route = "${local.route_host}.apps.internal"
+  default_route_host = "${var.cf_org_name}-${replace(var.cf_egress_space.name, ".", "-")}-${var.name}"
+  egress_route       = "${replace(lower(substr(coalesce(var.route_host, local.default_route_host), -63, -1)), "/^[^a-z]*/", "")}.apps.internal"
 }
 
 
