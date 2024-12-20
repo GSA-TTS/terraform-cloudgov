@@ -16,6 +16,12 @@ variable "name" {
   description = "name of the egress proxy application"
 }
 
+variable "route_host" {
+  type        = string
+  default     = null
+  description = "Hostname to access the egress proxy on apps.internal domain (optional)"
+}
+
 variable "egress_memory" {
   type        = string
   description = "Memory to allocate to egress proxy app, including unit"
