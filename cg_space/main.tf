@@ -17,16 +17,20 @@ locals {
   developer_names = setunion(var.developers, var.deployers)
 }
 
+data "cloudfoundry_user" "users" {
+  for_each = setunion(local.manager_names, local.developer_names)
+  name     = each.key
+}
 resource "cloudfoundry_space_role" "managers" {
   for_each = local.manager_names
-  username = each.key
+  user     = data.cloudfoundry_user.users[each.key].users.0.id
   space    = cloudfoundry_space.space.id
   type     = "space_manager"
 }
 
 resource "cloudfoundry_space_role" "developers" {
   for_each = local.developer_names
-  username = each.key
+  user     = data.cloudfoundry_user.users[each.key].users.0.id
   space    = cloudfoundry_space.space.id
   type     = "space_developer"
 }
