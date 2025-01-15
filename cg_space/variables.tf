@@ -14,6 +14,12 @@ variable "allow_ssh" {
   default     = false
 }
 
+variable "security_group_names" {
+  type        = set(string)
+  description = "The set of security group names to apply to this space for running apps"
+  default     = []
+}
+
 variable "managers" {
   type        = set(string)
   description = "list of cloud.gov users to be assigned to the SpaceManager role"

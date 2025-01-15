@@ -34,3 +34,16 @@ resource "cloudfoundry_space_role" "developers" {
   space    = cloudfoundry_space.space.id
   type     = "space_developer"
 }
+
+###
+# Security groups
+###
+data "cloudfoundry_security_group" "security_groups" {
+  for_each = var.security_group_names
+  name     = each.value
+}
+resource "cloudfoundry_security_group_space_bindings" "security_group_bindings" {
+  for_each       = var.security_group_names
+  security_group = data.cloudfoundry_security_group.security_groups[each.value].id
+  running_spaces = [cloudfoundry_space.space.id]
+}

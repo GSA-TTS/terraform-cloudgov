@@ -94,3 +94,14 @@ run "test_deployer_permissions" {
     error_message = "Output includes the manager role ids"
   }
 }
+
+run "test_security_groups" {
+  variables {
+    security_group_names = ["trusted_local_networks_egress"]
+  }
+
+  assert {
+    condition = can(cloudfoundry_security_group_space_bindings.security_group_bindings["trusted_local_networks_egress"])
+    error_message = "The security group binding has been created"
+  }
+}
