@@ -101,7 +101,7 @@ run "test_security_groups" {
   }
 
   assert {
-    condition = can(cloudfoundry_security_group_space_bindings.security_group_bindings["trusted_local_networks_egress"])
+    condition     = can(cloudfoundry_security_group_space_bindings.security_group_bindings["trusted_local_networks_egress"])
     error_message = "The security group binding has been created"
   }
 }
