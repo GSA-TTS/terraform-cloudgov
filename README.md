@@ -2,6 +2,11 @@
 
 Terraform modules for working with cloud.gov commonly used by [GSA-TTS/rails-template](https://github.com/GSA-TTS/rails-template) based apps
 
+> [!IMPORTANT]
+> The cloudfoundry v2 api [is being deprecated](https://cloud.gov/2025/01/07/v2api-deprecation/) on June 6, 2025.
+> terraform-cloudgov modules >= 2.0.0 are fully compatible with this change. If you are using a v1.x module, you must
+> see [the UPGRADING guide](./UPGRADING.md) and update to the most recent versions before then.
+
 ## Module Examples
 
 ### database
