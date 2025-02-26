@@ -173,6 +173,34 @@ module "egress_proxy" {
 
 See <UPGRADING.md> for an example of how to set up network policies and credential stores to enable your client app to reach the proxy.
 
+### drupal
+
+> [!WARNING]
+> This module is in active development and may change
+
+Creates and configures a Drupal application, and basic supporting services needed.
+
+There are also code changes required to take advantage of this module. Read more at TKTK
+
+```
+module "drupal" {
+  source = "github.com/GSA-TTS/terraform-cloudgov//drupal"
+
+  cf_org_name   = local.cf_org_name
+  cf_space      = data.cloudfoundry_space.app_space
+  name          = "my-drupal-app"
+  rds_plan_name = "small-mysql"
+  s3_plan_name  = "basic-sandbox"
+  source_dir    = "path/to/drupal/app"
+  credentials = {
+    NAME = "value-to-insert-into-user-provided-credential-service"
+  }
+  app_environment = {
+    NAME = "value"
+  }
+}
+```
+
 ## Testing
 
 

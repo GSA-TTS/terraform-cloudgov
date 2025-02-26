@@ -25,16 +25,24 @@ jobs:
         with:
           path: ${{ matrix.module }}
 
-  test-egress-proxy:
+  test-with-zip:
     runs-on: ubuntu-latest
-    name: Egress proxy integration test
+    name: Integration test with zip
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        module: ["egress_proxy", "drupal"]
     env:
       TERRAFORM_PRE_RUN: |
         apt-get update
         apt-get install -y zip
     steps:
       - uses: actions/checkout@v4
-      - name: terraform test egress_proxy
+      - name: terraform test ${{ matrix.module }}
         uses: dflook/terraform-test@v1
+        env:
+          CF_USER: ${{ secrets.CF_USER }}
+          CF_PASSWORD: ${{ secrets.CF_PASSWORD }}
         with:
-          path: egress_proxy
+          path: ${{ matrix.module }}
