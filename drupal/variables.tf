@@ -70,3 +70,9 @@ variable "app_instances" {
   type        = number
   default     = 1
 }
+
+variable "app_memory" {
+  description = "The amount of memory to allocate to each app, with unit"
+  type        = string
+  default     = "256M"
+}

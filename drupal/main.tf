@@ -98,7 +98,7 @@ resource "cloudfoundry_app" "app" {
   name             = var.name
   buildpacks       = ["https://github.com/cloudfoundry/apt-buildpack.git", "php_buildpack"]
   disk_quota       = "2G"
-  memory           = "256M"
+  memory           = var.app_memory
   instances        = var.app_instances
   strategy         = "rolling"
   timeout          = 180
