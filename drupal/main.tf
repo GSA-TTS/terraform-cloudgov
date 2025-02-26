@@ -108,7 +108,10 @@ resource "cloudfoundry_app" "app" {
   routes = [{ route = local.drupal_route }]
 
   environment = merge({
-    PHP_INI_SCAN_DIR = "/home/vcap/app/php/etc/:/home/vcap/app/php/etc/php.ini.d/"
+    PHP_INI_SCAN_DIR       = "/home/vcap/app/php/etc/:/home/vcap/app/php/etc/php.ini.d/"
+    DATABASE_INSTANCE_NAME = local.rds_name
+    STORAGE_INSTANCE_NAME  = local.s3_name
+    SECRETS_INSTANCE_NAME  = local.secrets_name
   }, var.app_environment)
 
   service_bindings = [
