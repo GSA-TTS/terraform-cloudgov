@@ -1,0 +1,77 @@
+---
+name: Pull Third Party Containers, Scan, and Publish to GHCR
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 5 * * 0'
+  push:
+    branches: [add-spiffworkflow-module]
+
+jobs:
+  pull-and-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      GH_REPO: gsa-tts/terraform-cloudgov
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - name: ghcr.io/gsa-tts/spiffworkflow-backend:deploy-to-cloud-gov-latest
+            short-name: spiffarena-backend
+          - name: ghcr.io/gsa-tts/spiffworkflow-frontend:deploy-to-cloud-gov-latest
+            short-name: spiffarena-frontend
+          - name: ghcr.io/gsa-tts/connector-proxy-demo:deploy-to-cloud-gov-latest
+            short-name: spiffarena-connector
+          - name: ghcr.io/gsa-tts/clamav-rest/clamav:latest
+            short-name: clamav-proxy-support
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Pull Docker Image
+        run: docker pull ${{ matrix.image.name }}
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.29.0
+        env:
+          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db,ghcr.io/aquasecurity/trivy-db
+          TRIVY_JAVA_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-java-db,ghcr.io/aquasecurity/trivy-java-db
+          TRIVY_SKIP_DB_UPDATE: true
+          TRIVY_SKIP_JAVA_DB_UPDATE: true
+          TRIVY_DISABLE_VEX_NOTICE: true
+        with:
+          image-ref: '${{ matrix.image.name }}'
+          scan-type: 'image'
+          hide-progress: false
+          exit-code: 1
+          severity: 'CRITICAL,HIGH'
+          scanners: 'vuln'
+          timeout: 15m0s
+          ignore-unfixed: true
+
+      # - name: Scan Image
+      #   run: docker run aquasec/trivy:latest image --db-repository public.ecr.aws/aquasecurity/trivy-db,ghcr.io/aquasecurity/trivy-db --java-db-repository public.ecr.aws/aquasecurity/trivy-java-db,ghcr.io/aquasecurity/trivy-java-db --timeout 5m --scanners vuln --exit-code 1 --severity CRITICAL,HIGH  ${{ matrix.image.name }}
+
+      - name: Tag Image
+        run: |
+          date=$(date +%Y%m%d)
+          docker tag ${{ matrix.image.name }} ghcr.io/${{ env.GH_REPO }}/${{ matrix.image.short-name }}:latest
+          docker tag ${{ matrix.image.name }} ghcr.io/${{ env.GH_REPO }}/${{ matrix.image.short-name }}:$date
+
+    #   - name: Login to GitHub Container Registry
+    #     uses: docker/login-action@v3
+    #     with:
+    #       registry: ghcr.io
+    #       username: ${{ github.repository_owner }}
+    #       password: ${{ secrets.GITHUB_TOKEN }}
+
+    #   - name: Push Image
+    #     run: docker push --all-tags ghcr.io/${{ env.GH_REPO }}/${{ matrix.image.short-name }}
