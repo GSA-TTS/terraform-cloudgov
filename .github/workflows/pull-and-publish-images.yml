@@ -4,8 +4,6 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '0 5 * * 0'
-  push:
-    branches: [add-spiffworkflow-module]
 
 jobs:
   pull-and-scan:
