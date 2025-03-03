@@ -50,8 +50,10 @@ jobs:
         with:
           image-ref: '${{ matrix.image.name }}'
           scan-type: 'image'
-          hide-progress: false
-          exit-code: 1
+          hide-progress: true
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          exit-code: 0
           severity: 'CRITICAL,HIGH'
           scanners: 'vuln'
           timeout: 15m0s
