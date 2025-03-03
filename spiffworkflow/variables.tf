@@ -91,19 +91,19 @@ variable "frontend_memory" {
 variable "backend_imageref" {
   type        = string
   description = "imageref for the specific version of the backend that you want to use. See https://github.com/orgs/GSA-TTS/packages for options."
-  default     = "ghcr.io/gsa-tts/spiffworkflow-backend:deploy-to-cloud-gov-latest"
+  default     = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-backend:latest"
 }
 
 variable "connector_imageref" {
   type        = string
   description = "imageref for the specific version of the connector that you want to use. See https://github.com/orgs/GSA-TTS/packages for options."
-  default     = "ghcr.io/gsa-tts/connector-proxy-demo:deploy-to-cloud-gov-latest"
+  default     = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-connector:latest"
 }
 
 variable "frontend_imageref" {
   type        = string
   description = "imageref for the specific version of the frontend that you want to use. See https://github.com/orgs/GSA-TTS/packages for options."
-  default     = "ghcr.io/gsa-tts/spiffworkflow-frontend:deploy-to-cloud-gov-latest"
+  default     = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-frontend:latest"
 }
 
 variable "backend_instances" {
