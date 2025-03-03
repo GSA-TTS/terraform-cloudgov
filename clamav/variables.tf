@@ -17,7 +17,7 @@ variable "clamav_image" {
   type        = string
   description = "Docker image to deploy the clamav api app"
   # Uses the https://github.com/GSA-TTS/clamav-rest clamav image, which is maintained by GSA-TTS, and supports a proxy.
-  default     = "ghcr.io/gsa-tts/terraform-cloudgov/clamav-proxy-support:latest"
+  default = "ghcr.io/gsa-tts/terraform-cloudgov/clamav-proxy-support:latest"
 }
 
 variable "clamav_memory" {
