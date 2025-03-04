@@ -127,13 +127,13 @@ resource "cloudfoundry_app" "backend" {
     SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA : "false"
     SPIFFWORKFLOW_BACKEND_LOG_LEVEL : "INFO"
 
-    # TODO: We should make these configurable with variables so 
+    # TODO: We should make these configurable with variables so
     # you can specify an external OIDC IDP.
     SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID : "spiffworkflow-backend"
     SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY : random_password.backend_openid_secret.result
     SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL : "${local.backend_url}/openid"
 
-    # TODO: static creds are in this path in the image: 
+    # TODO: static creds are in this path in the image:
     #   /config/permissions/example.yml
     # We should probably generate credentials only for the admin
     # and have everything else be specified via DMN as described here:
