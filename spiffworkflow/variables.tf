@@ -55,7 +55,6 @@ variable "process_models_ssh_key" {
   # ...
   # ...
   # -----END OPENSSH PRIVATE KEY-----
-  default = ""
 }
 
 variable "process_models_source_branch" {
