@@ -180,7 +180,8 @@ See <UPGRADING.md> for an example of how to set up network policies and credenti
 
 Creates and configures a Drupal application, and basic supporting services needed.
 
-There are also code changes required to take advantage of this module. Read more at TKTK
+There are also code changes from a vanilla drupal/cms install required to take advantage of this module.
+Find out more at <https://github.com/gsa-tts/drupal-template>
 
 ```
 module "drupal" {
