@@ -30,22 +30,23 @@ data "cloudfoundry_service_plans" "rds" {
   service_offering_name = "aws-rds"
 }
 
-data "cloudfoundry_org" "org" {
-  name = var.cf_org_name
-}
+# data "cloudfoundry_org" "org" {
+#   name = var.cf_org_name
+# }
 
-data "cloudfoundry_space" "space" {
-  name = var.cf_space_name
-  org  = data.cloudfoundry_org.org.id
-}
-resource "cloudfoundry_service_instance" "database" {
-  name         = "${var.app_prefix}-database"
-  space        = data.cloudfoundry_space.space.id
-  type         = "managed"
-  service_plan = data.cloudfoundry_service_plans.rds.service_plans.0.id
-  tags         = local.tags
-  parameters   = var.rds_json_params
-}
+# data "cloudfoundry_space" "space" {
+#   name = var.cf_space_name
+#   org  = data.cloudfoundry_org.org.id
+# }
+
+# resource "cloudfoundry_service_instance" "database" {
+#   name         = "${var.app_prefix}-database"
+#   space        = data.cloudfoundry_space.space.id
+#   type         = "managed"
+#   service_plan = data.cloudfoundry_service_plans.rds.service_plans.0.id
+#   tags         = local.tags
+#   parameters   = var.rds_json_params
+# }
 
 resource "random_uuid" "username" {}
 resource "random_password" "password" {
@@ -95,9 +96,9 @@ resource "cloudfoundry_app" "backend" {
     COMMAND
   health_check_type          = "http"
   health_check_http_endpoint = "/api/v1.0/status"
-  service_bindings = [
-    { service_instance = cloudfoundry_service_instance.database.name }
-  ]
+  # service_bindings = [
+  #   { service_instance = cloudfoundry_service_instance.database.name }
+  # ]
   routes = [{
     route    = local.backend_route
     protocol = "http1"
