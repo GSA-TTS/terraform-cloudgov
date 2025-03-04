@@ -122,3 +122,9 @@ variable "frontend_instances" {
   description = "the number of instances of the frontend application to run (default: 1)"
   default     = 1
 }
+
+variable "database_service_instance_id" {
+  type = string
+  description = "the service_instance_id of the database to bind to the backend app"
+  default = ""
+}
