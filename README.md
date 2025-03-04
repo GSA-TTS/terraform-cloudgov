@@ -184,7 +184,7 @@ There are also code changes required to take advantage of this module. Read more
 
 ```
 module "drupal" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//drupal"
+  source = "github.com/GSA-TTS/terraform-cloudgov//drupal?ref=v2.2.0"
 
   cf_org_name   = local.cf_org_name
   cf_space      = data.cloudfoundry_space.app_space
