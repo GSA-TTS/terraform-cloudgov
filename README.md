@@ -209,6 +209,8 @@ module "SpiffWorkflow" {
   source                         = ".github.com/GSA-TTS/terraform-cloudgov//spiffworkflow?ref=v2.3.0"
   cf_org_name                    = var.cf_org_name
   cf_space_name                  = var.cf_space_name
+  # You must have a valid git key pairing. Generate with ssh-keygen -t rsa -b 4096 -C "my-git@email", and add the
+  # public key to https://github.com/settings/keys. var.process_models_ssh_key is the private key.
   process_models_ssh_key         = var.process_models_ssh_key
   database_service_instance_name = "spiffworkflow-db"
   tags                           = ["SpiffWorkflow"]
