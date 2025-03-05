@@ -11,6 +11,9 @@ variables {
   backend_image                  = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-backend:latest"
   frontend_image                 = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-frontend:latest"
   connector_image                = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-connector:latest"
+  backend_image_name             = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-backend"
+  frontend_image_name            = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-frontend"
+  connector_image_name           = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-connector"
   health_check_endpoint          = "/api/v1.0/status"
 }
 
@@ -57,5 +60,20 @@ run "test_spiff_images" {
   assert {
     condition     = data.docker_registry_image.connector.name == var.connector_image
     error_message = "Connector docker image data name is passed directly in as var.connector_image"
+  }
+}
+
+run "test_spiff_sha" {
+  assert {
+    condition     = cloudfoundry_app.backend.docker_image == "${var.backend_image_name}@${data.docker_registry_image.backend.sha256_digest}"
+    error_message = "Backend docker image is derived from the image_location@sha256"
+  }
+  assert {
+    condition     = cloudfoundry_app.frontend.docker_image == "${var.frontend_image_name}@${data.docker_registry_image.frontend.sha256_digest}"
+    error_message = "Frontend docker image is derived from the image_location@sha256"
+  }
+  assert {
+    condition     = cloudfoundry_app.connector.docker_image == "${var.connector_image_name}@${data.docker_registry_image.connector.sha256_digest}"
+    error_message = "Connector docker image is derived from the image_location@sha256"
   }
 }
