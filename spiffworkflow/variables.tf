@@ -123,8 +123,7 @@ variable "frontend_instances" {
   default     = 1
 }
 
-variable "database_service_instance_id" {
-  type = string
-  description = "the service_instance_id of the database to bind to the backend app"
-  default = ""
+variable "database_service_instance_name" {
+  type        = string
+  description = "the service name of the database to bind to the backend app"
 }

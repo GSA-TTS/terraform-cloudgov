@@ -98,7 +98,7 @@ resource "cloudfoundry_app" "backend" {
   health_check_http_endpoint = "/api/v1.0/status"
   service_bindings = [
     # { service_instance = cloudfoundry_service_instance.database.name }
-    { service_instance = var.database_service_instance_id }
+    { service_instance = var.database_service_instance_name }
   ]
   routes = [{
     route    = local.backend_route
