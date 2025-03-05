@@ -202,6 +202,28 @@ module "drupal" {
 }
 ```
 
+### SpiffWorkflow
+Spiff Workflow is a workflow engine implemented in pure Python. Using BPMN will allow non-developers to describe complex workflow processes in a visual diagram, coupled with a powerful python script engine that works seamlessly within the diagrams. SpiffWorkflow can parse these diagrams and execute them. The ability for businesses to create clear, coherent diagrams that drive an application has far reaching potential. More information can be found on the creators [github page](https://github.com/sartography/SpiffWorkflow).
+```
+module "SpiffWorkflow" {
+  source                         = ".github.com/GSA-TTS/terraform-cloudgov//spiffworkflow?ref=v2.3.0"
+  cf_org_name                    = var.cf_org_name
+  cf_space_name                  = var.cf_space_name
+  process_models_ssh_key         = var.process_models_ssh_key
+  database_service_instance_name = "spiffworkflow-db"
+  tags                           = ["SpiffWorkflow"]
+  depends_on                     = [module.Database]
+}
+
+module "Database" {
+  source        = "github.com/gsa-tts/terraform-cloudgov//database?ref=v2.2.0"
+  cf_space_id   = data.cloudfoundry_space.space.id
+  name          = "my-db-name"
+  tags          = ["rds", "SpiffWorkflow"]
+  rds_plan_name = "small-psql"
+}
+```
+
 ## Testing
 
 
