@@ -60,7 +60,7 @@ variable "process_models_ssh_key" {
 variable "source_branch_for_example_models" {
   type        = string
   description = "branch for reading process models"
-  default     = "main"
+  default     = "process-models-playground"
 }
 
 variable "target_branch_for_saving_changes" {

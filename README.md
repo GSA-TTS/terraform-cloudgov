@@ -213,7 +213,8 @@ module "SpiffWorkflow" {
   # public key to https://github.com/settings/keys. var.process_models_ssh_key is the private key. When you store process_models_ssh_key
   # in a .tfvars, ensure that the file format of the .tfvars file is in "LF" End Of Line Sequence.
   process_models_ssh_key           = var.process_models_ssh_key
-  # target_branch_for_saving_changes = "" # This should be an existing branch in the model repo. Saved changes will be pushed here.
+  # source_branch_for_example_models = "" # This should be a branch (non-main), to load the examples. Otherwise, edits will be pushed directly to main
+  # target_branch_for_saving_changes = "" # This should be an existing branch in the model repo. New models will be pushed here.
   database_service_instance_name   = "spiffworkflow-db"
   tags                             = ["SpiffWorkflow"]
   depends_on                       = [module.Database]
