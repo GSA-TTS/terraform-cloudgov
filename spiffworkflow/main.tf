@@ -95,12 +95,12 @@ resource "cloudfoundry_app" "backend" {
     SPIFFWORKFLOW_BACKEND_DATABASE_TYPE : "postgres"
     SPIFFWORKFLOW_BACKEND_ENV : "local_docker"
     SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED : "true"
-    SPIFFWORKFLOW_BACKEND_GIT_COMMIT_ON_SAVE : "true"
-    SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL : var.process_models_repository
-    SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH : var.process_models_publish_branch
 
     # This branch needs to exist, otherwise we can't clone it at startup and startup fails
-    SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH : var.process_models_source_branch
+    SPIFFWORKFLOW_BACKEND_GIT_COMMIT_ON_SAVE : "true"
+    SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL : var.process_models_repository
+    SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH : var.target_branch_for_saving_changes
+    SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH : var.source_branch_for_example_models
     SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY : var.process_models_ssh_key
     SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA : "false"
     SPIFFWORKFLOW_BACKEND_LOG_LEVEL : "INFO"

@@ -43,7 +43,7 @@ variable "tags" {
 variable "process_models_repository" {
   type        = string
   description = "git repository with process models (for read-write, use SSH-style 'git@github.com:...' and supply your ssh_key)"
-  default     = "https://github.com/GSA-TTS/gsa-process-models.git"
+  default     = "git@github.com:GSA-TTS/gsa-process-models.git"
 }
 
 variable "process_models_ssh_key" {
@@ -57,16 +57,16 @@ variable "process_models_ssh_key" {
   # -----END OPENSSH PRIVATE KEY-----
 }
 
-variable "process_models_source_branch" {
+variable "source_branch_for_example_models" {
   type        = string
   description = "branch for reading process models"
   default     = "main"
 }
 
-variable "process_models_publish_branch" {
+variable "target_branch_for_saving_changes" {
   type        = string
   description = "branch for publishing process model changes"
-  default     = "publish-branch"
+  default     = "publish-staging-branch"
 }
 
 variable "backend_memory" {
