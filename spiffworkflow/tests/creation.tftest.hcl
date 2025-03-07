@@ -1,20 +1,23 @@
 mock_provider "cloudfoundry" {}
 
 variables {
-  cf_org_name                    = "gsa-tts-devtools-prototyping"
-  cf_space_name                  = "terraform-cloudgov-ci-tests"
-  process_models_ssh_key         = ""
-  database_service_instance_name = "spiffworkflow-db"
-  backend_name                   = "spiffworkflow-backend"
-  frontend_name                  = "spiffworkflow-frontend"
-  connector_name                 = "spiffworkflow-connector"
-  backend_image                  = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-backend:latest"
-  frontend_image                 = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-frontend:latest"
-  connector_image                = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-connector:latest"
-  backend_image_name             = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-backend"
-  frontend_image_name            = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-frontend"
-  connector_image_name           = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-connector"
-  health_check_endpoint          = "/api/v1.0/status"
+  cf_org_name                      = "gsa-tts-devtools-prototyping"
+  cf_space_name                    = "terraform-cloudgov-ci-tests"
+  process_models_ssh_key           = ""
+  database_service_instance_name   = "spiffworkflow-db"
+  backend_name                     = "spiffworkflow-backend"
+  frontend_name                    = "spiffworkflow-frontend"
+  connector_name                   = "spiffworkflow-connector"
+  backend_image                    = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-backend:latest"
+  frontend_image                   = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-frontend:latest"
+  connector_image                  = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-connector:latest"
+  backend_image_name               = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-backend"
+  frontend_image_name              = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-frontend"
+  connector_image_name             = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-connector"
+  health_check_endpoint            = "/api/v1.0/status"
+  process_models_repository        = "git@github.com:GSA-TTS/gsa-process-models.git"
+  source_branch_for_example_models = "process-models-playground"
+  target_branch_for_saving_changes = "publish-staging-branch"
 }
 
 run "test_spiff_instances" {
