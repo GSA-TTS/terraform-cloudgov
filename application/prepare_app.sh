@@ -5,12 +5,6 @@ set -ex
 
 eval "$(jq -r '@sh "GITREF=\(.gitref) ORG=\(.org) REPO=\(.repo) SRC_FOLDER=\(.src_folder)"')"
 
-# Useful for debugging the script. Comment out the eval if running for debugging purposes
-# GITREF="refs/heads/<branch-name>"
-# ORG="gsa-tts"
-# REPO="fac"
-# SRC_FOLDER="backend"
-
 popdir=$(pwd)
 
 # Portable construct so this will work everywhere
