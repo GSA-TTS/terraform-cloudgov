@@ -8,10 +8,9 @@ variable "cf_space_name" {
   description = "cloud.gov space name"
 }
 
-variable "environment_json" {
-  description = "A json string of environment values."
-  type        = string
-  default     = null
+variable "environment_map" {
+  description = "A map of environment values."
+  type        = map(string)
 }
 
 variable "buildpacks" {
@@ -52,8 +51,24 @@ variable "app_memory" {
   default     = "2048M"
 }
 
+variable "disk_space" {
+  type = string
+  description = "Memory to allocate for disk to app, including unit"
+  default = "2048M"
+}
+
 variable "instances" {
   type        = number
   description = "The number of instances for the application"
   default     = 1
+}
+
+variable "public_s3_name" {
+  type        = string
+  description = "The name of the public s3 bucket to bind to the app (eg. staticfiles storage)"
+}
+
+variable "db_name" {
+  type        = string
+  description = "The name of the db to bind to the app"
 }

@@ -28,6 +28,7 @@ resource "cloudfoundry_app" "application" {
 
   buildpacks = var.buildpacks
   memory     = var.app_memory
+  disk_quota = var.disk_space
   instances  = var.instances
   strategy   = "rolling"
 
@@ -35,12 +36,11 @@ resource "cloudfoundry_app" "application" {
     route = local.app_route
   }]
 
-  # service_bindings = [
-  #   { params = var.service_bindings }
-  # ]
+  service_bindings = [
+    { service_instance = var.db_name },
+    { service_instance = var.public_s3_name },
+  ]
 
-  environment = {
-    params = var.environment_json
-  }
+  environment = merge({}, var.environment_map)
 }
 
