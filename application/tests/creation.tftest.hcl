@@ -9,7 +9,6 @@ variables {
   github_repo_name     = "fac"
   src_code_folder_name = "backend"
   buildpacks           = ["https://github.com/cloudfoundry/apt-buildpack.git", "https://github.com/cloudfoundry/python-buildpack.git"]
-
 }
 
 #TODO: More Testing
@@ -21,6 +20,6 @@ run "application_tests" {
   }
   assert {
     condition     = "${var.name}.app.cloud.gov" == output.endpoint
-    error_message = "Endpoint output must match the clamav route endpoint"
+    error_message = "Endpoint output must match the app route endpoint"
   }
 }
