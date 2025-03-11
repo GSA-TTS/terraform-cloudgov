@@ -14,13 +14,12 @@ cd "$tmpdir"
 
 # Grab a copy of the zip file for the specified ref
 curl -s -L "https://github.com/${ORG}/${REPO}/archive/${GITREF}.zip" --output local.zip
-branch=$(echo "$GITREF" | cut -f3 -d"/")
 
-zip_folder=$(unzip -l local.zip | awk '/\/$/ {print $4}' | awk -F'/' '{print $1}' | cut -f1 -d"-" | sort -u)
+zip_folder=$(unzip -l local.zip | awk '/\/$/ {print $4}' | awk -F'/' '{print $1}' | sort -u)
 # Zip up just the $REPO-$branch/ subdirectory for pushing
 # Before zip stage, run [ npm ci --production | npm run build ] in /backend/ to get the compiled assets for the site in /static/compiled/
-unzip -q -u local.zip \*"$zip_folder-$branch/$SRC_FOLDER/*"\*
-cd "${tmpdir}/$zip_folder-$branch/$SRC_FOLDER/" &&
+unzip -q -u local.zip \*"$zip_folder/$SRC_FOLDER/*"\*
+cd "${tmpdir}/$zip_folder/$SRC_FOLDER/" &&
 npm ci --production --silent &&
 npm run build > '/dev/null' 2>&1 &&
 zip -r -o -X "${popdir}/app.zip" ./ > /dev/null
