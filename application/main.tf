@@ -36,11 +36,7 @@ resource "cloudfoundry_app" "application" {
     route = local.app_route
   }]
 
-  service_bindings = [
-    { service_instance = var.db_name },
-    { service_instance = var.public_s3_name },
-  ]
-
-  environment = merge({}, var.environment_map)
+  service_bindings = jsondecode(var.service_bindings)
+  environment = merge({}, var.environment_variables)
 }
 

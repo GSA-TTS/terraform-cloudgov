@@ -8,9 +8,14 @@ variable "cf_space_name" {
   description = "cloud.gov space name"
 }
 
-variable "environment_map" {
+variable "environment_variables" {
   description = "A map of environment values."
   type        = map(string)
+}
+
+variable "service_bindings" {
+  description = "A json of service binding names."
+  type        = string
 }
 
 variable "buildpacks" {
@@ -61,14 +66,4 @@ variable "instances" {
   type        = number
   description = "The number of instances for the application"
   default     = 1
-}
-
-variable "public_s3_name" {
-  type        = string
-  description = "The name of the public s3 bucket to bind to the app (eg. staticfiles storage)"
-}
-
-variable "db_name" {
-  type        = string
-  description = "The name of the db to bind to the app"
 }
