@@ -240,6 +240,60 @@ module "Database" {
 }
 ```
 
+### Application
+Creates and deploys an applications source to cloudfoundry. You must have a valid file structure for deploying to cloud.gov in your repository to deploy the application. This module would replace a traditional "manifest.yml" deployment.
+
+**NOTE:**
+1. `DISABLE_COLLECTSTATIC = 1` has been set as an environment variable in the example. It is recommended to build your staticfiles and run collectstatic in a `.profile`.
+2. `service_bindings` will be sent in with a `jsonencode([])` string, and then terraform will `jsondecode()` the string into the proper formatting. Due to this, all services that _would be bound_ to the running app should be deployed first, with a `depends_on = []` containing all references to the services, so the app cannot deploy without those services existing first. This module does not bind anything by default, so all services (database, s3, creds service, etc) and apps (logshipper, proxy, etc) that _need to be bound_, should be bound like so..
+```tf
+module "Application" {
+  service_bindings = jsonencode([
+    { service_instance = "a_service_name_to_bind" },
+    { service_instance = "another_service_name_to_bind" },
+    { service_instance = "an_app_name_to_bind" },
+    # [...]
+    { service_instance = "yet_another_service_name_to_bind" }
+  ])
+  # [...]
+  depends_on = [ module.a_service, module.another_service, module.an_app.name, module.yet_another_service ]
+}
+```
+
+```
+module "Application" {
+  source               = "github.com/GSA-TTS/terraform-cloudgov//application?ref=v2.4.0"
+  cf_org_name          = var.cf_org_name
+  cf_space_name        = var.cf_space_name
+  name                 = local.app_name
+  branch_name          = "main"
+  github_org_name      = "gsa-tts"
+  github_repo_name     = ""
+  src_code_folder_name = "" # folder for /home/vcap/app
+  buildpacks           = ["https://github.com/cloudfoundry/apt-buildpack.git", "https://github.com/cloudfoundry/python-buildpack.git"] # examples
+  environment_variables = {
+    DISABLE_COLLECTSTATIC = 1
+    ENV                   = "SANDBOX"
+    KEY                   = "VALUE"
+    ALLOWED_HOSTS         = "${local.app_name}.app.cloud.gov"
+    REQUESTS_CA_BUNDLE    = "/etc/ssl/certs/ca-certificates.crt"
+  }
+  service_bindings = jsonencode([
+    {
+      service_instance = "${local.service_binding_1_name}"
+    },
+    {
+      service_instance = "${local.service_binding_2_name}"
+    },
+    {
+      service_instance = "${local.service_binding_N_name}"
+    }
+  ])
+  depends_on = [ ] # modules that will be bound should be built first, with the app deploy depending on their successful deployment
+}
+```
+
+
 ## Testing
 
 
