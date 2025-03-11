@@ -47,3 +47,15 @@ run "application_tests" {
     error_message = "The application should have services bound by default"
   }
 }
+
+run "src_tests" {
+  assert {
+    condition     = cloudfoundry_app.application.path == "${path.module}/${data.external.app_zip.result.path}"
+    error_message = "The path for the zip should be in the module path"
+  }
+  assert {
+    condition     = cloudfoundry_app.application.source_code_hash == filesha256("${path.module}/${data.external.app_zip.result.path}")
+    error_message = "The hash for the zip should be a valid sha256"
+  }
+
+}
