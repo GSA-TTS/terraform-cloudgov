@@ -57,9 +57,9 @@ variable "app_memory" {
 }
 
 variable "disk_space" {
-  type = string
+  type        = string
   description = "Memory to allocate for disk to app, including unit"
-  default = "2048M"
+  default     = "2048M"
 }
 
 variable "instances" {

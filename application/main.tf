@@ -37,6 +37,6 @@ resource "cloudfoundry_app" "application" {
   }]
 
   service_bindings = jsondecode(var.service_bindings)
-  environment = merge({}, var.environment_variables)
+  environment      = merge({}, var.environment_variables)
 }
 
