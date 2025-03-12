@@ -210,9 +210,9 @@ module "drupal" {
 Spiff Workflow is a workflow engine implemented in pure Python. Using BPMN will allow non-developers to describe complex workflow processes in a visual diagram, coupled with a powerful python script engine that works seamlessly within the diagrams. SpiffWorkflow can parse these diagrams and execute them. The ability for businesses to create clear, coherent diagrams that drive an application has far reaching potential. More information can be found on the creators [github page](https://github.com/sartography/SpiffWorkflow).
 
 **NOTE:**
-You must have a valid git key pairing. Generate with ssh-keygen -t rsa -b 4096 -C "my-git@email", and add the public key to **https://github.com/settings/keys**. var.process_models_ssh_key is the private key. When you store process_models_ssh_key in a .tfvars, ensure that the file format of the .tfvars file is in "LF" End Of Line Sequence. **This key is a profile level SSH key, and does not appear to work at the repo level**
-
-Ensure that `cf bind-security-group public_networks_egress ORGNAME --lifecycle running --space SPACENAME` has been set for your target space.
+1. You must have a valid git key pairing. Generate with ssh-keygen -t rsa -b 4096 -C "my-git@email", and add the public key to **https://github.com/settings/keys**. var.process_models_ssh_key is the private key. When you store process_models_ssh_key in a .tfvars, ensure that the file format of the .tfvars file is in "LF" End Of Line Sequence. **This key is a profile level SSH key, and does not appear to work at the repo level**
+2. Ensure that `cf bind-security-group public_networks_egress ORGNAME --lifecycle running --space SPACENAME` has been set for your target space.
+3. Ensure that your space has the `public_networks_egress`security group.
 ```
 module "SpiffWorkflow" {
   source        = ".github.com/GSA-TTS/terraform-cloudgov//spiffworkflow?ref=v2.3.0"
