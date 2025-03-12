@@ -8,10 +8,6 @@ locals {
   username = random_uuid.username.result
   password = random_password.password.result
 
-  # backend_url   = "https://${local.username}:${local.password}@${local.backend_route}"
-  # connector_url = "https://${local.connector_route}:61443"
-  # frontend_url  = "https://${local.username}:${local.password}@${local.frontend_route}"
-
   backend_url   = "https://${local.backend_route}"
   connector_url = "https://${local.connector_route}:61443"
   frontend_url  = "https://${local.frontend_route}"
