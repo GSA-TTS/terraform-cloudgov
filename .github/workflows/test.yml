@@ -37,7 +37,6 @@ jobs:
       TERRAFORM_PRE_RUN: |
         apt-get update
         apt-get install -y zip
-        apt-get install -y npm
     steps:
       - uses: actions/checkout@v4
       - name: terraform test ${{ matrix.module }}
