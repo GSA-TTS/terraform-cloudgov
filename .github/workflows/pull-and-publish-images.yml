@@ -13,6 +13,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      security-events: write
       actions: read
     env:
       GH_REPO: gsa-tts/terraform-cloudgov
