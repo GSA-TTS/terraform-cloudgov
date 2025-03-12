@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Exit if any step fails
-set -ex
+set -e
 
 eval "$(jq -r '@sh "GITREF=\(.gitref) ORG=\(.org) REPO=\(.repo) SRC_FOLDER=\(.src_folder)"')"
 
@@ -20,7 +20,7 @@ zip_folder=$(unzip -l local.zip | awk '/\/$/ {print $4}' | awk -F'/' '{print $1}
 # Before zip stage, run [ npm ci --production | npm run build ] in /backend/ to get the compiled assets for the site in /static/compiled/
 unzip -q -u local.zip \*"$zip_folder/$SRC_FOLDER/*"\*
 cd "${tmpdir}/$zip_folder/$SRC_FOLDER/" &&
-npm ci --production --silent &&
+npm ci --production --silent --no-progress &&
 npm run build > '/dev/null' 2>&1 &&
 zip -r -o -X "${popdir}/app.zip" ./ > /dev/null
 
