@@ -26,5 +26,5 @@ zip -r -o -X "${popdir}/app.zip" ./ > /dev/null
 
 # Tell Terraform where to find it
 cat << EOF
-{ "path": "app.zip" }
+{ "app": "app.zip", "path": "${popdir}" }
 EOF
