@@ -23,8 +23,8 @@ resource "cloudfoundry_app" "application" {
   space_name = var.cf_space_name
   org_name   = var.cf_org_name
 
-  path             = "${data.external.app_zip.result.path}/${data.external.app_zip.result.app}"
-  source_code_hash = filesha256("${data.external.app_zip.result.path}/${data.external.app_zip.result.app}")
+  path             = "${path.module}/${data.external.app_zip.result.path}"
+  source_code_hash = filesha256("${path.module}/${data.external.app_zip.result.path}")
 
   buildpacks = var.buildpacks
   memory     = var.app_memory

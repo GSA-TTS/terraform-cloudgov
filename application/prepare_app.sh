@@ -5,7 +5,7 @@ set -e
 
 eval "$(jq -r '@sh "GITREF=\(.gitref) ORG=\(.org) REPO=\(.repo) SRC_FOLDER=\(.src_folder)"')"
 
-popdir=$(pwd)
+popdir="$(pwd)"
 
 # Portable construct so this will work everywhere
 # https://unix.stackexchange.com/a/84980
@@ -18,13 +18,13 @@ curl -s -L "https://github.com/${ORG}/${REPO}/archive/${GITREF}.zip" --output lo
 zip_folder=$(unzip -l local.zip | awk '/\/$/ {print $4}' | awk -F'/' '{print $1}' | sort -u)
 # Zip up just the $REPO-$branch/ subdirectory for pushing
 # Before zip stage, run [ npm ci --production | npm run build ] in /backend/ to get the compiled assets for the site in /static/compiled/
-unzip -q -u local.zip \*"$zip_folder/$SRC_FOLDER/*"\*
-cd "${tmpdir}/$zip_folder/$SRC_FOLDER/" &&
-npm ci --production --silent --no-progress &&
-npm run build > '/dev/null' 2>&1 &&
-zip -r -o -X "${popdir}/app.zip" ./ > /dev/null
+unzip -q -u local.zip "$zip_folder/$SRC_FOLDER/*"
+cd "$zip_folder/$SRC_FOLDER/" &&
+# npm ci --production --silent --no-progress &&
+# npm run build > '/dev/null' 2>&1 &&
+zip -q -r -o -X "${popdir}/app.zip" ./
 
 # Tell Terraform where to find it
 cat << EOF
-{ "app": "app.zip", "path": "${popdir}" }
+{ "path": "app.zip" }
 EOF
