@@ -13,6 +13,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      actions: read
     env:
       GH_REPO: gsa-tts/terraform-cloudgov
     strategy:
@@ -32,10 +33,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Pull Docker Image
         run: docker pull ${{ matrix.image.name }}
 
@@ -52,7 +49,7 @@ jobs:
           scan-type: 'image'
           hide-progress: true
           format: 'sarif'
-          output: 'trivy-results.sarif'
+          output: '${{ matrix.image.short-name }}-results.sarif'
           exit-code: 0
           severity: 'CRITICAL,HIGH'
           scanners: 'vuln'
@@ -62,7 +59,7 @@ jobs:
       - name: Upload Trivy scan results to GitHub Security tab for Third Party Images
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: '${{ matrix.image.short-name }}-results.sarif'
 
       - name: Tag Image
         run: |
