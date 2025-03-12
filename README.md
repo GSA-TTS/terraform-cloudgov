@@ -214,7 +214,7 @@ Spiff Workflow is a workflow engine implemented in pure Python. Using BPMN will 
 2. Ensure that your space has the `public_networks_egress`security group if you are not using a proxy.
 ```
 module "SpiffWorkflow" {
-  source        = ".github.com/GSA-TTS/terraform-cloudgov//spiffworkflow?ref=v2.3.0"
+  source        = "github.com/GSA-TTS/terraform-cloudgov//spiffworkflow?ref=v2.3.0"
   cf_org_name   = var.cf_org_name
   cf_space_name = var.cf_space_name
 
