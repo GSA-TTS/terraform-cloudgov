@@ -293,9 +293,7 @@ module "Application" {
 }
 ```
 
-
 ## Testing
-
 
 > [!WARNING]
 > Tests provision resources in the real world when not using `mock_provider`! Take care that `CF_USER`/`CF_PASSWORD` are set to an account in a suitable non-production space. If other providers, such as the AWS provider, are used, ensure the same care is taken with their credentials in your shell before running `terraform test`.
