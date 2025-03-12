@@ -48,6 +48,7 @@ variable "process_models_repository" {
 variable "process_models_ssh_key" {
   type        = string
   description = "Private SSH key with read/write access to var.process_models_repository repository"
+  sensitive   = true
   # Should look like:
   # -----BEGIN OPENSSH PRIVATE KEY-----
   # ...
