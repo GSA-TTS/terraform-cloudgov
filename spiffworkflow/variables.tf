@@ -42,12 +42,12 @@ variable "tags" {
 
 variable "process_models_repository" {
   type        = string
-  description = "git repository with process models (for read-write, use SSH-style 'git@github.com:...' and supply your ssh_key)"
+  description = "Git repository with process models (use SSH-style 'git@github.com:...')"
 }
 
 variable "process_models_ssh_key" {
   type        = string
-  description = "private SSH key (only needed for read-write to SSH-style 'git@github.com:...' repositories)"
+  description = "Private SSH key with read/write access to var.process_models_repository repository"
   # Should look like:
   # -----BEGIN OPENSSH PRIVATE KEY-----
   # ...
