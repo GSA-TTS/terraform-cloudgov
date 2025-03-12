@@ -15,8 +15,10 @@ cd "$tmpdir"
 # Grab a copy of the zip file for the specified ref
 curl -s -L "https://github.com/${ORG}/${REPO}/archive/${GITREF}.zip" --output local.zip
 
+# Get the folder that curl will download, usually looks like {repo_name}-{branch_name}/
 zip_folder=$(unzip -l local.zip | awk '/\/$/ {print $4}' | awk -F'/' '{print $1}' | sort -u)
-# Zip up just the $REPO-$branch/ subdirectory for pushing
+
+# Zip up just the {repo_name}-{branch_name}/{src_code_folder}/ subdirectory for pushing
 unzip -q -u local.zip "$zip_folder/$SRC_FOLDER/*"
 cd "$zip_folder/$SRC_FOLDER/" &&
 zip -q -r -o -X "${popdir}/app.zip" ./
