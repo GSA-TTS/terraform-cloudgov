@@ -23,8 +23,6 @@ variables {
   }
 }
 
-#TODO: More Testing
-
 run "application_tests" {
   assert {
     condition     = output.app_id == cloudfoundry_app.application.id

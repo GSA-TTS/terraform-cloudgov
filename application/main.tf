@@ -1,10 +1,11 @@
 locals {
-  app_route = "${var.name}.app.cloud.gov"
-  gitref    = "refs/heads/${var.branch_name}"
-  org_name  = var.github_org_name
-  repo_name = var.github_repo_name
-  src       = var.src_code_folder_name
-  app_id    = cloudfoundry_app.application.id
+  app_route      = "${var.name}.app.cloud.gov"
+  gitref         = "refs/heads/${var.branch_name}"
+  org_name       = var.github_org_name
+  repo_name      = var.github_repo_name
+  src            = var.src_code_folder_name
+  app_id         = cloudfoundry_app.application.id
+  bound_services = var.service_bindings
 }
 
 data "external" "app_zip" {
