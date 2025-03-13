@@ -13,9 +13,27 @@ variable "environment_variables" {
   type        = map(string)
 }
 
+# Example:
+# service_bindings = {
+#   my-service,
+#   (module.my-other-service.name),
+#   yet-another-service = <<-EOT
+#      {
+#        "astring"     : "foo",
+#        "anarray"     : ["bar", "baz"],
+#        "anarrayobjs" : [
+#          {
+#            "name": "bat",
+#            "value": "boz"
+#        ],
+#      }
+#      EOT
+#   }
+# }
 variable "service_bindings" {
-  description = "A json of service binding names."
-  type        = string
+  description = "A map of service instance name to JSON parameter string."
+  type        = map(string)
+  default     = {}
 }
 
 variable "buildpacks" {

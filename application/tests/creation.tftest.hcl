@@ -9,14 +9,21 @@ variables {
   github_repo_name     = "fac"
   src_code_folder_name = "backend"
   buildpacks           = ["https://github.com/cloudfoundry/apt-buildpack.git", "https://github.com/cloudfoundry/python-buildpack.git"]
-  service_bindings = jsonencode([
-    {
-      service_instance = "my-service-instance"
-    },
-    {
-      service_instance = "my-service-instance-2"
-    }
-  ])
+  service_bindings = {
+    "my-service_instance" = ""
+    "my-service-instance-with-params" = <<-EOT
+      {
+        "astring"     : "foo",
+        "anarray"     : ["bar", "baz"],
+        "anarrayobjs" : [
+          {
+            "name": "bat",
+            "value": "boz"
+          }
+        ]
+      }
+    EOT
+  }
   environment_variables = {
     ENV_VAR  = "1"
     ENV_VAR2 = "2"

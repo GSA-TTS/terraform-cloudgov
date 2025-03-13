@@ -1,11 +1,10 @@
 locals {
-  app_route      = "${var.name}.app.cloud.gov"
-  gitref         = "refs/heads/${var.branch_name}"
-  org_name       = var.github_org_name
-  repo_name      = var.github_repo_name
-  src            = var.src_code_folder_name
-  app_id         = cloudfoundry_app.application.id
-  bound_services = var.service_bindings
+  app_route = "${var.name}.app.cloud.gov"
+  gitref    = "refs/heads/${var.branch_name}"
+  org_name  = var.github_org_name
+  repo_name = var.github_repo_name
+  src       = var.src_code_folder_name
+  app_id    = cloudfoundry_app.application.id
 }
 
 data "external" "app_zip" {
@@ -37,7 +36,12 @@ resource "cloudfoundry_app" "application" {
     route = local.app_route
   }]
 
-  service_bindings = jsondecode(var.service_bindings)
-  environment      = merge({}, var.environment_variables)
+  service_bindings = [
+    for service_name, params in var.service_bindings : {
+      service_instance = service_name
+      params           = ( params == "" ? "{}" : params ) # Empty string -> Minimal JSON
+    }
+  ]
+  environment = merge({}, var.environment_variables)
 }
 

@@ -7,5 +7,5 @@ output "endpoint" {
 }
 
 output "service_bindings" {
-  value = local.bound_services
+  value = var.service_bindings
 }
