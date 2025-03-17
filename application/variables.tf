@@ -64,8 +64,12 @@ variable "github_repo_name" {
 }
 
 variable "src_code_folder_name" {
-  description = "The name of the folder that contains your src code. Generally the folder that would contain your Procfile. This will be used as the apps /app/ dir."
+  description = "The name of the folder that contains your src code without a trailing '/'. Generally the folder that would contain your Procfile. This will be used as the apps /app/ dir."
   type        = string
+  # Examples:
+  # "" -> Project to deploy is in the root of the repo
+  # "backend" -> Project to deploy is in the backend/ directory
+  # "backend/app" -> Project to deploy is in the backend/app directory
 }
 
 variable "app_memory" {

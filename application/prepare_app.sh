@@ -18,10 +18,17 @@ curl -s -L "https://github.com/${ORG}/${REPO}/archive/${GITREF}.zip" --output lo
 # Get the folder that curl will download, usually looks like {repo_name}-{branch_name}/
 zip_folder=$(unzip -l local.zip | awk '/\/$/ {print $4}' | awk -F'/' '{print $1}' | sort -u)
 
-# Zip up just the {repo_name}-{branch_name}/{src_code_folder}/ subdirectory for pushing
-unzip -q -u local.zip "$zip_folder/$SRC_FOLDER/*"
-cd "$zip_folder/$SRC_FOLDER/" &&
-zip -q -r -o -X "${popdir}/app.zip" ./
+# Zip up just the app for pushing under different circumstances.
+# if $SRC_FOLDER = "", then we want to look for the app in the root of the repo {repo_name}-{branch_name}/.
+if [ -z "$SRC_FOLDER" ]; then
+  unzip -q -u local.zip "$zip_folder/*"
+  cd "$zip_folder/" && zip -q -r -o -X "${popdir}/app.zip" ./
+else
+# if $SRC_FOLDER = "some/folder" then we want to look for the app in that path {repo_name}-{branch_name}/{src_code_folder}/.
+  unzip -q -u local.zip "$zip_folder/$SRC_FOLDER/*"
+  cd "$zip_folder/$SRC_FOLDER/" && zip -q -r -o -X "${popdir}/app.zip" ./
+fi
+
 
 # Tell Terraform where to find it
 cat << EOF
