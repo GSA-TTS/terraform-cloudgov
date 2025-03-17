@@ -288,7 +288,7 @@ module "Application" {
   branch_name          = "main"
   github_org_name      = "gsa-tts"
   github_repo_name     = ""
-  src_code_folder_name = "" # folder for /home/vcap/app
+  src_code_folder_name = "" # folder for /home/vcap/app. See variables.tf for examples.
   buildpacks           = ["https://github.com/cloudfoundry/apt-buildpack.git", "https://github.com/cloudfoundry/python-buildpack.git"] # examples
   environment_variables = {
     DISABLE_COLLECTSTATIC = 1
