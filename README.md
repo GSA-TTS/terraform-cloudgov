@@ -251,7 +251,7 @@ Creates and deploys an application from source to Cloud Foundry. You must have a
    module does not create or bind any service instances, so all services
    (database, s3, creds service, etc) should be specified. All services that
    should be bound to the running app must be deployed before the application
-   module is deployed. Ensure dependencies exist where they're needed. For example: 
+   module is deployed. Ensure dependencies exist where they're needed. For example:
    * You can make a dependency between the application and a service
    instance implicit by supplying a dynamic key based on an expression, eg `(module.servicename.attribute)`.
       ```tf
@@ -273,7 +273,7 @@ Creates and deploys an application from source to Cloud Foundry. You must have a
         }
 
         # [...]
-        depends_on = [ 
+        depends_on = [
           module.a_service    # modulce creates service "a_service" first
         ]
       }
@@ -300,7 +300,7 @@ module "Application" {
   service_bindings = {
       (var.service_1_name),
       (var.service_2_name) = "...JSON string..."
-    }
+  }
 }
 ```
 

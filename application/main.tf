@@ -39,7 +39,7 @@ resource "cloudfoundry_app" "application" {
   service_bindings = [
     for service_name, params in var.service_bindings : {
       service_instance = service_name
-      params           = ( params == "" ? "{}" : params ) # Empty string -> Minimal JSON
+      params           = (params == "" ? "{}" : params) # Empty string -> Minimal JSON
     }
   ]
   environment = merge({}, var.environment_variables)
