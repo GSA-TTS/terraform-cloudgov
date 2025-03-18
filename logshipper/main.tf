@@ -128,7 +128,7 @@ resource "cloudfoundry_user_provided_service" "logshipper_creds" {
   tags = ["logshipper-creds"]
 }
 
-resource "cloudfoundry_user_provided_service" "logshipper_logshipper_new_relic_credentials" {
+resource "cloudfoundry_user_provided_service" "logshipper_new_relic_credentials" {
   provider = cloudfoundry-community
   name     = "logshipper-newrelic-creds"
   space    = data.cloudfoundry_space.space.id
