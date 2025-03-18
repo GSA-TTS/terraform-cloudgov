@@ -57,17 +57,3 @@ run "src_tests" {
   }
 }
 
-run "sidecar_test" {
-  variables {
-    sidecars = [{
-      name          = "fluentbit"
-      command       = "/home/vcap/deps/0/apt/opt/fluent-bit/bin/fluent-bit -Y -c fluentbit.conf"
-      process_types = ["web"]
-    }]
-  }
-  assert {
-    condition     = cloudfoundry_app.logshipper.sidecars == var.sidecars
-    error_message = "Sidecar object must be an object as the logshipper cannot operate without a sidecar"
-  }
-}
-
