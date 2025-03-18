@@ -302,6 +302,68 @@ module "Application" {
 }
 ```
 
+## Logshipper
+Creates a logshipper application with all necessary components. It **does not** create a network policy between itsself and your proxy, and does not bind itsself to your desired application. Since there is no terraform to do that binding at this time, you must either `cf bind-service <my-app> logdrain`, supply `logdrain` to your `manifest.yml` or supply `logdrain` to your `service_bindings = {}` for your application.
+
+- Logshipper Credentials, defined as `logshipper-creds` is populated as a random user/pass generated via terraform that signifies the `${HTTP_USER}` AND `${HTTP_PASS}` credential set for the `syslog_drain`
+- New Relic Credentials, defined as `logshipper-newrelic-creds` contains your New Relic License Key, and the FedRAMP endpoint for New Relic log API.
+- The s3 bucket, defined as `${var.name}-logs-storage` with a tag of `logshipper-s3` is a dedicated s3 bucket that's sole purpose is the ingest and storage of all `fluentbit` logs being sent.
+- The logdrain service, defined as `logdrain` is what is bound to the application, so that it may stream logs to the `logshipper` application. It consists of a `syslog_drain` uri.
+
+>[!NOTE]
+> For reasons that remain unknown, it may be necessary to restart the logshipper after binding to an application or your application deploys.
+> See this note [here](https://github.com/GSA-TTS/FAC/blob/575bc6f790841ab6bafb95e845c3fe3ad4428f6c/.github/workflows/deploy-application.yml#L107-L119)
+```tf
+module "logshipper" {
+  source      = "github.com/gsa-tts/terraform-cloudgov//logshipper?ref=v2.5.0"
+  name        = var.name
+  cf_org_name = var.cf_org_name
+  cf_space = {
+    id   = data.cloudfoundry_space.space.id
+    name = var.cf_space_name
+  }
+  logshipper_s3_name    = local.logshipper_storage_name
+  https_proxy_url       = var.https_proxy_url
+  new_relic_license_key = var.new_relic_license_key
+  depends_on = [module.logs-storage]
+}
+```
+
+> [!NOTE]
+> You must have a network policy between the logshipper application and the proxy so it can go through the proxy to send the logs into new relic.
+```tf
+resource "cloudfoundry_network_policy" "logshipper-network-policy" {
+  provider = cloudfoundry-community
+  policy {
+    source_app      = module.logshipper.app_id
+    destination_app = module.https-proxy.app_id
+    port            = "61443"
+    protocol        = "tcp"
+  }
+}
+```
+
+It is necessary to have cf8-cli as part of your terraform plan and terraform apply to run the `null_resource`[Github Workflow](https://github.com/GSA-TTS/terraform-cloudgov/blob/7ba931bbf2d618a7a39e34c1ada7289e515cbd04/.github/workflows/test.yml#L37)
+```sh
+curl -k -O -L https://github.com/cloudfoundry/cli/releases/download/v8.11.0/cf8-cli-installer_8.11.0_x86-64.deb
+apt-get install --assume-yes ./cf8-cli-installer_8.11.0_x86-64.deb
+
+cf api api.fr.cloud.gov
+cf auth ${{ secrets.CF_USER }} ${{ secrets.CF_PASSWORD }}
+```
+
+>[!NOTE]
+> By default, the s3 and binding of this service are not part of this module. Since there are issues with the terraform tests because of it.
+> The s3 and binding can be done in the same module reference. You can do this with either a `null_resource` that uses the `cf8-api` as this module does for the other services. See [logshipper-meta.sh](./logshipper/logshipper-meta.sh)/[null_resource on L76](./logshipper/main.tf)
+```tf
+module "logs-storage" {
+  source       = "github.com/gsa-tts/terraform-cloudgov//s3?ref=v2.2.0"
+  cf_space_id  = data.cloudfoundry_space.space.id
+  name         = local.logshipper_storage_name
+  s3_plan_name = "basic"
+  tags         = ["logshipper-s3"]
+```
+
 ## Testing
 
 > [!WARNING]
