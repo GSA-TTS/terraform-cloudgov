@@ -8,7 +8,7 @@ locals {
   domain       = cloudfoundry_route.logshipper_route.domain
   app_id       = cloudfoundry_app.logshipper.id
   logdrain_id  = cloudfoundry_user_provided_service.logdrain_service.id
-  route        = "${var.cf_space_name}-${var.name}.app.cloud.gov"
+  route        = "${var.cf_space.name}-${var.name}.app.cloud.gov"
 }
 
 data "cloudfoundry_domain" "public" {
@@ -23,16 +23,16 @@ resource "random_password" "password" {
 
 module "logs-storage" {
   source       = "github.com/gsa-tts/terraform-cloudgov//s3?ref=v2.2.0"
-  cf_space_id  = var.cf_space_id
+  cf_space_id  = var.cf_space.id
   name         = local.logshipper_storage_name
   s3_plan_name = "basic"
   tags         = ["logshipper-s3"]
 }
 
 resource "cloudfoundry_route" "logshipper_route" {
-  space  = var.cf_space_id
+  space  = var.cf_space.id
   domain = data.cloudfoundry_domain.public.id
-  host   = "${var.cf_space_name}-${var.name}"
+  host   = "${var.cf_space.name}-${var.name}"
   # Yields something like: dev-logshipper
 }
 
@@ -46,7 +46,7 @@ data "external" "logshipper_zip" {
 
 resource "cloudfoundry_app" "logshipper" {
   name       = var.name
-  space_name = var.cf_space_name
+  space_name = var.cf_space.name
   org_name   = var.cf_org_name
 
   buildpacks       = ["https://github.com/cloudfoundry/apt-buildpack.git", "nginx_buildpack"]
@@ -96,8 +96,12 @@ resource "cloudfoundry_app" "logshipper" {
 #     interpreter = ["/bin/bash", "-c"]
 #     command     = "./logshipper-meta.sh"
 #   }
+#   # https://github.com/hashicorp/terraform/issues/8266#issuecomment-454377049
+#   # A clever way to get this to run every time, otherwise we would be relying on
+#   # an md5 hash or some other check to force it to run when the plan runs.
 #   triggers = {
-#     md5 = "${filemd5("${path.module}/logshipper-meta.sh")}"
+#     always_run = "${timestamp()}"
+#     # md5 = "${filemd5("${path.module}/logshipper-meta.sh")}"
 #   }
 # }
 
@@ -112,7 +116,7 @@ resource "cloudfoundry_service_key" "logshipper-s3-service-key" {
 resource "cloudfoundry_user_provided_service" "logshipper_creds" {
   provider = cloudfoundry-community
   name     = "logshipper-creds"
-  space    = var.cf_space_id
+  space    = var.cf_space.id
   credentials = {
     "HTTP_USER" = local.username
     "HTTP_PASS" = local.password
@@ -123,7 +127,7 @@ resource "cloudfoundry_user_provided_service" "logshipper_creds" {
 resource "cloudfoundry_user_provided_service" "logshipper_new_relic_credentials" {
   provider = cloudfoundry-community
   name     = "logshipper-newrelic-creds"
-  space    = var.cf_space_id
+  space    = var.cf_space.id
   credentials = {
     "NEW_RELIC_LICENSE_KEY"   = var.new_relic_license_key
     "NEW_RELIC_LOGS_ENDPOINT" = var.new_relic_logs_endpoint
@@ -134,7 +138,7 @@ resource "cloudfoundry_user_provided_service" "logshipper_new_relic_credentials"
 resource "cloudfoundry_user_provided_service" "logdrain_service" {
   provider         = cloudfoundry-community
   name             = "logdrain"
-  space            = var.cf_space_id
+  space            = var.cf_space.id
   syslog_drain_url = local.syslog_drain
 }
 
