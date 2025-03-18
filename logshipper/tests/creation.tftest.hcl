@@ -8,8 +8,11 @@ provider "cloudfoundry-community" {
 }
 
 variables {
-  cf_org_name           = "gsa-tts-devtools-prototyping"
-  cf_space_name         = "terraform-cloudgov-ci-tests"
+  cf_org_name = "gsa-tts-devtools-prototyping"
+  cf_space = {
+    id   = "15836eb6-a57e-4579-bca7-99764c5a01a4"
+    name = "terraform-cloudgov-ci-tests"
+  }
   name                  = "logshipper"
   https_proxy_url       = "https://egress-proxy-user:egress-proxy-password@some-internal-route.test.foo:00000"
   new_relic_license_key = "NRAKTHISISATESTKEY"
