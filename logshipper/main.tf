@@ -44,66 +44,6 @@ resource "cloudfoundry_route" "logshipper_route" {
   # Yields something like: dev-logshipper
 }
 
-# TODO if official provider doesn't. We would only want this to run once though.
-# Logshipper null_resource meta setup
-# - s3 service key
-# - logshipper creds (cups)
-# - new relic creds (cups)
-# - logdrain service (cups)
-# resource "null_resource" "cf_service_key" {
-#   provisioner "local-exec" {
-#     working_dir = path.module
-#     interpreter = ["/bin/bash", "-c"]
-#     command     = "./logshipper-meta.sh"
-#   }
-#   triggers = {
-#     md5 = "${filemd5("${path.module}/logshipper-meta.sh")}"
-#   }
-# }
-
-# Uses the legacy provider. We will need to remove this, or upgrade it to the
-# official provider when it releases. Alternatively, we can supply a null resource to do it
-resource "cloudfoundry_service_key" "logshipper-s3-service-key" {
-  provider         = cloudfoundry-community
-  name             = local.logshipper_service_key
-  service_instance = module.logs-storage.bucket_id
-}
-
-# Uses the legacy provider. We will need to remove this, or upgrade it to the
-# official provider when it releases. Alternatively, we can supply a null resource to do it
-resource "cloudfoundry_user_provided_service" "logshipper_creds" {
-  provider = cloudfoundry-community
-  name     = "logshipper-creds"
-  space    = data.cloudfoundry_space.space.id
-  credentials = {
-    "HTTP_USER" = local.username
-    "HTTP_PASS" = local.password
-  }
-  tags = ["logshipper-creds"]
-}
-
-# Uses the legacy provider. We will need to remove this, or upgrade it to the
-# official provider when it releases. Alternatively, we can supply a null resource to do it
-resource "cloudfoundry_user_provided_service" "new_relic_credentials" {
-  provider = cloudfoundry-community
-  name     = "newrelic-creds"
-  space    = data.cloudfoundry_space.space.id
-  credentials = {
-    "NEW_RELIC_LICENSE_KEY"   = var.new_relic_license_key
-    "NEW_RELIC_LOGS_ENDPOINT" = var.new_relic_logs_endpoint
-  }
-  tags = ["newrelic-creds"]
-}
-
-# Uses the legacy provider. We will need to remove this, or upgrade it to the
-# official provider when it releases. Alternatively, we can supply a null resource to do it
-resource "cloudfoundry_user_provided_service" "logdrain_service" {
-  provider         = cloudfoundry-community
-  name             = "logdrain"
-  space            = data.cloudfoundry_space.space.id
-  syslog_drain_url = local.syslog_drain
-}
-
 data "external" "logshipper_zip" {
   program     = ["/bin/sh", "prepare-logshipper.sh"]
   working_dir = path.module
@@ -135,7 +75,7 @@ resource "cloudfoundry_app" "logshipper" {
 
   service_bindings = [
     { service_instance = cloudfoundry_user_provided_service.logshipper_creds.name },
-    { service_instance = cloudfoundry_user_provided_service.new_relic_credentials.name },
+    { service_instance = cloudfoundry_user_provided_service.logshipper_new_relic_credentials.name },
     { service_instance = "logshipper-storage" }
   ]
 
@@ -146,5 +86,63 @@ resource "cloudfoundry_app" "logshipper" {
   environment = {
     PROXYROUTE = var.https_proxy_url
   }
+}
+
+# TODO
+# If official provider doesn't. We want to check to see if the keys/cups exist
+# and if they do, move on, but if they do not, we want the null_resource to create them.
+# This will support circumstances where these services are deleted underneath the module.
+
+# Logshipper null_resource meta setup
+# - s3 service key
+# - logshipper creds (cups)
+# - logshipper new relic creds (cups)
+# - logdrain service (cups)
+# resource "null_resource" "cf_service_keys" {
+#   provisioner "local-exec" {
+#     working_dir = path.module
+#     interpreter = ["/bin/bash", "-c"]
+#     command     = "./logshipper-meta.sh"
+#   }
+#   triggers = {
+#     md5 = "${filemd5("${path.module}/logshipper-meta.sh")}"
+#   }
+# }
+
+# Everything below this block uses the legacy provider. We will need to remove this, or upgrade it to the
+# official provider when it releases. Alternatively, we can supply a null resource to do it.
+resource "cloudfoundry_service_key" "logshipper-s3-service-key" {
+  provider         = cloudfoundry-community
+  name             = local.logshipper_service_key
+  service_instance = module.logs-storage.bucket_id
+}
+
+resource "cloudfoundry_user_provided_service" "logshipper_creds" {
+  provider = cloudfoundry-community
+  name     = "logshipper-creds"
+  space    = data.cloudfoundry_space.space.id
+  credentials = {
+    "HTTP_USER" = local.username
+    "HTTP_PASS" = local.password
+  }
+  tags = ["logshipper-creds"]
+}
+
+resource "cloudfoundry_user_provided_service" "logshipper_logshipper_new_relic_credentials" {
+  provider = cloudfoundry-community
+  name     = "logshipper-newrelic-creds"
+  space    = data.cloudfoundry_space.space.id
+  credentials = {
+    "NEW_RELIC_LICENSE_KEY"   = var.new_relic_license_key
+    "NEW_RELIC_LOGS_ENDPOINT" = var.new_relic_logs_endpoint
+  }
+  tags = ["logshipper-newrelic-creds"]
+}
+
+resource "cloudfoundry_user_provided_service" "logdrain_service" {
+  provider         = cloudfoundry-community
+  name             = "logdrain"
+  space            = data.cloudfoundry_space.space.id
+  syslog_drain_url = local.syslog_drain
 }
 
