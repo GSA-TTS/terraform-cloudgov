@@ -298,7 +298,7 @@ module "Application" {
     REQUESTS_CA_BUNDLE    = "/etc/ssl/certs/ca-certificates.crt"
   }
   service_bindings = {
-      (var.service_1_name),
+      (var.service_1_name) = ""
       (var.service_2_name) = "...JSON string..."
   }
 }

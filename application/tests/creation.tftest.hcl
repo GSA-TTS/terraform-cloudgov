@@ -10,8 +10,8 @@ variables {
   src_code_folder_name = "backend"
   buildpacks           = ["https://github.com/cloudfoundry/apt-buildpack.git", "https://github.com/cloudfoundry/python-buildpack.git"]
   service_bindings = {
-    "my-service_instance"             = ""
-    "my-service-instance-with-params" = <<-EOT
+    my-service_instance             = ""
+    my-service-instance-with-params = <<-EOT
       {
         "astring"     : "foo",
         "anarray"     : ["bar", "baz"],

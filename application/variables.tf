@@ -15,8 +15,8 @@ variable "environment_variables" {
 
 # Example:
 # service_bindings = {
-#   my-service,
-#   (module.my-other-service.name),
+#   my-service = "",
+#   (module.my-other-service.name) = "",
 #   yet-another-service = <<-EOT
 #      {
 #        "astring"     : "foo",
