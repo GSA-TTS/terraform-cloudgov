@@ -5,7 +5,7 @@ locals {
   password     = random_password.password.result
   syslog_drain = "https://${local.username}:${local.password}@${cloudfoundry_route.logshipper_route.host}.app.cloud.gov/?drain-type=all"
   domain       = cloudfoundry_route.logshipper_route.domain
-  app_id       = cloudfoundry_app.cg_logshipper_app.id
+  app_id       = cloudfoundry_app.logshipper.id
   logdrain_id  = cloudfoundry_user_provided_service.logdrain_service.id
   route        = "${var.cf_space_name}-${var.name}.app.cloud.gov"
 }
@@ -65,15 +65,15 @@ resource "cloudfoundry_route" "logshipper_route" {
 # official provider when it releases. Alternatively, we can supply a null resource to do it
 resource "cloudfoundry_service_key" "logshipper-s3-service-key" {
   provider         = cloudfoundry-community
-  name             = locals.logshipper_service_key
-  service_instance = module.s3-logshipper-storage.bucket_id
+  name             = local.logshipper_service_key
+  service_instance = module.logs-storage.bucket_id
 }
 
 # Uses the legacy provider. We will need to remove this, or upgrade it to the
 # official provider when it releases. Alternatively, we can supply a null resource to do it
 resource "cloudfoundry_user_provided_service" "logshipper_creds" {
   provider = cloudfoundry-community
-  name     = "cg-logshipper-creds"
+  name     = "logshipper-creds"
   space    = data.cloudfoundry_space.space.id
   credentials = {
     "HTTP_USER" = local.username
@@ -113,9 +113,9 @@ data "external" "logshipper_zip" {
 }
 
 resource "cloudfoundry_app" "logshipper" {
-  name     = var.name
-  space    = var.cf_space_name
-  org_name = var.cf_org_name
+  name       = var.name
+  space_name = var.cf_space_name
+  org_name   = var.cf_org_name
 
   buildpacks       = ["https://github.com/cloudfoundry/apt-buildpack.git", "nginx_buildpack"]
   path             = "${path.module}/${data.external.logshipper_zip.result.path}"
@@ -139,12 +139,12 @@ resource "cloudfoundry_app" "logshipper" {
     { service_instance = "logshipper-storage" }
   ]
 
-  routes {
+  routes = [{
     route = local.route
-  }
+  }]
 
   environment = {
-    PROXYROUTE = var.https_proxy
+    PROXYROUTE = var.https_proxy_url
   }
 }
 
