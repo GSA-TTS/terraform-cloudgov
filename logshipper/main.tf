@@ -1,5 +1,6 @@
 locals {
-  logshipper_service_key = "${var.name}-service-key"
+  logshipper_service_key  = "${var.name}-service-key"
+  logshipper_storage_name = "${var.name}-logs-storage"
 
   username     = random_uuid.username.result
   password     = random_password.password.result
@@ -8,15 +9,6 @@ locals {
   app_id       = cloudfoundry_app.logshipper.id
   logdrain_id  = cloudfoundry_user_provided_service.logdrain_service.id
   route        = "${var.cf_space_name}-${var.name}.app.cloud.gov"
-}
-
-data "cloudfoundry_org" "org" {
-  name = var.cf_org_name
-}
-
-data "cloudfoundry_space" "space" {
-  name = var.cf_space_name
-  org  = data.cloudfoundry_org.org.id
 }
 
 data "cloudfoundry_domain" "public" {
@@ -31,14 +23,14 @@ resource "random_password" "password" {
 
 module "logs-storage" {
   source       = "github.com/gsa-tts/terraform-cloudgov//s3?ref=v2.2.0"
-  cf_space_id  = data.cloudfoundry_space.space.id
-  name         = "logshipper-storage"
+  cf_space_id  = var.cf_space_id
+  name         = local.logshipper_storage_name
   s3_plan_name = "basic"
   tags         = ["logshipper-s3"]
 }
 
 resource "cloudfoundry_route" "logshipper_route" {
-  space  = data.cloudfoundry_space.space.id
+  space  = var.cf_space_id
   domain = data.cloudfoundry_domain.public.id
   host   = "${var.cf_space_name}-${var.name}"
   # Yields something like: dev-logshipper
@@ -76,7 +68,7 @@ resource "cloudfoundry_app" "logshipper" {
   service_bindings = [
     { service_instance = cloudfoundry_user_provided_service.logshipper_creds.name },
     { service_instance = cloudfoundry_user_provided_service.logshipper_new_relic_credentials.name },
-    { service_instance = "logshipper-storage" }
+    { service_instance = local.logshipper_storage_name }
   ]
 
   routes = [{
@@ -120,7 +112,7 @@ resource "cloudfoundry_service_key" "logshipper-s3-service-key" {
 resource "cloudfoundry_user_provided_service" "logshipper_creds" {
   provider = cloudfoundry-community
   name     = "logshipper-creds"
-  space    = data.cloudfoundry_space.space.id
+  space    = var.cf_space_id
   credentials = {
     "HTTP_USER" = local.username
     "HTTP_PASS" = local.password
@@ -131,7 +123,7 @@ resource "cloudfoundry_user_provided_service" "logshipper_creds" {
 resource "cloudfoundry_user_provided_service" "logshipper_new_relic_credentials" {
   provider = cloudfoundry-community
   name     = "logshipper-newrelic-creds"
-  space    = data.cloudfoundry_space.space.id
+  space    = var.cf_space_id
   credentials = {
     "NEW_RELIC_LICENSE_KEY"   = var.new_relic_license_key
     "NEW_RELIC_LOGS_ENDPOINT" = var.new_relic_logs_endpoint
@@ -142,7 +134,7 @@ resource "cloudfoundry_user_provided_service" "logshipper_new_relic_credentials"
 resource "cloudfoundry_user_provided_service" "logdrain_service" {
   provider         = cloudfoundry-community
   name             = "logdrain"
-  space            = data.cloudfoundry_space.space.id
+  space            = var.cf_space_id
   syslog_drain_url = local.syslog_drain
 }
 
