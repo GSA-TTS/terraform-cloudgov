@@ -11,6 +11,7 @@ variable "cf_space_name" {
 variable "name" {
   type        = string
   description = "Name of the cg-logshipper application"
+  default     = "logshipper"
 }
 
 variable "gitref" {
@@ -21,15 +22,15 @@ variable "gitref" {
 }
 
 variable "disk_quota" {
-  type        = number
+  type        = string
   description = "disk in MB to allocate to cg-logshipper app instance"
-  default     = 512
+  default     = "512M"
 }
 
 variable "logshipper_memory" {
-  type        = number
+  type        = string
   description = "Memory in MB to allocate to cg-logshipper app instance"
-  default     = 1046
+  default     = "1046M"
 }
 
 variable "logshipper_instances" {
@@ -38,14 +39,16 @@ variable "logshipper_instances" {
   default     = 1
 }
 
-variable "https_proxy" {
+variable "https_proxy_url" {
   type        = string
-  description = "the full string of the https proxy for use with the logshipper app"
+  description = "the full string of the https proxy url for use with the logshipper app"
+  sensitive   = true
 }
 
 variable "new_relic_license_key" {
   type        = string
   description = "the full string of the new relic license key"
+  sensitive   = true
 }
 
 variable "new_relic_logs_endpoint" {
