@@ -8,6 +8,11 @@ variable "cf_space_name" {
   description = "cloud.gov space name for client apps"
 }
 
+variable "cf_space_id" {
+  type        = string
+  description = "cloud.gov space id for client apps"
+}
+
 variable "name" {
   type        = string
   description = "Name of the cg-logshipper application"
