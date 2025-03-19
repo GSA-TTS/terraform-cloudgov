@@ -2,10 +2,10 @@ provider "cloudfoundry" {
   api_url = "https://api.fr.cloud.gov"
   # cf_user and cf_password are passed in via CF_USER and CF_PASSWORD env vars
 }
-provider "cloudfoundry-community" {
-  api_url = "https://api.fr.cloud.gov"
-  # cf_user and cf_password are passed in via CF_USER and CF_PASSWORD env vars
-}
+# provider "cloudfoundry-community" {
+#   api_url = "https://api.fr.cloud.gov"
+#   # cf_user and cf_password are passed in via CF_USER and CF_PASSWORD env vars
+# }
 
 variables {
   cf_org_name = "gsa-tts-devtools-prototyping"

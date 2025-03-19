@@ -1,5 +1,4 @@
 locals {
-  logshipper_service_key  = "${var.name}-service-key"
   logshipper_storage_name = "${var.name}-logs-storage"
 
   username     = random_uuid.username.result
@@ -8,7 +7,7 @@ locals {
   domain       = cloudfoundry_route.logshipper_route.domain
   app_id       = cloudfoundry_app.logshipper.id
   #logdrain_id  = cloudfoundry_user_provided_service.logdrain_service.id
-  route        = "${var.cf_space.name}-${var.name}.app.cloud.gov"
+  route = "${var.cf_space.name}-${var.name}.app.cloud.gov"
 }
 
 data "cloudfoundry_domain" "public" {
@@ -89,7 +88,7 @@ resource "null_resource" "cf_services" {
     working_dir = path.module
     interpreter = ["/bin/bash", "-c"]
     command     = <<-COMMAND
-      ./logshipper-meta.sh ${var.cf_org_name} ${var.cf_space.name} ${local.username} ${local.password} ${var.new_relic_license_key} ${var.new_relic_logs_endpoint} ${local.syslog_drain}
+      ./logshipper-meta.sh ${var.cf_org_name} ${var.cf_space.name} ${local.username} ${local.password} ${var.new_relic_license_key} ${var.new_relic_logs_endpoint} ${local.syslog_drain} ${var.name}
     COMMAND
   }
   # https://github.com/hashicorp/terraform/issues/8266#issuecomment-454377049
@@ -99,6 +98,7 @@ resource "null_resource" "cf_services" {
     always_run = "${timestamp()}"
     # md5 = "${filemd5("${path.module}/logshipper-meta.sh")}"
   }
+  depends_on = [cloudfoundry_app.logshipper]
 }
 
 # Everything below this block uses the legacy provider. We will need to remove this, or upgrade it to the
