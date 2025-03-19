@@ -5,9 +5,9 @@ terraform {
       source  = "cloudfoundry/cloudfoundry"
       version = "1.3.0"
     }
-    cloudfoundry-community = {
-      source  = "cloudfoundry-community/cloudfoundry"
-      version = "~>0.53.1"
-    }
+    # cloudfoundry-community = {
+    #   source  = "cloudfoundry-community/cloudfoundry"
+    #   version = "~>0.53.1"
+    # }
   }
 }
