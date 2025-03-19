@@ -8,11 +8,6 @@ nr_key="$5"; nr_api="$6";
 logdrain="$7";
 app_name="$8";
 
-wait_for_api(){
-    echo "Sleeping for CF API..."
-    sleep 10
-}
-
 logshipper_creds() {
     if [ -n "$(cf service logshipper-creds)" ] ; then :
     else
