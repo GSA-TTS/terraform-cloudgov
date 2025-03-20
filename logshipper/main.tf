@@ -78,7 +78,7 @@ resource "null_resource" "cf_services" {
     working_dir = path.module
     interpreter = ["/bin/bash", "-c"]
     command     = <<-COMMAND
-      ./logshipper-meta.sh ${var.cf_org_name} ${var.cf_space.name} ${local.username} ${local.password} ${var.new_relic_license_key} ${var.new_relic_logs_endpoint} ${local.syslog_drain} ${var.name} ${var.logshipper_s3_name}
+      ./logshipper-meta.sh ${var.cf_org_name} ${var.cf_space.name} ${local.username} ${local.password} ${var.new_relic_license_key} ${var.new_relic_logs_endpoint} ${local.syslog_drain} ${var.name}
     COMMAND
   }
   # https://github.com/hashicorp/terraform/issues/8266#issuecomment-454377049
