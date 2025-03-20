@@ -83,7 +83,7 @@ variable "new_relic_logs_endpoint" {
 }
 
 variable "syslog_drain_name" {
-  type = "string"
+  type        = string
   description = "the name of the syslog drain that will be created"
-  default = "logdrain"
+  default     = "logdrain"
 }

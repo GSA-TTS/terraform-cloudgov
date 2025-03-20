@@ -1,6 +1,6 @@
 locals {
-  username     = random_uuid.username.result
-  password     = random_password.password.result
+  username = random_uuid.username.result
+  password = random_password.password.result
   # The syslog_drain must be registered on the public domain for cloudfoundry.
   # Cloud Foundry uses the syslog URL to route messages to the service.
   # The syslog URL has a scheme of syslog, syslog-tls, or https, and can include a port number.
@@ -10,15 +10,15 @@ locals {
   syslog_drain = "https://${local.username}:${local.password}@${cloudfoundry_route.logshipper_route.host}.app.cloud.gov/?drain-type=all"
   domain       = cloudfoundry_route.logshipper_route.domain
   app_id       = cloudfoundry_app.logshipper.id
-  route = "${var.cf_space.name}-${var.name}.app.cloud.gov"
+  route        = "${var.cf_space.name}-${var.name}.app.cloud.gov"
 
-  logshipper_creds = "logshipper-creds"
+  logshipper_creds    = "logshipper-creds"
   newrelic_creds_name = "logshipper-newrelic-creds"
 
   services = merge({
-    "${local.logshipper_creds}" = ""
+    "${local.logshipper_creds}"    = ""
     "${local.newrelic_creds_name}" = ""
-    }, var.service_bindings)
+  }, var.service_bindings)
 }
 
 data "cloudfoundry_domain" "public" {
