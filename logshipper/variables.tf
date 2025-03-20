@@ -58,3 +58,8 @@ variable "new_relic_logs_endpoint" {
   # https://docs.newrelic.com/docs/logs/log-api/introduction-log-api/#endpoint
   # The default is the FedRAMP endpoint.
 }
+
+variable "logshipper_s3_name" {
+  type = string
+  description = "the name of the s3 service for the logshipper"
+}

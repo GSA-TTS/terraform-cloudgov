@@ -14,6 +14,7 @@ variables {
     name = "terraform-cloudgov-ci-tests"
   }
   name                  = "logshipper"
+  logshipper_s3_name    = "my-s3-name"
   https_proxy_url       = "https://egress-proxy-user:egress-proxy-password@some-internal-route.test.foo:00000"
   new_relic_license_key = "NRAKTHISISATESTKEY"
 }

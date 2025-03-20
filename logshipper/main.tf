@@ -1,6 +1,4 @@
 locals {
-  logshipper_storage_name = "${var.name}-logs-storage"
-
   username     = random_uuid.username.result
   password     = random_password.password.result
   syslog_drain = "https://${local.username}:${local.password}@${cloudfoundry_route.logshipper_route.host}.app.cloud.gov/?drain-type=all"
@@ -18,14 +16,6 @@ resource "random_uuid" "username" {}
 resource "random_password" "password" {
   length  = 16
   special = false
-}
-
-module "logs-storage" {
-  source       = "github.com/gsa-tts/terraform-cloudgov//s3?ref=v2.2.0"
-  cf_space_id  = var.cf_space.id
-  name         = local.logshipper_storage_name
-  s3_plan_name = "basic"
-  tags         = ["logshipper-s3"]
 }
 
 resource "cloudfoundry_route" "logshipper_route" {
@@ -64,11 +54,11 @@ resource "cloudfoundry_app" "logshipper" {
     process_types = ["web"]
   }]
 
-  service_bindings = [
-    # { service_instance = cloudfoundry_user_provided_service.logshipper_creds.name },
-    # { service_instance = cloudfoundry_user_provided_service.logshipper_new_relic_credentials.name },
-    { service_instance = local.logshipper_storage_name }
-  ]
+  # service_bindings = [
+  #   # { service_instance = cloudfoundry_user_provided_service.logshipper_creds.name },
+  #   # { service_instance = cloudfoundry_user_provided_service.logshipper_new_relic_credentials.name },
+  #   # { service_instance = local.logshipper_storage_name }
+  # ]
 
   routes = [{
     route = local.route
@@ -88,7 +78,7 @@ resource "null_resource" "cf_services" {
     working_dir = path.module
     interpreter = ["/bin/bash", "-c"]
     command     = <<-COMMAND
-      ./logshipper-meta.sh ${var.cf_org_name} ${var.cf_space.name} ${local.username} ${local.password} ${var.new_relic_license_key} ${var.new_relic_logs_endpoint} ${local.syslog_drain} ${var.name}
+      ./logshipper-meta.sh ${var.cf_org_name} ${var.cf_space.name} ${local.username} ${local.password} ${var.new_relic_license_key} ${var.new_relic_logs_endpoint} ${local.syslog_drain} ${var.name} ${var.logshipper_s3_name}
     COMMAND
   }
   # https://github.com/hashicorp/terraform/issues/8266#issuecomment-454377049
