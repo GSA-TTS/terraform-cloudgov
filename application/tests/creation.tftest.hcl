@@ -4,10 +4,10 @@ variables {
   cf_org_name          = "gsa-tts-devtools-prototyping"
   cf_space_name        = "terraform-cloudgov-ci-tests"
   name                 = "fac-app"
-  branch_name          = "main"
   github_org_name      = "gsa-tts"
   github_repo_name     = "fac"
   src_code_folder_name = "backend"
+  app_memory           = "2048M"
   buildpacks           = ["https://github.com/cloudfoundry/apt-buildpack.git", "https://github.com/cloudfoundry/python-buildpack.git"]
   service_bindings = {
     my-service_instance             = ""
