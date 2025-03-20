@@ -38,7 +38,7 @@ variable "service_bindings" {
 
 variable "buildpacks" {
   description = "A list of buildpacks to add to the app resource."
-  type        = set(string)
+  type        = list(string)
   default     = []
 }
 
@@ -47,9 +47,11 @@ variable "name" {
   type        = string
 }
 
-variable "branch_name" {
-  description = "Branch name for deploying the src code. Using a '/' (abc/xyz) in the branch name will confuse terraform, as it will attempt to get refs/heads/abc/xyx"
+variable "gitref" {
   type        = string
+  description = "gitref for the specific version of applicaion that you want to use. Branch name should start with `refs/heads` while a git sha should be given without a prefix"
+  default     = "refs/heads/main"
+  # You can also specify a specific commit, eg "7487f882903b9e834a5133a883a88b16fb8b16c9"
 }
 
 variable "github_org_name" {
@@ -75,7 +77,6 @@ variable "src_code_folder_name" {
 variable "app_memory" {
   type        = string
   description = "Memory to allocate to app, including unit"
-  default     = "2048M"
 }
 
 variable "disk_space" {

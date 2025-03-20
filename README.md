@@ -274,7 +274,7 @@ Creates and deploys an application from source to Cloud Foundry. You must have a
 
         # [...]
         depends_on = [
-          module.a_service    # modulce creates service "a_service" first
+          module.a_service    # module creates service "a_service" first
         ]
       }
       ```
@@ -285,9 +285,9 @@ module "Application" {
   cf_org_name          = var.cf_org_name
   cf_space_name        = var.cf_space_name
   name                 = local.app_name
-  branch_name          = "main"
   github_org_name      = "gsa-tts"
   github_repo_name     = ""
+  app_memory           = "2048M"
   src_code_folder_name = "" # folder for /home/vcap/app. See variables.tf for examples.
   buildpacks           = ["https://github.com/cloudfoundry/apt-buildpack.git", "https://github.com/cloudfoundry/python-buildpack.git"] # examples
   environment_variables = {

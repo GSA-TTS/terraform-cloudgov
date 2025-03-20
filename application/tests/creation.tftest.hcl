@@ -40,10 +40,6 @@ run "application_tests" {
     error_message = "Endpoint output must match the app route endpoint"
   }
   assert {
-    condition     = lookup(cloudfoundry_app.application.environment, "REQUESTS_CA_BUNDLE", "/etc/ssl/certs/ca-certificates.crt") != null
-    error_message = "The REQUESTS_CA_BUNDLE environment variable should not be null by default"
-  }
-  assert {
     condition     = cloudfoundry_app.application.buildpacks != null
     error_message = "The application buildpacks should not be empty"
   }

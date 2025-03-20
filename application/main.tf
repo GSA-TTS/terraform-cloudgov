@@ -1,6 +1,5 @@
 locals {
   app_route = "${var.name}.app.cloud.gov"
-  gitref    = "refs/heads/${var.branch_name}"
   org_name  = var.github_org_name
   repo_name = var.github_repo_name
   src       = var.src_code_folder_name
@@ -11,7 +10,7 @@ data "external" "app_zip" {
   program     = ["/bin/sh", "prepare_app.sh"]
   working_dir = path.module
   query = {
-    gitref     = local.gitref
+    gitref     = var.gitref
     org        = local.org_name
     repo       = local.repo_name
     src_folder = local.src
@@ -42,6 +41,8 @@ resource "cloudfoundry_app" "application" {
       params           = (params == "" ? "{}" : params) # Empty string -> Minimal JSON
     }
   ]
-  environment = merge({}, var.environment_variables)
+  environment = merge({
+    REQUESTS_CA_BUNDLE = "/etc/ssl/certs/ca-certificates.crt"
+  }, var.environment_variables)
 }
 
