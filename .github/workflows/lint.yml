@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        path: ["cg_space", "clamav", "database", "domain", "redis", "s3", "egress_proxy", "drupal"]
+        path: ["cg_space", "clamav", "database", "domain", "redis", "s3", "egress_proxy", "drupal", "spiffworkflow", "application"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        path: ["cg_space", "clamav", "database", "domain", "redis", "s3", "egress_proxy", "drupal"]
+        path: ["cg_space", "clamav", "database", "domain", "redis", "s3", "egress_proxy", "drupal", "spiffworkflow", "application"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
