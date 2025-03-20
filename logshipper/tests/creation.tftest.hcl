@@ -36,8 +36,8 @@ run "application_tests" {
     error_message = "The application buildpacks should not be empty"
   }
   assert {
-    condition     = cloudfoundry_app.logshipper.service_bindings != null
-    error_message = "The application should have services bound by default"
+    condition     = cloudfoundry_app.logshipper.service_bindings == null
+    error_message = "The application should use a null_resource to handle service bindings"
   }
   assert {
     condition     = cloudfoundry_route.logshipper_route.domain == output.domain
