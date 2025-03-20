@@ -14,13 +14,15 @@ cd "${tmpdir}"
 # Grab a copy of the zip file for the specified ref
 # https://github.com/GSA-TTS/cg-logshipper/archive/refs/heads/main.zip
 curl -s -L https://github.com/GSA-TTS/cg-logshipper/archive/"${GITREF}".zip --output "${tmpdir}/logshipper-dist.zip"
-branch=$(echo "$GITREF" | cut -f3 -d"/")
+
+# Get the folder that curl will download, usually looks like {repo_name}-{branch_name}/
+zip_folder=$(unzip -l local.zip | awk '/\/$/ {print $4}' | awk -F'/' '{print $1}' | sort -u)
+
 
 # Remove the leading directory; the .zip needs to have the files at the top
 cd "${tmpdir}"
 unzip -o "${tmpdir}/logshipper-dist.zip" > /dev/null
-cat "${popdir}/fluentbit_config/fluentbit.conf" > "${tmpdir}/cg-logshipper-main/fluentbit.conf"
-cd "${tmpdir}/cg-logshipper-${branch}" && zip -r -o -X "${popdir}/logshipper.zip" ./ > /dev/null
+cd "${tmpdir}/${zip_folder}" && zip -r -o -X "${popdir}/logshipper.zip" ./ > /dev/null
 
 # Tell Terraform where to find it
 cat << EOF

@@ -81,3 +81,9 @@ variable "new_relic_logs_endpoint" {
   # https://docs.newrelic.com/docs/logs/log-api/introduction-log-api/#endpoint
   # The default is the FedRAMP endpoint.
 }
+
+variable "syslog_drain_name" {
+  type = "string"
+  description = "the name of the syslog drain that will be created"
+  default = "logdrain"
+}
