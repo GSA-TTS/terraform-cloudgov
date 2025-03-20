@@ -214,7 +214,7 @@ Spiff Workflow is a workflow engine implemented in pure Python. Using BPMN will 
 2. Ensure that your space has the `public_networks_egress`security group if you are not using a proxy.
 ```
 module "SpiffWorkflow" {
-  source        = ".github.com/GSA-TTS/terraform-cloudgov//spiffworkflow?ref=v2.3.0"
+  source        = "github.com/GSA-TTS/terraform-cloudgov//spiffworkflow?ref=v2.3.0"
   cf_org_name   = var.cf_org_name
   cf_space_name = var.cf_space_name
 
@@ -240,8 +240,69 @@ module "Database" {
 }
 ```
 
-## Testing
+### Application
+Creates and deploys an application from source to Cloud Foundry. You must have a valid file structure for deploying to cloud.gov in your repository to deploy the application. This module would replace a traditional "manifest.yml" deployment.
 
+**NOTE:**
+1. `DISABLE_COLLECTSTATIC = 1` has been set as an environment variable in the
+   example. It is recommended to build your staticfiles and run collectstatic in
+   a `.profile`.
+2. `service_bindings` is a map where the keys are service instance names. This
+   module does not create or bind any service instances, so all services
+   (database, s3, creds service, etc) should be specified. All services that
+   should be bound to the running app must be deployed before the application
+   module is deployed. Ensure dependencies exist where they're needed. For example:
+   * You can make a dependency between the application and a service
+   instance implicit by supplying a dynamic key based on an expression, eg `(module.servicename.attribute)`.
+      ```tf
+      service_bindings = {
+        (module.a_service.name),
+        (module.another_service.name) = <<-EOT  # with params
+          ...JSON parameter string...
+        EOT
+      }
+
+      ```
+   * You can make a dependency between the application and a service explicit by adding a `depends_on = []` block for this module containing references to the module or resource that creates the service.
+      ```tf
+      module "Application" {
+        # [...]
+
+        service_bindings = {
+          "a_service","       # hardcoded service name
+        }
+
+        # [...]
+        depends_on = [
+          module.a_service    # module creates service "a_service" first
+        ]
+      }
+      ```
+
+```
+module "Application" {
+  source               = "github.com/GSA-TTS/terraform-cloudgov//application?ref=v2.4.0"
+  cf_org_name          = var.cf_org_name
+  cf_space_name        = var.cf_space_name
+  name                 = local.app_name
+  github_org_name      = "gsa-tts"
+  github_repo_name     = ""
+  app_memory           = "2048M"
+  src_code_folder_name = "" # folder for /home/vcap/app. See variables.tf for examples.
+  buildpacks           = ["https://github.com/cloudfoundry/apt-buildpack.git", "https://github.com/cloudfoundry/python-buildpack.git"] # examples
+  environment_variables = {
+    DISABLE_COLLECTSTATIC = 1
+    KEY                   = "VALUE"
+    ANOTHER_KEY           = "VALUE"
+  }
+  service_bindings = {
+      (var.service_1_name) = ""
+      (var.service_2_name) = "...JSON string..."
+  }
+}
+```
+
+## Testing
 
 > [!WARNING]
 > Tests provision resources in the real world when not using `mock_provider`! Take care that `CF_USER`/`CF_PASSWORD` are set to an account in a suitable non-production space. If other providers, such as the AWS provider, are used, ensure the same care is taken with their credentials in your shell before running `terraform test`.
