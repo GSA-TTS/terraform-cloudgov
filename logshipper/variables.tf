@@ -21,6 +21,29 @@ variable "gitref" {
   # You can also specify a specific commit, eg "7487f882903b9e834a5133a883a88b16fb8b16c9"
 }
 
+# Example:
+# service_bindings = {
+#   my-service = "",
+#   (module.my-other-service.name) = "",
+#   yet-another-service = <<-EOT
+#      {
+#        "astring"     : "foo",
+#        "anarray"     : ["bar", "baz"],
+#        "anarrayobjs" : [
+#          {
+#            "name": "bat",
+#            "value": "boz"
+#        ],
+#      }
+#      EOT
+#   }
+# }
+variable "service_bindings" {
+  description = "A map of service instance name to JSON parameter string."
+  type        = map(string)
+  default     = {}
+}
+
 variable "disk_quota" {
   type        = string
   description = "disk in MB to allocate to cg-logshipper app instance"

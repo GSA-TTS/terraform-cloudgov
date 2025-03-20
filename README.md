@@ -313,6 +313,17 @@ Creates a logshipper application with all necessary components. It **does not** 
 >[!NOTE]
 > For reasons that remain unknown, it may be necessary to restart the logshipper after binding to an application or your application deploys.
 > See this note [here](https://github.com/GSA-TTS/FAC/blob/575bc6f790841ab6bafb95e845c3fe3ad4428f6c/.github/workflows/deploy-application.yml#L107-L119)
+> By default, the s3 is not part of this module, if you desire to store logs. You can create that with the s3 module from this repo, and do the following:
+```tf
+module "logshipper" {
+  [...]
+
+  service_bindings = {
+    "${local.logshipper_storage_name}" = ""
+  }
+  depends_on = [module.logs-storage]
+```
+
 ```tf
 module "logshipper" {
   source      = "github.com/gsa-tts/terraform-cloudgov//logshipper?ref=v2.5.0"
@@ -325,6 +336,9 @@ module "logshipper" {
   logshipper_s3_name    = local.logshipper_storage_name
   https_proxy_url       = var.https_proxy_url
   new_relic_license_key = var.new_relic_license_key
+  service_bindings = {
+    "${local.logshipper_storage_name}" = ""
+  }
   depends_on = [module.logs-storage]
 }
 ```
@@ -350,18 +364,6 @@ apt-get install --assume-yes ./cf8-cli-installer_8.11.0_x86-64.deb
 
 cf api api.fr.cloud.gov
 cf auth ${{ secrets.CF_USER }} ${{ secrets.CF_PASSWORD }}
-```
-
->[!NOTE]
-> By default, the s3 and binding of this service are not part of this module. Since there are issues with the terraform tests because of it.
-> The s3 and binding can be done in the same module reference. You can do this with either a `null_resource` that uses the `cf8-api` as this module does for the other services. See [logshipper-meta.sh](./logshipper/logshipper-meta.sh)/[null_resource on L76](./logshipper/main.tf)
-```tf
-module "logs-storage" {
-  source       = "github.com/gsa-tts/terraform-cloudgov//s3?ref=v2.2.0"
-  cf_space_id  = data.cloudfoundry_space.space.id
-  name         = local.logshipper_storage_name
-  s3_plan_name = "basic"
-  tags         = ["logshipper-s3"]
 ```
 
 ## Testing
