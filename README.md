@@ -292,10 +292,8 @@ module "Application" {
   buildpacks           = ["https://github.com/cloudfoundry/apt-buildpack.git", "https://github.com/cloudfoundry/python-buildpack.git"] # examples
   environment_variables = {
     DISABLE_COLLECTSTATIC = 1
-    ENV                   = "SANDBOX"
     KEY                   = "VALUE"
-    ALLOWED_HOSTS         = "${local.app_name}.app.cloud.gov"
-    REQUESTS_CA_BUNDLE    = "/etc/ssl/certs/ca-certificates.crt"
+    ANOTHER_KEY           = "VALUE"
   }
   service_bindings = {
       (var.service_1_name) = ""
