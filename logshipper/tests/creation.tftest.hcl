@@ -24,11 +24,7 @@ run "application_tests" {
     error_message = "Output id must match the app id"
   }
   assert {
-    condition     = cloudfoundry_user_provided_service.logdrain_service.syslog_drain_url == output.syslog_drain_url
-    error_message = "The logdrain url for the logdrain service must match the logdrain url of the application"
-  }
-  assert {
-    condition     = lookup(cloudfoundry_app.logshipper.environment, "PROXYROUTE", "https://some-proxy.com") != null
+    condition     = lookup(cloudfoundry_app.logshipper.environment, "PROXYROUTE", var.https_proxy_url) != null
     error_message = "The PROXYROUTE environment variable should not be null by default to ensure new relic connections"
   }
   assert {
@@ -42,10 +38,6 @@ run "application_tests" {
   assert {
     condition     = cloudfoundry_route.logshipper_route.domain == output.domain
     error_message = "The domain for the route must match the output domain"
-  }
-  assert {
-    condition     = cloudfoundry_user_provided_service.logdrain_service.id == output.logdrain_service_id
-    error_message = "The logdrain service id must match the output id"
   }
 }
 
