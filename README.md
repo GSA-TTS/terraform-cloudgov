@@ -303,12 +303,12 @@ module "Application" {
 ```
 
 ## Logshipper
-Creates a logshipper application with all necessary components. It **does not** create a network policy between itsself and your proxy, and does not bind itsself to your desired application. Since there is no terraform to do that binding at this time, you must either `cf bind-service <my-app> logdrain`, supply `logdrain` to your `manifest.yml` or supply `logdrain` to your `service_bindings = {}` for your application.
+Creates a log-draining application with all necessary components. It **does not** create a network policy between itself and your egress proxy, and does not bind itself to your desired application. You must either `cf bind-service <my-app> logdrain`, supply `logdrain` in the bindings section of your `manifest.yml` or include `logdrain` in the `service_bindings = {}` for your application.
 
-- Logshipper Credentials, defined as `logshipper-creds` is populated as a random user/pass generated via terraform that signifies the `${HTTP_USER}` AND `${HTTP_PASS}` credential set for the `syslog_drain`
+- Logshipper Credentials, defined as `logshipper-creds` is populated with a random user/pass generated via terraform that signifies the `${HTTP_USER}` AND `${HTTP_PASS}` credential set for the `syslog_drain`
 - New Relic Credentials, defined as `logshipper-newrelic-creds` contains your New Relic License Key, and the FedRAMP endpoint for New Relic log API.
-- The s3 bucket, defined as `${var.name}-logs-storage` with a tag of `logshipper-s3` is a dedicated s3 bucket that's sole purpose is the ingest and storage of all `fluentbit` logs being sent.
-- The logdrain service, defined as `logdrain` is what is bound to the application, so that it may stream logs to the `logshipper` application. It consists of a `syslog_drain` uri.
+- The s3 bucket, defined as `<my-s3-name>` with a tag of `logshipper-s3` is a dedicated s3 bucket to store all logs being drained.
+- The `logdrain` service, when bound to an application, causes the platform to stream logs for that app to the `logshipper` application. It consists of a `syslog_drain` URI.
 
 >[!NOTE]
 > For reasons that remain unknown, it may be necessary to restart the logshipper after binding to an application or your application deploys.
