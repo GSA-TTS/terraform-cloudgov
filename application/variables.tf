@@ -46,7 +46,7 @@ variable "name" {
 }
 
 variable "route" {
-  description = "The full app route. Defaults to {var.name}.app.cloud.gov if this is omitted"
+  description = "The full app route (ie. 'myservice.apps.internal'). Defaults to '{var.name}.app.cloud.gov' if this is omitted"
   type        = string
   default     = null
 }
