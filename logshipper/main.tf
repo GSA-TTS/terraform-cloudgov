@@ -12,12 +12,12 @@ locals {
   app_id       = cloudfoundry_app.logshipper.id
   route        = "${var.cf_space.name}-${var.name}.app.cloud.gov"
 
-  logshipper_creds    = "logshipper-creds"
-  newrelic_creds_name = "logshipper-newrelic-creds"
+  logshipper_creds_name = "logshipper-creds"
+  newrelic_creds_name   = "logshipper-newrelic-creds"
 
   services = merge({
-    "${local.logshipper_creds}"    = ""
-    "${local.newrelic_creds_name}" = ""
+    "${local.logshipper_creds_name}" = ""
+    "${local.newrelic_creds_name}"   = ""
   }, var.service_bindings)
 }
 
@@ -84,7 +84,7 @@ resource "cloudfoundry_app" "logshipper" {
 }
 
 resource "cloudfoundry_service_instance" "logshipper_creds" {
-  name        = local.logshipper_creds
+  name        = local.logshipper_creds_name
   type        = "user-provided"
   tags        = ["logshipper-creds"]
   space       = var.cf_space.id

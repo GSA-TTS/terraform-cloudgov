@@ -333,7 +333,6 @@ module "logshipper" {
     id   = data.cloudfoundry_space.space.id
     name = var.cf_space_name
   }
-  logshipper_s3_name    = local.logshipper_storage_name
   https_proxy_url       = var.https_proxy_url
   new_relic_license_key = var.new_relic_license_key
   service_bindings = {
