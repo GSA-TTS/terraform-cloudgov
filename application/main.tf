@@ -1,5 +1,5 @@
 locals {
-  app_route = "${var.name}.app.cloud.gov"
+  app_route = coalesce(var.route, "${var.name}.app.cloud.gov")
   app_id    = cloudfoundry_app.application.id
 }
 
@@ -42,4 +42,3 @@ resource "cloudfoundry_app" "application" {
     REQUESTS_CA_BUNDLE = "/etc/ssl/certs/ca-certificates.crt"
   }, var.environment_variables)
 }
-

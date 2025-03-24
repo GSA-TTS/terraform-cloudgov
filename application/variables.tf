@@ -33,18 +33,22 @@ variable "environment_variables" {
 variable "service_bindings" {
   description = "A map of service instance name to JSON parameter string."
   type        = map(string)
-  default     = {}
 }
 
 variable "buildpacks" {
   description = "A list of buildpacks to add to the app resource."
   type        = list(string)
-  default     = []
 }
 
 variable "name" {
   description = "The name of the application to deploy"
   type        = string
+}
+
+variable "route" {
+  description = "The full app route (ie. 'myservice.apps.internal'). Defaults to '{var.name}.app.cloud.gov' if this is omitted"
+  type        = string
+  default     = null
 }
 
 variable "gitref" {
