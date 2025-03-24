@@ -8,21 +8,10 @@ locals {
   egress_route       = "${replace(lower(substr(coalesce(var.route_host, local.default_route_host), -63, -1)), "/^[^a-z]*/", "")}.apps.internal"
 }
 
-
 resource "random_uuid" "username" {}
 resource "random_password" "password" {
   length  = 16
   special = false
-}
-
-# This zips up just the depoyable files from the specified gitref in the
-# cg-egress-proxy repository
-data "external" "proxyzip" {
-  program     = ["/bin/sh", "prepare-proxy.sh"]
-  working_dir = path.module
-  query = {
-    gitref = var.gitref
-  }
 }
 
 module "egress_app" {
@@ -42,6 +31,7 @@ module "egress_app" {
   instances  = var.instances
   app_memory = var.egress_memory
 
+  service_bindings = { "" = "" }
   environment_variables = {
     PROXY_PORTS : join(" ", var.allowports)
     PROXY_ALLOW : local.allowacl

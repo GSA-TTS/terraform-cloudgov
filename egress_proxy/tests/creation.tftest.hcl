@@ -32,7 +32,7 @@ run "test_proxy_creation" {
   }
 
   assert {
-    condition     = output.app_id == cloudfoundry_app.egress_app.id
+    condition     = output.app_id == module.egress_app.app_id
     error_message = "Output app_id is the egress_app's ID"
   }
 
