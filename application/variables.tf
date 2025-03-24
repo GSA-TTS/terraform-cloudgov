@@ -55,8 +55,8 @@ variable "route" {
 
 variable "command" {
   description = "The command to run, or null to pick up from the buildpack default"
-  type = string
-  default = null
+  type        = string
+  default     = null
 }
 
 variable "gitref" {
