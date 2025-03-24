@@ -16,7 +16,7 @@ cd "${tmpdir}"
 curl -s -L https://github.com/GSA-TTS/cg-logshipper/archive/"${GITREF}".zip --output "${tmpdir}/logshipper-dist.zip"
 
 # Get the folder that curl will download, usually looks like {repo_name}-{branch_name}/
-zip_folder=$(unzip -l local.zip | awk '/\/$/ {print $4}' | awk -F'/' '{print $1}' | sort -u)
+zip_folder=$(unzip -l logshipper-dist.zip | awk '/\/$/ {print $4}' | awk -F'/' '{print $1}' | sort -u)
 
 
 # Remove the leading directory; the .zip needs to have the files at the top
