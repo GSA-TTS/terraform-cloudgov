@@ -337,7 +337,7 @@ module "logshipper" {
   https_proxy_url       = var.https_proxy_url
   new_relic_license_key = var.new_relic_license_key
   service_bindings = {
-    "${local.logshipper_storage_name}" = ""
+    "${module.logs-storage.bucket_name}" = ""
   }
   depends_on = [module.logs-storage]
 }
