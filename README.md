@@ -356,15 +356,6 @@ resource "cloudfoundry_network_policy" "logshipper-network-policy" {
 }
 ```
 
-It is necessary to have cf8-cli as part of your terraform plan and terraform apply to run the `null_resource`[Github Workflow](https://github.com/GSA-TTS/terraform-cloudgov/blob/7ba931bbf2d618a7a39e34c1ada7289e515cbd04/.github/workflows/test.yml#L37)
-```sh
-curl -k -O -L https://github.com/cloudfoundry/cli/releases/download/v8.11.0/cf8-cli-installer_8.11.0_x86-64.deb
-apt-get install --assume-yes ./cf8-cli-installer_8.11.0_x86-64.deb
-
-cf api api.fr.cloud.gov
-cf auth ${{ secrets.CF_USER }} ${{ secrets.CF_PASSWORD }}
-```
-
 ## Testing
 
 > [!WARNING]
