@@ -30,7 +30,7 @@ output "password" {
 }
 
 output "app_id" {
-  value = cloudfoundry_app.egress_app.id
+  value = module.egress_app.app_id
 }
 
 output "json_credentials" {

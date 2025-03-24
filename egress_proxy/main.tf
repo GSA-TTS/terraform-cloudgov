@@ -25,25 +25,24 @@ data "external" "proxyzip" {
   }
 }
 
-resource "cloudfoundry_app" "egress_app" {
-  name       = var.name
-  space_name = var.cf_egress_space.name
-  org_name   = var.cf_org_name
+module "egress_app" {
+  source = "../application"
 
+  name          = var.name
+  cf_org_name   = var.cf_org_name
+  cf_space_name = var.cf_egress_space.name
 
-  path             = "${path.module}/${data.external.proxyzip.result.path}"
-  source_code_hash = filesha256("${path.module}/${data.external.proxyzip.result.path}")
-  buildpacks       = ["binary_buildpack"]
-  command          = "./caddy run --config Caddyfile"
-  memory           = var.egress_memory
-  instances        = var.instances
-  strategy         = "rolling"
+  gitref               = var.gitref
+  github_repo_name     = "cg-egress-proxy"
+  src_code_folder_name = "proxy"
 
-  routes = [{
-    route = local.egress_route
-  }]
+  buildpacks = ["binary_buildpack"]
+  command    = "./caddy run --config Caddyfile"
+  route      = local.egress_route
+  instances  = var.instances
+  app_memory = var.egress_memory
 
-  environment = {
+  environment_variables = {
     PROXY_PORTS : join(" ", var.allowports)
     PROXY_ALLOW : local.allowacl
     PROXY_DENY : local.denyacl
@@ -53,9 +52,9 @@ resource "cloudfoundry_app" "egress_app" {
 }
 
 locals {
-  https_proxy = "https://${random_uuid.username.result}:${random_password.password.result}@${local.egress_route}:61443"
-  http_proxy  = "http://${random_uuid.username.result}:${random_password.password.result}@${local.egress_route}:8080"
-  domain      = local.egress_route
+  https_proxy = "https://${random_uuid.username.result}:${random_password.password.result}@${module.egress_app.endpoint}:61443"
+  http_proxy  = "http://${random_uuid.username.result}:${random_password.password.result}@${module.egress_app.endpoint}:8080"
+  domain      = module.egress_app.endpoint
   username    = random_uuid.username.result
   password    = random_password.password.result
   https_port  = 61443

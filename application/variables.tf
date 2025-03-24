@@ -47,6 +47,18 @@ variable "name" {
   type        = string
 }
 
+variable "route" {
+  description = "The full app route. Defaults to {var.name}.app.cloud.gov if this is omitted"
+  type        = string
+  default     = null
+}
+
+variable "command" {
+  description = "The command to run, or null to pick up from the buildpack default"
+  type = string
+  default = null
+}
+
 variable "gitref" {
   type        = string
   description = "gitref for the specific version of applicaion that you want to use. Branch name should start with `refs/heads` while a git sha should be given without a prefix"
