@@ -33,13 +33,11 @@ variable "environment_variables" {
 variable "service_bindings" {
   description = "A map of service instance name to JSON parameter string."
   type        = map(string)
-  default     = {}
 }
 
 variable "buildpacks" {
   description = "A list of buildpacks to add to the app resource."
   type        = list(string)
-  default     = []
 }
 
 variable "name" {
