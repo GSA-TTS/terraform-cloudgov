@@ -338,7 +338,6 @@ module "logshipper" {
   service_bindings = {
     "${module.logs-storage.bucket_name}" = ""
   }
-  depends_on = [module.logs-storage]
 }
 ```
 
