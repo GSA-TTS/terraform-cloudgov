@@ -11,6 +11,7 @@ variable "cf_space_name" {
 variable "app_ids" {
   type        = set(string)
   description = "The list of app IDs the route should send traffic to"
+  default     = []
 }
 
 variable "hostname" {
@@ -20,6 +21,12 @@ variable "hostname" {
 
 variable "domain" {
   type        = string
-  description = "The domain "
+  description = "The domain to route to"
   default     = "app.cloud.gov"
+}
+
+variable "path" {
+  type        = string
+  description = "The path to route to"
+  default     = null
 }
