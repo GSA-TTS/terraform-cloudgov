@@ -1,13 +1,5 @@
 provider "cloudfoundry" {}
 
-# don't create the connected route because the destination apps don't exist
-override_resource {
-  target = cloudfoundry_route.origin_route
-  values = {
-    url = "www.apps.internal"
-  }
-}
-
 # don't create the external domain instance because the CNAME records don't exist
 override_resource {
   target = cloudfoundry_service_instance.external_domain_instance
@@ -22,19 +14,41 @@ variables {
   cdn_plan_name = "domain"
   domain_name   = "apps.internal"
   name          = "terraform-cloudgov-domain-test"
-  app_ids       = ["f9722bd0-ee5c-4b83-afd9-24e03760a692"]
   tags          = ["terraform-cloudgov-managed", "tests"]
 }
 
-run "test_domain_creation" {
+run "test_managing_domain_resource" {
+  variables {
+    domain_name   = "test.devtools.gov"
+    create_domain = true
+  }
+
   assert {
-    condition     = cloudfoundry_service_instance.external_domain_instance.id == output.instance_id
-    error_message = "Instance ID output must match the service instance"
+    condition     = output.endpoint == "test.devtools.gov"
+    error_message = "The endpoint matches the created domain"
   }
 
   assert {
     condition     = cloudfoundry_route.origin_route.id == output.route_id
     error_message = "Route ID output must match the created route"
+  }
+}
+
+run "test_domain_creation" {
+  # don't create the route because the destination apps don't exist
+  override_resource {
+    target = cloudfoundry_route.origin_route
+    values = {
+      url = "www.apps.internal"
+    }
+  }
+  variables {
+    app_ids = ["f9722bd0-ee5c-4b83-afd9-24e03760a692"]
+  }
+
+  assert {
+    condition     = cloudfoundry_service_instance.external_domain_instance.id == output.instance_id
+    error_message = "Instance ID output must match the service instance"
   }
 
   assert {
@@ -89,6 +103,8 @@ run "test_with_hostname" {
 run "test_cdn_creation" {
   variables {
     cdn_plan_name = "domain-with-cdn"
+    host_name     = "cdn"
+    app_ids       = []
   }
 
   assert {
@@ -98,6 +114,14 @@ run "test_cdn_creation" {
 }
 
 run "test_multi_app_target" {
+  # don't create the connected route because the destination apps don't exist
+  override_resource {
+    target = cloudfoundry_route.origin_route
+    values = {
+      url = "www.apps.internal"
+    }
+  }
+
   variables {
     name = null
     app_ids = [

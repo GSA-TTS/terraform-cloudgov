@@ -28,6 +28,12 @@ variable "cdn_plan_name" {
   description = "name of the service plan name to create"
 }
 
+variable "create_domain" {
+  type        = bool
+  default     = false
+  description = "Set to true to create the domain resource. Must be called by an OrgManager"
+}
+
 variable "domain_name" {
   type        = string
   description = "Domain name users will use to access the application"
