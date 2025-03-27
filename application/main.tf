@@ -1,7 +1,3 @@
-locals {
-  app_id = cloudfoundry_app.application.id
-}
-
 data "external" "app_zip" {
   program     = ["/bin/sh", "prepare_app.sh"]
   working_dir = path.module
@@ -45,5 +41,5 @@ module "route" {
   cf_space_name = var.cf_space_name
   domain        = var.domain
   hostname      = coalesce(var.hostname, var.name)
-  app_ids       = [local.app_id]
+  app_ids       = [cloudfoundry_app.application.id]
 }

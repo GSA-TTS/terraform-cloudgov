@@ -1,5 +1,5 @@
 output "app_id" {
-  value = local.app_id
+  value = cloudfoundry_app.application.id
 }
 
 output "endpoint" {
