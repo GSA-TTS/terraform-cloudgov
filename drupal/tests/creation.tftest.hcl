@@ -26,6 +26,13 @@ run "test_app_creation" {
       id = "738931fc-d330-4333-88da-76399363d3f4"
     }
   }
+  override_resource {
+    target = cloudfoundry_route.app_route
+    values = {
+      id  = "6db9a64e-8321-425b-b1e3-97b60ca67e8a"
+      url = "terraform-cloudgov-drupal-test.app.cloud.gov"
+    }
+  }
 
   assert {
     condition     = module.database.instance_id == output.database_id
@@ -45,5 +52,10 @@ run "test_app_creation" {
   assert {
     condition     = cloudfoundry_app.app.id == output.app_id
     error_message = "App ID output must match the app instance"
+  }
+
+  assert {
+    condition     = output.endpoint == cloudfoundry_route.app_route.url
+    error_message = "The endpoint is retured from the app_route"
   }
 }

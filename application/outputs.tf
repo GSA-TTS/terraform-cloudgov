@@ -3,7 +3,7 @@ output "app_id" {
 }
 
 output "endpoint" {
-  value = local.app_route
+  value = module.route.endpoint
 }
 
 output "service_bindings" {

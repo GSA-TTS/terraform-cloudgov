@@ -1,7 +1,3 @@
-locals {
-  endpoint = "${var.name}.apps.internal"
-}
-
 resource "cloudfoundry_app" "clamav_api" {
   name       = var.name
   space_name = var.cf_space_name
@@ -13,11 +9,7 @@ resource "cloudfoundry_app" "clamav_api" {
   strategy                        = "rolling"
   instances                       = var.instances
   docker_image                    = var.clamav_image
-  routes = [
-    {
-      route = local.endpoint
-    }
-  ]
+
   environment = {
     # Only set the proxy environment variables if a value was supplied.
     # Otherwise, ensure that a harmless envvar gets set instead.
@@ -28,4 +20,14 @@ resource "cloudfoundry_app" "clamav_api" {
     "${var.proxy_password != "" ? "PROXY_PASSWORD" : "proxy_password_is_not_set"}" = var.proxy_password
     MAX_FILE_SIZE                                                                  = var.max_file_size
   }
+}
+
+module "route" {
+  source = "../app_route"
+
+  cf_org_name   = var.cf_org_name
+  cf_space_name = var.cf_space_name
+  domain        = "apps.internal"
+  hostname      = var.name
+  app_ids       = [cloudfoundry_app.clamav_api.id]
 }

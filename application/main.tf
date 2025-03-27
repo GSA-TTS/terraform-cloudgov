@@ -1,6 +1,5 @@
 locals {
-  app_route = coalesce(var.route, "${var.name}.app.cloud.gov")
-  app_id    = cloudfoundry_app.application.id
+  app_id = cloudfoundry_app.application.id
 }
 
 data "external" "app_zip" {
@@ -28,10 +27,6 @@ resource "cloudfoundry_app" "application" {
   instances  = var.instances
   strategy   = "rolling"
 
-  routes = [{
-    route = local.app_route
-  }]
-
   service_bindings = [
     for service_name, params in var.service_bindings : {
       service_instance = service_name
@@ -41,4 +36,14 @@ resource "cloudfoundry_app" "application" {
   environment = merge({
     REQUESTS_CA_BUNDLE = "/etc/ssl/certs/ca-certificates.crt"
   }, var.environment_variables)
+}
+
+module "route" {
+  source = "../app_route"
+
+  cf_org_name   = var.cf_org_name
+  cf_space_name = var.cf_space_name
+  domain        = var.domain
+  hostname      = coalesce(var.hostname, var.name)
+  app_ids       = [local.app_id]
 }
