@@ -35,7 +35,8 @@ resource "cloudfoundry_route" "logshipper_route" {
   space  = var.cf_space.id
   domain = data.cloudfoundry_domain.public.id
   host   = "${var.cf_space.name}-${var.name}"
-  # Yields something like: dev-logshipper
+  destinations = [{ app_id = cloudfoundry_app.logshipper.id }]
+  # Yields something like: dev-logshipper.app.cloud.gov
 }
 
 data "external" "logshipper_zip" {
@@ -73,10 +74,6 @@ resource "cloudfoundry_app" "logshipper" {
       params           = (params == "" ? "{}" : params) # Empty string -> Minimal JSON
     }
   ]
-
-  routes = [{
-    route = local.route
-  }]
 
   environment = {
     PROXYROUTE = var.https_proxy_url
