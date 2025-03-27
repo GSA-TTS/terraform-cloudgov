@@ -13,10 +13,16 @@ variable "name" {
   description = "Name of the Drupal application"
 }
 
-variable "route" {
+variable "hostname" {
   type        = string
   default     = null
-  description = "The route to serve the application on. Defaults to 'var.name.app.cloud.gov'"
+  description = "The route hostname to serve the application on. Defaults to var.name"
+}
+
+variable "domain" {
+  type        = string
+  description = "The route domain to serve the application on. Defaults to app.cloud.gov"
+  default     = "app.cloud.gov"
 }
 
 variable "rds_plan_name" {

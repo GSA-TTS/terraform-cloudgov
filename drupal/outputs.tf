@@ -13,3 +13,7 @@ output "credentials_id" {
 output "app_id" {
   value = cloudfoundry_app.app.id
 }
+
+output "endpoint" {
+  value = cloudfoundry_route.app_route.url
+}

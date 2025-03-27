@@ -1,4 +1,15 @@
-mock_provider "cloudfoundry" {}
+mock_provider "cloudfoundry" {
+  mock_data "cloudfoundry_domain" {
+    defaults = {
+      id = "682327e2-9beb-4a17-ab0c-64f4b6a96a39"
+    }
+  }
+  mock_resource "cloudfoundry_app" {
+    defaults = {
+      id = "2ccdc746-e68e-4ffa-9417-544966983719"
+    }
+  }
+}
 
 variables {
   cf_org_name = "gsa-tts-devtools-prototyping"
@@ -17,7 +28,7 @@ run "test_proxy_creation" {
   }
 
   assert {
-    condition     = output.domain == local.egress_route
+    condition     = output.domain == cloudfoundry_route.egress_route.url
     error_message = "Output domain must match the route url"
   }
 
@@ -58,7 +69,7 @@ run "test_specific_hostname_bug" {
     name = "egress-proxy-staging"
   }
   assert {
-    condition     = can(regex("[a-z]", substr(output.domain, 0, 1)))
+    condition     = can(regex("[a-z]", substr(local.egress_host, 0, 1)))
     error_message = "proxy domain must start with an alpha character"
   }
 }
@@ -68,7 +79,7 @@ run "test_custom_hostname_is_trimmed" {
     route_host = "-3host-name"
   }
   assert {
-    condition     = output.domain == "host-name.apps.internal"
+    condition     = local.egress_host == "host-name"
     error_message = "proxy domain is stripped of any non-alpha characters"
   }
 }

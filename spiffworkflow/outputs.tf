@@ -24,4 +24,3 @@ output "connector_app_id" {
 output "frontend_app_id" {
   value = local.frontend_app_id
 }
-

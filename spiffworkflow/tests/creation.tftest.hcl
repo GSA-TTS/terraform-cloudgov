@@ -1,4 +1,20 @@
-mock_provider "cloudfoundry" {}
+mock_provider "cloudfoundry" {
+  mock_data "cloudfoundry_org" {
+    defaults = {
+      id = "591a8a56-3093-43e7-a21e-1b1b4dbd1c3a"
+    }
+  }
+  mock_data "cloudfoundry_domain" {
+    defaults = {
+      id = "ad9f5303-b5b0-40cb-b21a-a7276efae4b1"
+    }
+  }
+  mock_data "cloudfoundry_space" {
+    defaults = {
+      id = "31a2c21d-ba50-437b-9d40-8c2d741af9e7"
+    }
+  }
+}
 mock_provider "cloudfoundry-community" {} # Update this when the official provider supports cloudfoundry_network_policy
 
 variables {

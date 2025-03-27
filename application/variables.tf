@@ -45,10 +45,16 @@ variable "name" {
   type        = string
 }
 
-variable "route" {
-  description = "The full app route (ie. 'myservice.apps.internal'). Defaults to '{var.name}.app.cloud.gov' if this is omitted"
+variable "hostname" {
+  description = "The hostname to route to. Combined with var.domain for the full route. Defaults to var.name if omitted"
   type        = string
   default     = null
+}
+
+variable "domain" {
+  description = "The domain part of the application route. Defaults to app.cloud.gov"
+  type        = string
+  default     = "app.cloud.gov"
 }
 
 variable "gitref" {

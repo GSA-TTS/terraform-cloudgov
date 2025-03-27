@@ -3,7 +3,6 @@ locals {
   s3_name      = "${var.name}-storage"
   rds_name     = "${var.name}-database"
   secrets_name = "${var.name}-secrets"
-  drupal_route = coalesce(var.route, "${var.name}.app.cloud.gov")
 }
 
 module "database" {
@@ -105,8 +104,6 @@ resource "cloudfoundry_app" "app" {
   path             = data.archive_file.src.output_path
   source_code_hash = data.archive_file.src.output_base64sha256
 
-  routes = [{ route = local.drupal_route }]
-
   environment = merge({
     PHP_INI_SCAN_DIR       = "/home/vcap/app/php/etc/:/home/vcap/app/php/etc/php.ini.d/"
     DATABASE_INSTANCE_NAME = local.rds_name
@@ -121,4 +118,16 @@ resource "cloudfoundry_app" "app" {
   ]
 
   depends_on = [module.database]
+}
+
+data "cloudfoundry_domain" "domain" {
+  name = var.domain
+}
+resource "cloudfoundry_route" "app_route" {
+  domain = data.cloudfoundry_domain.domain.id
+  space  = var.cf_space.id
+  host   = coalesce(var.hostname, var.name)
+  destinations = [{
+    app_id = cloudfoundry_app.app.id
+  }]
 }
