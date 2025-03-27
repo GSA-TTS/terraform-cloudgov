@@ -11,16 +11,16 @@ variable "cf_space" {
   description = "cloud.gov space resource"
 }
 
-variable "app_names" {
+variable "app_ids" {
   type        = list(string)
-  description = "base application names to be accessed at this domain name."
+  description = "Application IDs to be accessed at this domain name."
   default     = []
 }
 
 variable "name" {
   type        = string
   description = "name of the service instance"
-  default     = ""
+  default     = null
 }
 
 variable "cdn_plan_name" {

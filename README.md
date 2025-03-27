@@ -85,7 +85,7 @@ module "domain" {
 
   cf_org_name   = local.cf_org_name
   cf_space      = data.cloudfoundry_space.app_space
-  app_names     = ["app_name"]
+  app_ids       = ["36935951-6e82-4d86-87f7-b3b09f95f4a4"]
   cdn_plan_name = "domain"
   domain_name   = "my-production-domain.name"
   host_name     = "my-production-host-name"

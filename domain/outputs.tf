@@ -3,5 +3,9 @@ output "instance_id" {
 }
 
 output "route_id" {
-  value = (length(var.app_names) == 0 ? cloudfoundry_route.origin_route.0.id : cloudfoundry_route.origin_route_connected.0.id)
+  value = cloudfoundry_route.origin_route.id
+}
+
+output "endpoint" {
+  value = local.endpoint
 }

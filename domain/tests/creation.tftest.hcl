@@ -1,22 +1,8 @@
 provider "cloudfoundry" {}
 
-override_data {
-  target = data.cloudfoundry_app.app["test-app-does-not-exist"]
-  values = {
-    id = "f9722bd0-ee5c-4b83-afd9-24e03760a692"
-  }
-}
-
-override_data {
-  target = data.cloudfoundry_app.app["test-app-does-not-exist-2"]
-  values = {
-    id = "6e214634-8cf6-435c-858c-b0fd4bba8f48"
-  }
-}
-
 # don't create the connected route because the destination apps don't exist
 override_resource {
-  target = cloudfoundry_route.origin_route_connected
+  target = cloudfoundry_route.origin_route
   values = {
     url = "www.apps.internal"
   }
@@ -36,7 +22,7 @@ variables {
   cdn_plan_name = "domain"
   domain_name   = "apps.internal"
   name          = "terraform-cloudgov-domain-test"
-  app_names     = ["test-app-does-not-exist"]
+  app_ids       = ["f9722bd0-ee5c-4b83-afd9-24e03760a692"]
   tags          = ["terraform-cloudgov-managed", "tests"]
 }
 
@@ -47,7 +33,7 @@ run "test_domain_creation" {
   }
 
   assert {
-    condition     = cloudfoundry_route.origin_route_connected.0.id == output.route_id
+    condition     = cloudfoundry_route.origin_route.id == output.route_id
     error_message = "Route ID output must match the created route"
   }
 
@@ -69,13 +55,13 @@ run "test_domain_creation" {
 
 run "test_no_apps" {
   variables {
-    host_name = "terraform-ci-test"
-    app_names = []
+    host_name = "www"
+    app_ids   = []
   }
 
   assert {
-    condition     = cloudfoundry_route.origin_route.0.id == output.route_id
-    error_message = "Route ID should return the correct resource id when apps are not specified"
+    condition     = cloudfoundry_route.origin_route.id == output.route_id
+    error_message = "The route is still constructed"
   }
 
   assert {
@@ -90,7 +76,7 @@ run "test_with_hostname" {
   }
 
   assert {
-    condition     = cloudfoundry_route.origin_route_connected.0.host == var.host_name
+    condition     = cloudfoundry_route.origin_route.host == var.host_name
     error_message = "Route hostname should be set to value of var.host_name"
   }
 
@@ -113,17 +99,20 @@ run "test_cdn_creation" {
 
 run "test_multi_app_target" {
   variables {
-    name      = ""
-    app_names = ["test-app-does-not-exist", "test-app-does-not-exist-2"]
+    name = null
+    app_ids = [
+      "f9722bd0-ee5c-4b83-afd9-24e03760a692",
+      "6e214634-8cf6-435c-858c-b0fd4bba8f48"
+    ]
   }
 
   assert {
-    condition     = can(regex("^[a-z-]{23}-${var.domain_name}$", cloudfoundry_service_instance.external_domain_instance.name))
+    condition     = "${var.cdn_plan_name}-${var.domain_name}-svc" == cloudfoundry_service_instance.external_domain_instance.name
     error_message = "Service Instance name is built from the first app name and domain_name"
   }
 
   assert {
-    condition     = toset([for name, value in data.cloudfoundry_app.app : value.id]) == toset([for t in cloudfoundry_route.origin_route_connected.0.destinations : t.app_id])
+    condition     = toset(["f9722bd0-ee5c-4b83-afd9-24e03760a692", "6e214634-8cf6-435c-858c-b0fd4bba8f48"]) == toset([for t in cloudfoundry_route.origin_route.destinations : t.app_id])
     error_message = "Target apps is set to the list of app_names"
   }
 }
