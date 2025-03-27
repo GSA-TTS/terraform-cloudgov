@@ -5,7 +5,7 @@ locals {
 
   # Yields something like: orgname-spacename-name.apps.internal, limited to the last 63 characters
   default_route_host = "${var.cf_org_name}-${replace(var.cf_egress_space.name, ".", "-")}-${var.name}"
-  egress_route       = "${replace(lower(substr(coalesce(var.route_host, local.default_route_host), -63, -1)), "/^[^a-z]*/", "")}.apps.internal"
+  egress_host        = replace(lower(substr(coalesce(var.route_host, local.default_route_host), -63, -1)), "/^[^a-z]*/", "")
 }
 
 
@@ -39,10 +39,6 @@ resource "cloudfoundry_app" "egress_app" {
   instances        = var.instances
   strategy         = "rolling"
 
-  routes = [{
-    route = local.egress_route
-  }]
-
   environment = {
     PROXY_PORTS : join(" ", var.allowports)
     PROXY_ALLOW : local.allowacl
@@ -52,10 +48,22 @@ resource "cloudfoundry_app" "egress_app" {
   }
 }
 
+data "cloudfoundry_domain" "internal_domain" {
+  name = "apps.internal"
+}
+resource "cloudfoundry_route" "egress_route" {
+  domain = data.cloudfoundry_domain.internal_domain.id
+  space  = var.cf_egress_space.id
+  host   = local.egress_host
+  destinations = [{
+    app_id = cloudfoundry_app.egress_app.id
+  }]
+}
+
 locals {
-  https_proxy = "https://${random_uuid.username.result}:${random_password.password.result}@${local.egress_route}:61443"
-  http_proxy  = "http://${random_uuid.username.result}:${random_password.password.result}@${local.egress_route}:8080"
-  domain      = local.egress_route
+  domain      = cloudfoundry_route.egress_route.url
+  https_proxy = "https://${random_uuid.username.result}:${random_password.password.result}@${local.domain}:61443"
+  http_proxy  = "http://${random_uuid.username.result}:${random_password.password.result}@${local.domain}:8080"
   username    = random_uuid.username.result
   password    = random_password.password.result
   https_port  = 61443
