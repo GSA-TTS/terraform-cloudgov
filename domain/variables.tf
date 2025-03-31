@@ -31,7 +31,7 @@ variable "cdn_plan_name" {
 variable "create_domain" {
   type        = bool
   default     = false
-  description = "Set to true to create the domain resource. Must be called by an OrgManager"
+  description = "Set to true to create the domain resource. Requires the OrgManager role."
 }
 
 variable "domain_name" {
