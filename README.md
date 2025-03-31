@@ -85,7 +85,7 @@ module "domain" {
 
   cf_org_name   = local.cf_org_name
   cf_space      = data.cloudfoundry_space.app_space
-  app_names     = ["app_name"]
+  app_ids       = [data.cloudfoundry_app.app.id, module.application.app_id]
   cdn_plan_name = "domain"
   domain_name   = "my-production-domain.name"
   host_name     = "my-production-host-name"
@@ -305,11 +305,10 @@ module "Application" {
 ## Testing
 
 > [!WARNING]
-> Tests provision resources in the real world when not using `mock_provider`! Take care that `CF_USER`/`CF_PASSWORD` are set to an account in a suitable non-production space. If other providers, such as the AWS provider, are used, ensure the same care is taken with their credentials in your shell before running `terraform test`.
+> Tests provision resources in the real world when not using `mock_provider`! Take care that any tests set cf_org_name and cf_space[_name] to a suitable non-production space. If other providers, such as the AWS provider, are used, ensure the same care is taken with their credentials in your shell before running `terraform test`.
 
 [Terraform tests](https://developer.hashicorp.com/terraform/language/tests) are in progress of being written. To run for any module with a `tests` directory:
 
-1. Set `CF_USER` and `CF_PASSWORD` env variables with SpaceDeployer credentials that can access the space(s) being used for tests
 1. cd to module root. Example: `cd s3`
 1. Run `terraform init`
 1. Run `terraform test`

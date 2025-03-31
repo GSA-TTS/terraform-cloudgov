@@ -3,5 +3,5 @@ output "app_id" {
 }
 
 output "endpoint" {
-  value = local.endpoint
+  value = module.route.endpoint
 }

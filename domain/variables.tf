@@ -11,21 +11,27 @@ variable "cf_space" {
   description = "cloud.gov space resource"
 }
 
-variable "app_names" {
+variable "app_ids" {
   type        = list(string)
-  description = "base application names to be accessed at this domain name."
+  description = "Application IDs to be accessed at this domain name."
   default     = []
 }
 
 variable "name" {
   type        = string
   description = "name of the service instance"
-  default     = ""
+  default     = null
 }
 
 variable "cdn_plan_name" {
   type        = string
   description = "name of the service plan name to create"
+}
+
+variable "create_domain" {
+  type        = bool
+  default     = false
+  description = "Set to true to create the domain resource. Requires the OrgManager role."
 }
 
 variable "domain_name" {

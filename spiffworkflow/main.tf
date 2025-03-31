@@ -1,9 +1,9 @@
 locals {
   route_prefix = (var.route_prefix != "" ? var.route_prefix : random_pet.route_prefix.id)
 
-  backend_route   = "${local.frontend_route}/api"
-  connector_route = "${local.route_prefix}-connector.apps.internal"
-  frontend_route  = "${local.route_prefix}.app.cloud.gov"
+  backend_route   = module.backend_route.endpoint
+  connector_route = module.connector_route.endpoint
+  frontend_route  = module.frontend_route.endpoint
 
   username = random_uuid.username.result
   password = random_password.password.result
@@ -123,6 +123,14 @@ resource "cloudfoundry_app" "backend" {
     SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX : "/api"
   }
 }
+module "backend_route" {
+  source = "../app_route"
+
+  cf_org_name   = var.cf_org_name
+  cf_space_name = var.cf_space_name
+  hostname      = local.route_prefix
+  path          = "/api"
+}
 
 resource "random_password" "connector_flask_secret_key" {
   length  = 32
@@ -150,10 +158,6 @@ resource "cloudfoundry_app" "connector" {
     COMMAND
   health_check_type          = "http"
   health_check_http_endpoint = "/liveness"
-  routes = [{
-    route    = local.connector_route
-    protocol = "http1"
-  }]
 
   environment = {
     FLASK_DEBUG : "0"
@@ -161,6 +165,15 @@ resource "cloudfoundry_app" "connector" {
     CONNECTOR_PROXY_PORT : "8080"
     REQUESTS_CA_BUNDLE : "/etc/ssl/certs/ca-certificates.crt"
   }
+}
+module "connector_route" {
+  source = "../app_route"
+
+  cf_org_name   = var.cf_org_name
+  cf_space_name = var.cf_space_name
+  domain        = "apps.internal"
+  hostname      = "${local.route_prefix}-connector"
+  app_ids       = [cloudfoundry_app.connector.id]
 }
 
 data "docker_registry_image" "frontend" {
@@ -176,10 +189,6 @@ resource "cloudfoundry_app" "frontend" {
   instances         = var.frontend_instances
   strategy          = "rolling"
   health_check_type = "port"
-  routes = [{
-    route    = local.frontend_route
-    protocol = "http1"
-  }]
 
   environment = {
     APPLICATION_ROOT : "/"
@@ -188,6 +197,14 @@ resource "cloudfoundry_app" "frontend" {
     SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_BACKEND_BASE_URL : local.backend_url
     BACKEND_BASE_URL : local.backend_url
   }
+}
+module "frontend_route" {
+  source = "../app_route"
+
+  cf_org_name   = var.cf_org_name
+  cf_space_name = var.cf_space_name
+  hostname      = local.route_prefix
+  app_ids       = [cloudfoundry_app.frontend.id]
 }
 
 resource "cloudfoundry_network_policy" "connector-network-policy" {
