@@ -7,9 +7,8 @@ locals {
   # More information here:
   # https://docs.cloudfoundry.org/devguide/services/log-management.html
   # https://docs.cloudfoundry.org/devguide/services/user-provided.html#syslog
-  syslog_drain = "https://${local.username}:${local.password}@${module.route.host}.app.cloud.gov/?drain-type=all"
+  syslog_drain = "https://${local.username}:${local.password}@${module.route.endpoint}/?drain-type=all"
   app_id       = cloudfoundry_app.logshipper.id
-  route        = "${var.cf_space.name}-${var.name}.app.cloud.gov"
 
   logshipper_creds_name = "logshipper-creds"
   newrelic_creds_name   = "logshipper-newrelic-creds"
@@ -18,10 +17,6 @@ locals {
     "${local.logshipper_creds_name}" = ""
     "${local.newrelic_creds_name}"   = ""
   }, var.service_bindings)
-}
-
-data "cloudfoundry_domain" "public" {
-  name = "app.cloud.gov"
 }
 
 resource "random_uuid" "username" {}
@@ -105,12 +100,16 @@ resource "cloudfoundry_service_instance" "logdrain" {
   syslog_drain_url = local.syslog_drain
 }
 
+resource "random_pet" "random_route" {
+  prefix = "logshipper"
+}
+
 module "route" {
   source = "../app_route"
 
   cf_org_name   = var.cf_org_name
   cf_space_name = var.cf_space.name
   domain        = var.domain
-  hostname      = coalesce(var.hostname, var.name)
+  hostname      = coalesce(var.hostname, random_pet.random_route.id)
   app_ids       = [cloudfoundry_app.logshipper.id]
 }
