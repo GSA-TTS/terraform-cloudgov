@@ -12,10 +12,6 @@ output "syslog_drain_url" {
   sensitive = true
 }
 
-output "domain" {
-  value = local.domain
-}
-
 output "syslog_drain_name" {
   value = var.syslog_drain_name
 }

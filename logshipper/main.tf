@@ -7,8 +7,7 @@ locals {
   # More information here:
   # https://docs.cloudfoundry.org/devguide/services/log-management.html
   # https://docs.cloudfoundry.org/devguide/services/user-provided.html#syslog
-  syslog_drain = "https://${local.username}:${local.password}@${cloudfoundry_route.logshipper_route.host}.app.cloud.gov/?drain-type=all"
-  domain       = cloudfoundry_route.logshipper_route.domain
+  syslog_drain = "https://${local.username}:${local.password}@${module.route.host}.app.cloud.gov/?drain-type=all"
   app_id       = cloudfoundry_app.logshipper.id
   route        = "${var.cf_space.name}-${var.name}.app.cloud.gov"
 
@@ -29,14 +28,6 @@ resource "random_uuid" "username" {}
 resource "random_password" "password" {
   length  = 16
   special = false
-}
-
-resource "cloudfoundry_route" "logshipper_route" {
-  space  = var.cf_space.id
-  domain = data.cloudfoundry_domain.public.id
-  host   = "${var.cf_space.name}-${var.name}"
-  destinations = [{ app_id = cloudfoundry_app.logshipper.id }]
-  # Yields something like: dev-logshipper.app.cloud.gov
 }
 
 data "external" "logshipper_zip" {
@@ -114,3 +105,12 @@ resource "cloudfoundry_service_instance" "logdrain" {
   syslog_drain_url = local.syslog_drain
 }
 
+module "route" {
+  source = "../app_route"
+
+  cf_org_name   = var.cf_org_name
+  cf_space_name = var.cf_space.name
+  domain        = var.domain
+  hostname      = coalesce(var.hostname, var.name)
+  app_ids       = [cloudfoundry_app.logshipper.id]
+}
