@@ -25,8 +25,8 @@ run "application_tests" {
     error_message = "The application buildpacks should not be empty"
   }
   assert {
-    condition     = cloudfoundry_route.logshipper_route.domain == output.domain
-    error_message = "The domain for the route must match the output domain"
+    condition     = cloudfoundry_route.logshipper.route == module.route.endpoint
+    error_message = "The route for the route must match the module route"
   }
 }
 
