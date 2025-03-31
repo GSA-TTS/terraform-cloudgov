@@ -33,11 +33,12 @@ jobs:
       fail-fast: false
       max-parallel: 1
       matrix:
-        module: ["egress_proxy", "drupal", "application"]
+        module: ["egress_proxy", "drupal", "application", "logshipper"]
     env:
       TERRAFORM_PRE_RUN: |
         apt-get update
         apt-get install -y zip
+
     steps:
       - uses: actions/checkout@v4
       - name: terraform test ${{ matrix.module }}
