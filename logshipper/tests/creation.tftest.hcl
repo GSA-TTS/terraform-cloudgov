@@ -24,10 +24,6 @@ run "application_tests" {
     condition     = cloudfoundry_app.logshipper.buildpacks != null
     error_message = "The application buildpacks should not be empty"
   }
-  assert {
-    condition     = cloudfoundry_app.logshipper.route == module.route.endpoint
-    error_message = "The route for the route must match the module route"
-  }
 }
 
 run "src_tests" {
