@@ -50,6 +50,7 @@ run "test_individual_permissions" {
   variables {
     managers   = ["paul.hirsch@gsa.gov"]
     developers = ["ryan.ahearn@gsa.gov"]
+    auditors   = ["zachary.rollyson@gsa.gov"]
   }
 
   assert {
@@ -60,6 +61,11 @@ run "test_individual_permissions" {
   assert {
     condition     = keys(cloudfoundry_space_role.developers) == ["ryan.ahearn@gsa.gov"]
     error_message = "Should be able to set Space Developers"
+  }
+
+  assert {
+    condition     = keys(cloudfoundry_space_role.auditors) == ["zachary.rollyson@gsa.gov"]
+    error_message = "Should be able to set Space Auditors"
   }
 }
 

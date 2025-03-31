@@ -17,3 +17,7 @@ output "developer_role_ids" {
 output "manager_role_ids" {
   value = { for username in local.manager_names : username => cloudfoundry_space_role.managers[username].id }
 }
+
+output "auditor_role_ids" {
+  value = { for username in var.auditors : username => cloudfoundry_space_role.auditors[username].id }
+}
