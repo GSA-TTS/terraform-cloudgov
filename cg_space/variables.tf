@@ -37,3 +37,9 @@ variable "deployers" {
   description = "list of cloud.gov users to be assigned both SpaceManager and SpaceDeveloper roles"
   default     = []
 }
+
+variable "auditors" {
+  type        = set(string)
+  description = "list of cloud.gov users to be assigned the SpaceAuditor role"
+  default     = []
+}
