@@ -358,6 +358,52 @@ resource "cloudfoundry_network_policy" "logshipper-network-policy" {
 }
 ```
 
+## REST File Scanner
+Creates a small application in cloudfoundry that is used to scan s3 bucket contents at REST. The purpose of this was originally to satisfy an ATO requirement where it may be necessary to scan files periodically. By attaching a `logdrain` it, you can also use new relic to facilitate alerting.
+
+
+**Requirements:**
+* An s3 Bucket to scan from (add as a service binding).
+* Use a `resource "cloudfoundry_service_instance" "clamav_ups" {}` (add as a service binding) or `environment_variables` to give the scan url
+* Some scanning tool (clamav for example, add as a service binding)
+
+**Optional but suggested requirements:**
+* A quarantine bucket, or some quarantine solution.
+* Logdrain from the Logshipper module `module.logshipper.logdrain_name` (add as a service binding) if you wish to send scan notifications to New Relic and use New Relic for your alerting.
+
+It is recommended to use a `depends_on = []` to ensure any necessary s3's, logshipper, virus scanner and the `cloudfoundry_service_instance` are created before this module attempts to be created.
+
+If you would like information on a potential scanning application, the FAC created a small flask app to handle their needs. You may fork and iterate on, or develop one for your preferred tech stack https://github.com/GSA-TTS/fac-periodic-scanner
+
+
+```tf
+module "file-scanner" {
+  source               = "github.com/gsa-tts/terraform-cloudgov//scanner?ref=v2.4.0"
+  name                 = local.scanner_name
+  cf_org_name          = var.cf_org_name
+  github_repo_name     = "my-repo-name"
+  src_code_folder_name = "" #See variables.tf for information
+  cf_space = {
+    id   = data.cloudfoundry_space.space.id
+    name = var.cf_space_name
+  }
+  buildpacks        = ["https://my-buildpack1-link.com", "my-buildpack2"]
+  https_proxy_url   = module.egress_proxy.https_url
+  scanner_instances = 1
+  scanner_memory    = "512M"
+  disk_quota        = "512M"
+  service_bindings = {
+    "${module.quarantine.bucket_name}"                 = "",
+    "${module.some-s3.bucket_name}"                 = "",
+    "${cloudfoundry_service_instance.clamav_ups.name}" = "",
+    "${module.logshipper.logdrain_name}"               = ""
+  }
+  environment_variables = {
+    AV_SCAN_URL = "https://clamav-${var.cf_space_name}.apps.internal:61443/scan"
+  }
+}
+```
+
 ## Testing
 
 > [!WARNING]
