@@ -159,6 +159,9 @@ Creates and configures an instance of cg-egress-proxy to proxy traffic from your
 
 Prerequite: existing public-egress space to deploy the proxy into
 
+> [!NOTE]
+> It may be necessary to use the `allowports` variable to allow new relic agents to communicate through the proxy to the collector. This was discovered on the FAC who uses the python new relic agent, and giving the module `allowports = [443, 61443]` allowed the agent to successfully communicate with the FEDRAMP'd `gov-collector.newrelic.com` endpoint for telemetry.
+
 ```
 module "egress_proxy" {
   source = "github.com/GSA-TTS/terraform-cloudgov//egress_proxy?ref=v2.3.0"
