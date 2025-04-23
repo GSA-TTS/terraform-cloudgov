@@ -226,7 +226,7 @@ module "SpiffWorkflow" {
   # This should be an existing branch in the model repo. New models will be pushed here.
   target_branch_for_saving_changes = "publish-staging-branch"
 
-  database_service_instance_name = module.Database.name
+  database_service_instance_name = module.Database.database_name
   tags                           = ["SpiffWorkflow"]
   depends_on                     = [module.Database]
 }
