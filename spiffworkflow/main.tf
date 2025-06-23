@@ -111,7 +111,7 @@ resource "cloudfoundry_app" "backend" {
     #   /config/permissions/example.yml
     # We should probably generate credentials only for the admin
     # and have everything else be specified via DMN as described here:
-    #   https://spiff-arena.readthedocs.io/en/latest/DevOps_installation_integration/admin_and_permissions.html#site-administration
+    #   https://spiff-arena.readthedocs.io/en/latest/how_to_guides/deployment/manage_permissions.html#site-administration
     SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME : "example.yml"
 
     SPIFFWORKFLOW_BACKEND_PORT : "8080"
