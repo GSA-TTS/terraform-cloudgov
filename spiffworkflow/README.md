@@ -16,6 +16,9 @@ This Terraform module deploys the [SpiffWorkflow](https://github.com/sartography
 
 ## Usage
 
+**NOTE:**
+Ensure that your space has the `public_networks_egress`security group if you are not using an egress proxy, so that the frontend can reach the backend API endpoint.
+
 ### Container-based Backend Deployment
 
 Use this approach when you have a pre-built container image with your process models included:
@@ -67,6 +70,24 @@ module "spiffworkflow" {
   backend_additional_service_bindings = {
     "my-redis-service" = ""
   }
+}
+```
+
+### Enabling saving and publishing changes
+
+The deployment can be configured to sync with an upstream repository. Saving will add your changes to a branch, while publishing will make a PR to the upstream repository.
+
+**NOTE:**
+You must have a valid git key pairing. Generate with `ssh-keygen -t rsa -b 4096 -C "my-git@email"`, and add the public key to **https://github.com/settings/keys**. `var.process_models_ssh_key` is the private key. When you store `process_models_ssh_key` in a .tfvars file, ensure that the file format of the .tfvars file is in "LF" End Of Line Sequence. **This key is a profile level SSH key, and does not appear to work at the repo level**
+
+```
+module "spiffworkflow" {
+  source = "github.com/GSA-TTS/terraform-cloudgov//spiffworkflow"
+  
+  cf_org_name   = "my-org"
+  cf_space_name = "my-space"
+  [TODO: Document the variables to use!]
+  [other configuration]
 }
 ```
 

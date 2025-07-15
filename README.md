@@ -208,38 +208,36 @@ module "drupal" {
 ### SpiffWorkflow
 
 > [!WARNING]
-> This module is in an experimental phase, and is being added as a means to bring this workflow engine into GSA with a reusable terraform module. It is in active development and not _necessarily_ reflective of a production ready module.
+> This module is in an experimental phase, and is being added as a means to bring this workflow engine into GSA with a reusable terraform module. It is in active development and not _necessarily_ reflective of a production ready module. In particular, the module does not yet replace the default credentials.
 
 Spiff Workflow is a workflow engine implemented in pure Python. Using BPMN will allow non-developers to describe complex workflow processes in a visual diagram, coupled with a powerful python script engine that works seamlessly within the diagrams. SpiffWorkflow can parse these diagrams and execute them. The ability for businesses to create clear, coherent diagrams that drive an application has far reaching potential. More information can be found on the creators [github page](https://github.com/sartography/SpiffWorkflow).
 
-**NOTE:**
-1. You must have a valid git key pairing. Generate with ssh-keygen -t rsa -b 4096 -C "my-git@email", and add the public key to **https://github.com/settings/keys**. var.process_models_ssh_key is the private key. When you store process_models_ssh_key in a .tfvars, ensure that the file format of the .tfvars file is in "LF" End Of Line Sequence. **This key is a profile level SSH key, and does not appear to work at the repo level**
-2. Ensure that your space has the `public_networks_egress`security group if you are not using a proxy.
+For detailed documentation, options, and usage examples, see the [SpiffWorkflow module README](./spiffworkflow/README.md).
+
+Basic example:
+
 ```
-module "SpiffWorkflow" {
-  source        = "github.com/GSA-TTS/terraform-cloudgov//spiffworkflow?ref=v2.3.0"
-  cf_org_name   = var.cf_org_name
-  cf_space_name = var.cf_space_name
-
-  process_models_ssh_key = var.process_models_ssh_key
-
-  process_models_repository ="git@github.com:GSA-TTS/gsa-process-models.git"
-  # This should be a branch (non-main), to load the examples. Edits to existing models will be pushed here.
-  source_branch_for_example_models = "process-models-playground"
-  # This should be an existing branch in the model repo. New models will be pushed here.
-  target_branch_for_saving_changes = "publish-staging-branch"
-
-  database_service_instance_name = module.Database.database_name
-  tags                           = ["SpiffWorkflow"]
-  depends_on                     = [module.Database]
-}
-
-module "Database" {
+module "database" {
   source        = "github.com/gsa-tts/terraform-cloudgov//database?ref=v2.3.0"
   cf_space_id   = data.cloudfoundry_space.space.id
   name          = "spiffworkflow-db"
   tags          = ["rds", "SpiffWorkflow"]
   rds_plan_name = "small-psql"
+}
+
+module "spiffworkflow" {
+  source        = "github.com/GSA-TTS/terraform-cloudgov//spiffworkflow?ref=v2.3.0"
+  cf_org_name   = var.cf_org_name
+  cf_space_name = var.cf_space_name
+  
+  # Required database instance
+  backend_database_service_instance = module.database.database_name
+  
+  # Choose deployment method: "container" (default) or "buildpack"
+  backend_deployment_method = "container"
+  
+  tags = ["SpiffWorkflow"]
+  depends_on = [module.database]
 }
 ```
 
