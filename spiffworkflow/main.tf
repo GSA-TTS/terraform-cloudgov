@@ -167,7 +167,7 @@ resource "cloudfoundry_app" "connector" {
   }
 }
 module "connector_route" {
-  source = "../app_route"
+  source = "github.com/GSA-TTS/terraform-cloudgov//app_route?ref=v2.3.0"
 
   cf_org_name   = var.cf_org_name
   cf_space_name = var.cf_space_name
@@ -199,7 +199,7 @@ resource "cloudfoundry_app" "frontend" {
   }
 }
 module "frontend_route" {
-  source = "../app_route"
+  source = "github.com/GSA-TTS/terraform-cloudgov//app_route?ref=v2.3.0"
 
   cf_org_name   = var.cf_org_name
   cf_space_name = var.cf_space_name
