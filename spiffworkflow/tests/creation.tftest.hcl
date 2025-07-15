@@ -17,10 +17,12 @@ mock_provider "cloudfoundry" {
 }
 
 variables {
-  cf_org_name                      = "gsa-tts-devtools-prototyping"
-  cf_space_name                    = "terraform-cloudgov-ci-tests"
-  process_models_ssh_key           = ""
-  database_service_instance_name   = "spiffworkflow-db"
+  cf_org_name                       = "gsa-tts-devtools-prototyping"
+  cf_space_name                     = "terraform-cloudgov-ci-tests"
+  process_models_ssh_key            = ""
+  backend_database_service_instance = "spiffworkflow-db"
+  name                              = "spiffworkflow-backend"
+
   backend_name                     = "spiffworkflow-backend"
   frontend_name                    = "spiffworkflow-frontend"
   connector_name                   = "spiffworkflow-connector"
