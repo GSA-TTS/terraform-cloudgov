@@ -19,11 +19,11 @@ jobs:
       fail-fast: false
       matrix:
         image:
-          - name: ghcr.io/gsa-tts/spiffworkflow-backend:deploy-to-cloud-gov-latest
+          - name: ghcr.io/sartography/spiffworkflow-backend:v1.0.0
             short-name: spiffarena-backend
-          - name: ghcr.io/gsa-tts/spiffworkflow-frontend:deploy-to-cloud-gov-latest
+          - name: ghcr.io/sartography/spiffworkflow-frontend:v1.0.0
             short-name: spiffarena-frontend
-          - name: ghcr.io/gsa-tts/connector-proxy-demo:deploy-to-cloud-gov-latest
+          - name: ghcr.io/sartography/connector-proxy-demo:v1.0.0
             short-name: spiffarena-connector
           - name: ghcr.io/gsa-tts/clamav-rest/clamav:latest
             short-name: clamav-proxy-support
