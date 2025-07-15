@@ -1,0 +1,28 @@
+backend-image: ghcr.io/gsa-tts/spiffworkflow-backend:deploy-to-cloud-gov-latest
+frontend-image: ghcr.io/gsa-tts/spiffworkflow-frontend:deploy-to-cloud-gov-latest
+connector-image: ghcr.io/gsa-tts/connector-proxy-demo:deploy-to-cloud-gov-latest
+
+db-instance: spiffworkflow-db
+backend-flask-session-key: 66eef9e98a3f4e6f85258154e4a1bdce
+connector-flask-secret-key: 66eef9e99a3f4e6f85258154e4a1bdce
+git-process-models-repo: git@github.com:GSA-TTS/gsa-process-models.git
+openid-secret: flarblegarble
+source-branch: process-models-playground
+target-branch-for-publish: publish-staging-branch
+
+# Generate a Key to be used for pulling and pushing commits to the bpmn process models repo (refer to git-process-models-repo var above):
+# ssh-keygen -t rsa -b 4096 -C "my-git@email.blah"
+# Add the public key to:
+# https://github.com/settings/keys
+# And then put the private key here.
+github-ssh-key: |
+  -----BEGIN OPENSSH PRIVATE KEY-----
+  ...
+  ...
+  ...
+  -----END OPENSSH PRIVATE KEY-----
+
+# The "slug" is a URL-friendly string that can be used to distinguish between
+# deployments. It will be including in app names and generated URLs. (You can leave
+# this empty for an "official" deployment.)
+slug: -flamingo-stardust
