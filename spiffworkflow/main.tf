@@ -208,11 +208,12 @@ module "frontend_route" {
 }
 
 resource "cloudfoundry_network_policy" "connector-network-policy" {
-  provider = cloudfoundry-community
-  policy {
-    source_app      = local.backend_app_id
-    destination_app = local.connector_app_id
-    port            = "61443"
-    protocol        = "tcp"
-  }
+  policies = [
+    {
+      source_app      = local.backend_app_id
+      destination_app = local.connector_app_id
+      port            = "61443"
+      protocol        = "tcp"
+    }
+  ]
 }

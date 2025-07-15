@@ -15,7 +15,6 @@ mock_provider "cloudfoundry" {
     }
   }
 }
-mock_provider "cloudfoundry-community" {} # Update this when the official provider supports cloudfoundry_network_policy
 
 variables {
   cf_org_name                      = "gsa-tts-devtools-prototyping"
