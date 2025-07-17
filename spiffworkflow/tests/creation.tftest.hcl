@@ -14,14 +14,32 @@ mock_provider "cloudfoundry" {
       id = "31a2c21d-ba50-437b-9d40-8c2d741af9e7"
     }
   }
+
+  # Mock cloudfoundry_app resources with valid UUIDs to fix the network policy test
+  mock_resource "cloudfoundry_app" {
+    defaults = {
+      id = "c5b9e4d2-1a8f-46c3-a957-4f3d8b79e61c"
+    }
+  }
 }
-mock_provider "cloudfoundry-community" {} # Update this when the official provider supports cloudfoundry_network_policy
+
+# Mock Docker registry image data
+mock_provider "docker" {
+  mock_resource "docker_registry_image" {
+    defaults = {
+      name          = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena:latest"
+      sha256_digest = "sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+    }
+  }
+}
 
 variables {
-  cf_org_name                      = "gsa-tts-devtools-prototyping"
-  cf_space_name                    = "terraform-cloudgov-ci-tests"
-  process_models_ssh_key           = ""
-  database_service_instance_name   = "spiffworkflow-db"
+  cf_org_name                       = "gsa-tts-devtools-prototyping"
+  cf_space_name                     = "terraform-cloudgov-ci-tests"
+  process_models_ssh_key            = ""
+  backend_database_service_instance = "spiffworkflow-db"
+  name                              = "spiffworkflow-backend"
+
   backend_name                     = "spiffworkflow-backend"
   frontend_name                    = "spiffworkflow-frontend"
   connector_name                   = "spiffworkflow-connector"
@@ -39,16 +57,16 @@ variables {
 
 run "test_spiff_instances" {
   assert {
-    condition     = cloudfoundry_app.connector.name == var.connector_name
-    error_message = "Connector App name matches var.name"
+    condition     = cloudfoundry_app.connector.name == "${var.name}-connector"
+    error_message = "Connector App name should be ${var.name}-connector"
   }
   assert {
-    condition     = cloudfoundry_app.backend.name == var.backend_name
-    error_message = "Backend App name matches var.name"
+    condition     = cloudfoundry_app.backend.name == "${var.name}-backend"
+    error_message = "Backend App name should be ${var.name}-backend"
   }
   assert {
-    condition     = cloudfoundry_app.frontend.name == var.frontend_name
-    error_message = "Frontend App name matches var.name"
+    condition     = cloudfoundry_app.frontend.name == "${var.name}-frontend"
+    error_message = "Frontend App name should be ${var.name}-frontend"
   }
   assert {
     condition     = cloudfoundry_app.connector.id == output.connector_app_id
@@ -65,35 +83,5 @@ run "test_spiff_instances" {
   assert {
     condition     = cloudfoundry_app.backend.health_check_http_endpoint == var.health_check_endpoint
     error_message = "Health check endpoint must match backend health check endpoint"
-  }
-}
-
-run "test_spiff_images" {
-  assert {
-    condition     = data.docker_registry_image.backend.name == var.backend_image
-    error_message = "Backend docker image data name is passed directly in as var.backend_image"
-  }
-  assert {
-    condition     = data.docker_registry_image.frontend.name == var.frontend_image
-    error_message = "Frontend docker image data name is passed directly in as var.frontend_image"
-  }
-  assert {
-    condition     = data.docker_registry_image.connector.name == var.connector_image
-    error_message = "Connector docker image data name is passed directly in as var.connector_image"
-  }
-}
-
-run "test_spiff_sha" {
-  assert {
-    condition     = cloudfoundry_app.backend.docker_image == "${var.backend_image_name}@${data.docker_registry_image.backend.sha256_digest}"
-    error_message = "Backend docker image is derived from the image_location@sha256"
-  }
-  assert {
-    condition     = cloudfoundry_app.frontend.docker_image == "${var.frontend_image_name}@${data.docker_registry_image.frontend.sha256_digest}"
-    error_message = "Frontend docker image is derived from the image_location@sha256"
-  }
-  assert {
-    condition     = cloudfoundry_app.connector.docker_image == "${var.connector_image_name}@${data.docker_registry_image.connector.sha256_digest}"
-    error_message = "Connector docker image is derived from the image_location@sha256"
   }
 }

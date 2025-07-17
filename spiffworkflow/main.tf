@@ -1,24 +1,25 @@
 locals {
-  route_prefix = (var.route_prefix != "" ? var.route_prefix : random_pet.route_prefix.id)
+  prefix = (var.name != null ? var.name : random_pet.prefix.id)
 
-  backend_route   = module.backend_route.endpoint
-  connector_route = module.connector_route.endpoint
-  frontend_route  = module.frontend_route.endpoint
-
+  # TODO: Currently unused. We should be set creds for the backend
+  # and include them in the outputs since people will need them to 
+  # log into the frontend. This should be straightforward to 
+  # implement in the buildpack path but the container path will 
+  # require a bit more thought. 
   username = random_uuid.username.result
   password = random_password.password.result
 
-  backend_url   = "https://${local.backend_route}"
-  connector_url = "https://${local.connector_route}:61443"
-  frontend_url  = "https://${local.frontend_route}"
+  backend_url   = "https://${module.backend_route.endpoint}"
+  connector_url = "https://${module.connector_route.endpoint}:61443"
+  frontend_url  = "https://${module.frontend_route.endpoint}"
 
   backend_app_id      = cloudfoundry_app.backend.id
   connector_app_id    = cloudfoundry_app.connector.id
   frontend_app_id     = cloudfoundry_app.frontend.id
   tags                = setunion(["terraform-cloudgov-managed"], var.tags)
-  backend_baseimage   = split(":", var.backend_imageref)[0]
   frontend_baseimage  = split(":", var.frontend_imageref)[0]
   connector_baseimage = split(":", var.connector_imageref)[0]
+  backend_baseimage   = var.backend_deployment_method == "container" ? split(":", var.backend_imageref)[0] : null
 }
 
 resource "random_uuid" "username" {}
@@ -27,109 +28,8 @@ resource "random_password" "password" {
   special = false
 }
 
-resource "random_pet" "route_prefix" {
+resource "random_pet" "prefix" {
   prefix = "spiffworkflow"
-}
-
-resource "random_password" "backend_flask_secret_key" {
-  length  = 32
-  special = true
-}
-
-resource "random_password" "backend_openid_secret" {
-  length  = 32
-  special = true
-}
-
-data "docker_registry_image" "backend" {
-  name = var.backend_imageref
-}
-resource "cloudfoundry_app" "backend" {
-  name                       = "${var.app_prefix}-backend"
-  org_name                   = var.cf_org_name
-  space_name                 = var.cf_space_name
-  docker_image               = "${local.backend_baseimage}@${data.docker_registry_image.backend.sha256_digest}"
-  memory                     = var.backend_memory
-  instances                  = var.backend_instances
-  disk_quota                 = "3G"
-  strategy                   = "rolling"
-  command                    = <<-COMMAND
-    # Get the postgres URI from the service binding. (SQL Alchemy insists on "postgresql://".🙄)
-    export SPIFFWORKFLOW_BACKEND_DATABASE_URI=$( echo $VCAP_SERVICES | jq -r '.["aws-rds"][].credentials.uri' | sed -e s/postgres/postgresql/ )
-
-    # Make sure the Cloud Foundry-provided CA is recognized when making TLS connections
-    cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt
-    /usr/sbin/update-ca-certificates
-
-    # Verify that this is working. It should return '{"ok": true}'
-    # curl https://spiffworkflow((slug))-connector.apps.internal:61443/liveness
-
-    /app/bin/clone_process_models
-    /app/bin/boot_server_in_docker
-    COMMAND
-  health_check_type          = "http"
-  health_check_http_endpoint = "/api/v1.0/status"
-  service_bindings = [
-    { service_instance = var.database_service_instance_name }
-  ]
-  routes = [{
-    route    = local.backend_route
-    protocol = "http1"
-  }]
-
-  environment = {
-    APPLICATION_ROOT : "/"
-    FLASK_SESSION_SECRET_KEY : random_password.backend_flask_secret_key.result
-    FLASK_DEBUG : "0"
-    REQUESTS_CA_BUNDLE : "/etc/ssl/certs/ca-certificates.crt"
-
-    # All of the configuration variables are documented here:
-    # spiffworkflow-backend/src/spiffworkflow_backend/config/default.py
-    SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR : "/app/process_models"
-    SPIFFWORKFLOW_BACKEND_CHECK_FRONTEND_AND_BACKEND_URL_COMPATIBILITY : "false"
-    SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL : local.connector_url
-    SPIFFWORKFLOW_BACKEND_DATABASE_TYPE : "postgres"
-    SPIFFWORKFLOW_BACKEND_ENV : "local_docker"
-    SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED : "true"
-
-    # This branch needs to exist, otherwise we can't clone it at startup and startup fails
-    SPIFFWORKFLOW_BACKEND_GIT_COMMIT_ON_SAVE : "true"
-    SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL : var.process_models_repository
-    SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH : var.target_branch_for_saving_changes
-    SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH : var.source_branch_for_example_models
-    SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY : var.process_models_ssh_key
-    SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA : "false"
-    SPIFFWORKFLOW_BACKEND_LOG_LEVEL : "INFO"
-
-    # TODO: We should make these configurable with variables so
-    # you can specify an external OIDC IDP.
-    SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID : "spiffworkflow-backend"
-    SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY : random_password.backend_openid_secret.result
-    SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL : "${local.backend_url}/openid"
-
-    # TODO: static creds are in this path in the image:
-    #   /config/permissions/example.yml
-    # We should probably generate credentials only for the admin
-    # and have everything else be specified via DMN as described here:
-    #   https://spiff-arena.readthedocs.io/en/latest/how_to_guides/deployment/manage_permissions.html#site-administration
-    SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME : "example.yml"
-
-    SPIFFWORKFLOW_BACKEND_PORT : "8080"
-    SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP : "true"
-    SPIFFWORKFLOW_BACKEND_UPGRADE_DB : "true"
-    SPIFFWORKFLOW_BACKEND_URL : local.backend_url
-    SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND : local.frontend_url
-    SPIFFWORKFLOW_BACKEND_USE_WERKZEUG_MIDDLEWARE_PROXY_FIX : "true"
-    SPIFFWORKFLOW_BACKEND_WSGI_PATH_PREFIX : "/api"
-  }
-}
-module "backend_route" {
-  source = "../app_route"
-
-  cf_org_name   = var.cf_org_name
-  cf_space_name = var.cf_space_name
-  hostname      = local.route_prefix
-  path          = "/api"
 }
 
 resource "random_password" "connector_flask_secret_key" {
@@ -142,7 +42,7 @@ data "docker_registry_image" "connector" {
 }
 
 resource "cloudfoundry_app" "connector" {
-  name                       = "${var.app_prefix}-connector"
+  name                       = "${local.prefix}-connector"
   org_name                   = var.cf_org_name
   space_name                 = var.cf_space_name
   docker_image               = "${local.connector_baseimage}@${data.docker_registry_image.connector.sha256_digest}"
@@ -166,22 +66,13 @@ resource "cloudfoundry_app" "connector" {
     REQUESTS_CA_BUNDLE : "/etc/ssl/certs/ca-certificates.crt"
   }
 }
-module "connector_route" {
-  source = "../app_route"
-
-  cf_org_name   = var.cf_org_name
-  cf_space_name = var.cf_space_name
-  domain        = "apps.internal"
-  hostname      = "${local.route_prefix}-connector"
-  app_ids       = [cloudfoundry_app.connector.id]
-}
 
 data "docker_registry_image" "frontend" {
   name = var.frontend_imageref
 }
 
 resource "cloudfoundry_app" "frontend" {
-  name              = "${var.app_prefix}-frontend"
+  name              = "${local.prefix}-frontend"
   org_name          = var.cf_org_name
   space_name        = var.cf_space_name
   docker_image      = "${local.frontend_baseimage}@${data.docker_registry_image.frontend.sha256_digest}"
@@ -196,23 +87,5 @@ resource "cloudfoundry_app" "frontend" {
     SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_APP_ROUTING_STRATEGY : "path_based"
     SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_BACKEND_BASE_URL : local.backend_url
     BACKEND_BASE_URL : local.backend_url
-  }
-}
-module "frontend_route" {
-  source = "../app_route"
-
-  cf_org_name   = var.cf_org_name
-  cf_space_name = var.cf_space_name
-  hostname      = local.route_prefix
-  app_ids       = [cloudfoundry_app.frontend.id]
-}
-
-resource "cloudfoundry_network_policy" "connector-network-policy" {
-  provider = cloudfoundry-community
-  policy {
-    source_app      = local.backend_app_id
-    destination_app = local.connector_app_id
-    port            = "61443"
-    protocol        = "tcp"
   }
 }
