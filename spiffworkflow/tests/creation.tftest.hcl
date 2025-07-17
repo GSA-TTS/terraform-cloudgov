@@ -14,7 +14,7 @@ mock_provider "cloudfoundry" {
       id = "31a2c21d-ba50-437b-9d40-8c2d741af9e7"
     }
   }
-  
+
   # Mock cloudfoundry_app resources with valid UUIDs to fix the network policy test
   mock_resource "cloudfoundry_app" {
     defaults = {
@@ -27,7 +27,7 @@ mock_provider "cloudfoundry" {
 mock_provider "docker" {
   mock_resource "docker_registry_image" {
     defaults = {
-      name = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena:latest"
+      name          = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena:latest"
       sha256_digest = "sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
     }
   }
