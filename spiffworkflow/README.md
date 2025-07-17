@@ -17,7 +17,7 @@ This Terraform module deploys the [SpiffWorkflow](https://github.com/sartography
 ## Usage
 
 **NOTE:**
-Ensure that your space has the `public_networks_egress`security group if you are not using an egress proxy, so that the frontend can reach the backend API endpoint.
+Your space must have the `trusted-local-egress` security group applied so that the backend can reach the database. If you are not using an egress proxy, you should also ensure that your space has the `public_networks_egress` security group applied, so that the frontend can reach the backend API endpoint.
 
 ### Container-based Backend Deployment
 
