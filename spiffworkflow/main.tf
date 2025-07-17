@@ -1,8 +1,5 @@
 locals {
-  prefix          = (var.name != null ? var.name : random_pet.prefix.id)
-  backend_route   = module.backend_route.endpoint
-  connector_route = module.connector_route.endpoint
-  frontend_route  = module.frontend_route.endpoint
+  prefix = (var.name != null ? var.name : random_pet.prefix.id)
 
   # TODO: Currently unused. We should be set creds for the backend
   # and include them in the outputs since people will need them to 
@@ -12,9 +9,9 @@ locals {
   username = random_uuid.username.result
   password = random_password.password.result
 
-  backend_url   = "https://${local.backend_route}"
-  connector_url = "https://${local.connector_route}:61443"
-  frontend_url  = "https://${local.frontend_route}"
+  backend_url   = "https://${module.backend_route.endpoint}"
+  connector_url = "https://${module.connector_route.endpoint}:61443"
+  frontend_url  = "https://${module.frontend_route.endpoint}"
 
   backend_app_id      = cloudfoundry_app.backend.id
   connector_app_id    = cloudfoundry_app.connector.id
@@ -69,15 +66,6 @@ resource "cloudfoundry_app" "connector" {
     REQUESTS_CA_BUNDLE : "/etc/ssl/certs/ca-certificates.crt"
   }
 }
-module "connector_route" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//app_route?ref=v2.3.0"
-
-  cf_org_name   = var.cf_org_name
-  cf_space_name = var.cf_space_name
-  domain        = "apps.internal"
-  hostname      = "${local.prefix}-connector"
-  app_ids       = [cloudfoundry_app.connector.id]
-}
 
 data "docker_registry_image" "frontend" {
   name = var.frontend_imageref
@@ -100,23 +88,4 @@ resource "cloudfoundry_app" "frontend" {
     SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_BACKEND_BASE_URL : local.backend_url
     BACKEND_BASE_URL : local.backend_url
   }
-}
-module "frontend_route" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//app_route?ref=v2.3.0"
-
-  cf_org_name   = var.cf_org_name
-  cf_space_name = var.cf_space_name
-  hostname      = local.prefix
-  app_ids       = [cloudfoundry_app.frontend.id]
-}
-
-resource "cloudfoundry_network_policy" "connector-network-policy" {
-  policies = [
-    {
-      source_app      = local.backend_app_id
-      destination_app = local.connector_app_id
-      port            = "61443"
-      protocol        = "tcp"
-    }
-  ]
 }

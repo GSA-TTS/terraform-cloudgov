@@ -102,15 +102,6 @@ resource "random_password" "backend_openid_secret" {
   special = true
 }
 
-module "backend_route" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//app_route?ref=v2.3.0"
-
-  cf_org_name   = var.cf_org_name
-  cf_space_name = var.cf_space_name
-  hostname      = local.prefix
-  path          = "/api"
-}
-
 data "docker_registry_image" "backend" {
   count = var.backend_deployment_method == "container" ? 1 : 0
   name  = var.backend_imageref
@@ -211,7 +202,7 @@ resource "cloudfoundry_app" "backend" {
   )
 
   routes = [{
-    route    = local.backend_route
+    route    = module.backend_route.endpoint
     protocol = "http1"
   }]
 }
