@@ -61,6 +61,8 @@ echo "Python version: ${PYTHON_VERSION}"
 # Create the dist directory if it doesn't exist
 mkdir -p "${DIST_DIR}"
 mkdir -p "${DOWNLOAD_DIR}"
+mkdir -p "${BACKEND_DIR}"
+
 echo "Created directories: ${DIST_DIR} and ${DOWNLOAD_DIR}"
 
 # Cleanup any existing backend directory from previous runs
