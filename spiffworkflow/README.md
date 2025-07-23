@@ -10,18 +10,18 @@ This Terraform module deploys the [SpiffWorkflow](https://github.com/sartography
 
 - Deploy all components of SpiffWorkflow in a cloud.gov space
 - Automatic configuration of network policies and routes
-- Two deployment options for the backend:
-  - Container-based deployment using a pre-built Docker image
-  - Buildpack-based deployment from source code using local process models
+- Two deployment options for the backend and connector:
+  - Container-based deployment using a pre-built upstream Docker image
+  - Buildpack-based deployment using upstream source and local process models (backend) or local source (connector)
 
 ## Usage
 
 **NOTE:**
 Your space must have the `trusted-local-egress` security group applied so that the backend can reach the database. If you are not using an egress proxy, you should also ensure that your space has the `public_networks_egress` security group applied, so that the frontend can reach the backend API endpoint.
 
-### Container-based Backend Deployment
+### Container-based Deployment
 
-Use this approach when you have a pre-built container image with your process models included:
+Use this approach when you have pre-built container images for the backend and connector:
 
 ```hcl
 module "spiffworkflow" {
@@ -46,9 +46,9 @@ module "spiffworkflow" {
 }
 ```
 
-### Buildpack-based Backend Deployment
+### Buildpack-based Deployment
 
-Use this approach when you want to deploy the SpiffWorkflow from source code, including local process models:
+Use this approach when you want to customize the content of the backend and/or connector:
 
 ```hcl
 module "spiffworkflow" {
@@ -63,6 +63,11 @@ module "spiffworkflow" {
   backend_process_models_path = "/somepath/my-process-models"  # Local path to process models
   backend_python_version = "python-3.12.x"  # Python version for the buildpack
   
+  # Use buildpack-based deployment for the connector
+  connector_deployment_method = "buildpack"
+  connector_local_path = "service-connector"  # Local path to connector source
+  connector_python_version = "python-3.12.x"  # Python version for the buildpack
+  
   # Required PostgreSQL database service instance
   backend_database_service_instance = "my-postgres-db"
   
@@ -71,6 +76,9 @@ module "spiffworkflow" {
     "my-redis-service" = ""
   }
 }
+```
+
+You can also mix deployment methods, for example using a container for the frontend and backend but buildpack for the connector, or vice versa.
 ```
 
 ### Enabling saving and publishing changes

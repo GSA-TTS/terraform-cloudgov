@@ -160,6 +160,16 @@ variable "backend_additional_service_bindings" {
 # Connector Variables
 ###############################################################################
 
+variable "connector_deployment_method" {
+  description = "Method to deploy the connector: 'buildpack' for Python buildpack or 'container' for a container image."
+  type        = string
+  default     = "container"
+
+  validation {
+    condition     = contains(["buildpack", "container"], var.connector_deployment_method)
+    error_message = "The connector_deployment_method must be either 'buildpack' or 'container'."
+  }
+}
 
 variable "connector_memory" {
   type        = string
@@ -177,6 +187,29 @@ variable "connector_instances" {
   type        = number
   description = "the number of instances of the connector application to run (default: 1)"
   default     = 1
+}
+
+variable "connector_local_path" {
+  description = "Path to the local connector directory to deploy. Only used when connector_deployment_method = 'buildpack'."
+  type        = string
+  default     = "service-connector"
+
+  validation {
+    condition     = var.connector_local_path != "" || var.connector_deployment_method == "container"
+    error_message = "connector_local_path must be provided when using connector_deployment_method = 'buildpack'."
+  }
+}
+
+variable "connector_python_version" {
+  description = "Python version to use for the connector when using buildpack deployment"
+  type        = string
+  default     = "python-3.12.x"
+}
+
+variable "connector_disk" {
+  description = "Disk quota for the connector app, including unit"
+  type        = string
+  default     = "3G"
 }
 
 ###############################################################################
