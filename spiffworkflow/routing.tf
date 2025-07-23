@@ -14,7 +14,7 @@
 # -----------------------------------------------------------------------------
 
 module "connector_route" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//app_route?ref=v2.3.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//app_route?ref=v2.4.0"
 
   cf_org_name   = var.cf_org_name
   cf_space_name = var.cf_space_name
@@ -24,7 +24,7 @@ module "connector_route" {
 }
 
 module "frontend_route" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//app_route?ref=v2.3.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//app_route?ref=v2.4.0"
 
   cf_org_name   = var.cf_org_name
   cf_space_name = var.cf_space_name
@@ -33,7 +33,7 @@ module "frontend_route" {
 }
 
 module "backend_route" {
-  source = "github.com/GSA-TTS/terraform-cloudgov//app_route?ref=v2.3.0"
+  source = "github.com/GSA-TTS/terraform-cloudgov//app_route?ref=v2.4.0"
 
   cf_org_name   = var.cf_org_name
   cf_space_name = var.cf_space_name
