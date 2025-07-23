@@ -126,11 +126,11 @@ resource "null_resource" "build_package" {
       for f in fileset(var.backend_process_models_path, "**/*") :
       filesha1("${var.backend_process_models_path}/${f}")
     ])) : ""
-    build_script = filesha1("${path.module}/build.sh")
+    build_script = filesha1("${path.module}/build-backend.sh")
   }
 
   provisioner "local-exec" {
-    command = "bash ${path.module}/build.sh \"${path.root}\" \"${var.backend_gitref}\" \"${var.backend_process_models_path}\" \"${var.backend_python_version}\""
+    command = "bash ${path.module}/build-backend.sh \"${path.root}\" \"${var.backend_gitref}\" \"${var.backend_process_models_path}\" \"${var.backend_python_version}\""
   }
 }
 
