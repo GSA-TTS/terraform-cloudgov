@@ -25,6 +25,7 @@
 # - Only one deployment method can be used at a time.
 # - The backend_process_models_path variable is only used with buildpack deployment.
 # - Container images should already contain the process models.
+#   - TODO: Say more about configuring a git remote for the process models
 ###############################################################################
 
 
