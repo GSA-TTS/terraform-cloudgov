@@ -30,7 +30,7 @@
 
 
 locals {
-  dist_dir         = "${path.root}/dist"
+  dist_dir         = abspath("${path.root}/dist")
   backend_dir      = "${local.dist_dir}/backend"
   package_filename = "${local.prefix}-backend.zip"
   package_path     = "${local.dist_dir}/${local.package_filename}"
@@ -131,18 +131,93 @@ resource "null_resource" "build_package" {
   }
 
   provisioner "local-exec" {
-    command = "bash ${path.module}/build-backend.sh \"${path.root}\" \"${var.backend_gitref}\" \"${var.backend_process_models_path}\" \"${var.backend_python_version}\""
+    command = <<-EOT
+      echo "Running build script for backend..."
+      echo "PATH_ROOT: ${path.root}"
+      echo "Backend GitRef: ${var.backend_gitref}"
+      echo "Process Models Path: ${var.backend_process_models_path}"
+      echo "Python Version: ${var.backend_python_version}"
+      
+      echo "Checking if process models directory exists:"
+      ls -la "${var.backend_process_models_path}" || echo "Warning: Process models path does not exist or is inaccessible"
+      
+      bash "${path.module}/build-backend.sh" "${path.root}" "${var.backend_gitref}" "${var.backend_process_models_path}" "${var.backend_python_version}"
+      
+      echo "Build script completed, checking output directory:"
+      ls -la "${local.backend_dir}" || echo "Warning: Backend directory was not created"
+    EOT
   }
 }
 
 # Create a zip file containing the backend code and process models for buildpack deployment
-resource "archive_file" "code" {
-  count       = var.backend_deployment_method == "buildpack" ? 1 : 0
-  depends_on  = [null_resource.build_package]
-  type        = "zip"
-  source_dir  = local.backend_dir
-  output_path = local.package_path
-  excludes    = [".git", "__pycache__", "*.pyc", "*.pyo"]
+resource "local_file" "backend_paths" {
+  count      = var.backend_deployment_method == "buildpack" ? 1 : 0
+  depends_on = [null_resource.build_package]
+
+  # Write paths to a file so they can be read from the Terraform module context
+  filename = "${path.module}/backend_paths.txt"
+  content  = <<-EOF
+  SOURCE_DIR=${local.backend_dir}
+  OUTPUT_PATH=${local.package_path}
+  EOF
+}
+
+resource "null_resource" "create_backend_zip" {
+  count      = var.backend_deployment_method == "buildpack" ? 1 : 0
+  depends_on = [local_file.backend_paths, null_resource.build_package]
+
+  # Create the zip file using a shell script that can handle absolute paths
+  provisioner "local-exec" {
+    command = <<-EOT
+      # Read paths from the paths file
+      source "${path.module}/backend_paths.txt"
+      
+      echo "Creating backend zip file..."
+      echo "SOURCE_DIR: $SOURCE_DIR"
+      echo "OUTPUT_PATH: $OUTPUT_PATH"
+      echo "Current directory: $(pwd)"
+      
+      # Make sure the source directory exists
+      if [ ! -d "$SOURCE_DIR" ]; then
+        echo "Error: Source directory $SOURCE_DIR does not exist"
+        echo "Creating the necessary directory structure"
+        mkdir -p "$SOURCE_DIR"
+        echo "Running the build script to populate directory"
+        bash "${path.module}/build-backend.sh" "${path.root}" "${var.backend_gitref}" "${var.backend_process_models_path}" "${var.backend_python_version}"
+      fi
+      
+      # Check if the source directory has content
+      if [ -z "$(ls -A $SOURCE_DIR 2>/dev/null)" ]; then
+        echo "Warning: Source directory $SOURCE_DIR is empty"
+        echo "Running the build script again to ensure content is available"
+        bash "${path.module}/build-backend.sh" "${path.root}" "${var.backend_gitref}" "${var.backend_process_models_path}" "${var.backend_python_version}"
+      fi
+      
+      # Create the output directory if it doesn't exist
+      mkdir -p "$(dirname "$OUTPUT_PATH")"
+      
+      # Create the zip file
+      echo "Creating zip file from $SOURCE_DIR to $OUTPUT_PATH"
+      cd "$SOURCE_DIR" && zip -r "$OUTPUT_PATH" . -x "*.git*" -x "*__pycache__*" -x "*.pyc" -x "*.pyo"
+      
+      # Check if the zip file was created successfully
+      if [ -f "$OUTPUT_PATH" ]; then
+        echo "Successfully created $OUTPUT_PATH with size: $(du -h "$OUTPUT_PATH" | cut -f1)"
+      else
+        echo "Error: Failed to create $OUTPUT_PATH"
+        exit 1
+      fi
+    EOT
+  }
+
+  # Create a trigger to re-run when the source directory changes
+  triggers = {
+    source_dir = local.backend_dir
+    # Use the same triggers as build_package to ensure consistency
+    backend_gitref              = var.backend_gitref
+    backend_process_models_path = var.backend_process_models_path
+    backend_python_version      = var.backend_python_version
+  }
 }
 
 # -----------------------------------------------------------------------------
@@ -164,8 +239,11 @@ resource "cloudfoundry_app" "backend" {
     "${local.backend_baseimage}@${data.docker_registry_image.backend[0].sha256_digest}" :
     var.backend_imageref
   ) : null
-  path             = var.backend_deployment_method == "buildpack" ? archive_file.code[0].output_path : null
-  source_code_hash = var.backend_deployment_method == "buildpack" ? archive_file.code[0].output_base64sha256 : null
+  path = var.backend_deployment_method == "buildpack" ? local.package_path : null
+  # Only calculate the hash if the file exists to avoid errors
+  source_code_hash = var.backend_deployment_method == "buildpack" ? (
+    fileexists(local.package_path) ? filebase64sha256(local.package_path) : null
+  ) : null
 
   # Common properties
   disk_quota                 = var.backend_disk
@@ -211,7 +289,7 @@ resource "cloudfoundry_app" "backend" {
 # Clean up artifacts when the module is destroyed - only for buildpack deployment
 resource "null_resource" "cleanup" {
   count      = var.backend_deployment_method == "buildpack" ? 1 : 0
-  depends_on = [archive_file.code]
+  depends_on = [null_resource.create_backend_zip]
 
   # Only run cleanup on destroy
   triggers = {
