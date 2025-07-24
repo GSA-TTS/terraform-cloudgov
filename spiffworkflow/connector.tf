@@ -18,8 +18,8 @@
 # -----------------------------------------------------------------------------
 
 locals {
-  # Connector package paths for buildpack deployment
-  connector_dist_dir         = "${path.root}/dist-connector"
+  # Connector package paths for buildpack deployment - use absolute paths to avoid module path resolution issues
+  connector_dist_dir         = abspath("${path.root}/dist-connector")
   connector_dir              = "${local.connector_dist_dir}/connector"
   connector_package_filename = "${local.prefix}-connector.zip"
   connector_package_path     = "${local.connector_dist_dir}/${local.connector_package_filename}"
@@ -57,7 +57,11 @@ resource "null_resource" "prepare_connector" {
   # Create the directory structure and copy connector files
   provisioner "local-exec" {
     command = <<-EOT
+      echo "Creating connector directory at ${local.connector_dir}"
       mkdir -p "${local.connector_dir}"
+      echo "Checking source path: ${var.connector_local_path}"
+      ls -la "${var.connector_local_path}" || echo "Warning: Source path does not exist or is inaccessible"
+      echo "Copying files from ${var.connector_local_path} to ${local.connector_dir}"
       rsync -av --exclude="__pycache__" --exclude="*.pyc" --exclude="*.pyo" --exclude=".git" "${var.connector_local_path}/" "${local.connector_dir}/"
       
       # If a requirements.txt doesn't exist, try to generate one from pyproject.toml/poetry.lock
@@ -88,13 +92,87 @@ resource "null_resource" "prepare_connector" {
 }
 
 # Create a zip file containing the connector code for buildpack deployment
-resource "archive_file" "connector_code" {
-  count       = var.connector_deployment_method == "buildpack" ? 1 : 0
-  depends_on  = [null_resource.prepare_connector]
-  type        = "zip"
-  source_dir  = local.connector_dir
-  output_path = local.connector_package_path
-  excludes    = [".git", "__pycache__", "*.pyc", "*.pyo"]
+resource "local_file" "connector_paths" {
+  count      = var.connector_deployment_method == "buildpack" ? 1 : 0
+  depends_on = [null_resource.prepare_connector]
+
+  # Write paths to a file so they can be read from the Terraform module context
+  filename = "${path.module}/connector_paths.txt"
+  content  = <<-EOF
+  SOURCE_DIR=${local.connector_dir}
+  OUTPUT_PATH=${local.connector_package_path}
+  EOF
+}
+
+resource "null_resource" "create_connector_zip" {
+  count      = var.connector_deployment_method == "buildpack" ? 1 : 0
+  depends_on = [local_file.connector_paths, null_resource.prepare_connector]
+
+  # Create the zip file using a shell script that can handle absolute paths
+  provisioner "local-exec" {
+    command = <<-EOT
+      # Read paths from the paths file
+      source "${path.module}/connector_paths.txt"
+      
+      echo "Creating connector zip file..."
+      echo "SOURCE_DIR: $SOURCE_DIR"
+      echo "OUTPUT_PATH: $OUTPUT_PATH"
+      echo "Current directory: $(pwd)"
+      
+      # Make sure the source directory exists
+      if [ ! -d "$SOURCE_DIR" ]; then
+        echo "Error: Source directory $SOURCE_DIR does not exist"
+        echo "Creating directory and copying files from ${var.connector_local_path}"
+        mkdir -p "$SOURCE_DIR"
+        rsync -av --exclude="__pycache__" --exclude="*.pyc" --exclude="*.pyo" --exclude=".git" "${var.connector_local_path}/" "$SOURCE_DIR/"
+      fi
+      
+      # Check if the source directory has content
+      if [ -z "$(ls -A $SOURCE_DIR 2>/dev/null)" ]; then
+        echo "Warning: Source directory $SOURCE_DIR is empty"
+        echo "Copying files from ${var.connector_local_path} to $SOURCE_DIR"
+        mkdir -p "$SOURCE_DIR"
+        rsync -av --exclude="__pycache__" --exclude="*.pyc" --exclude="*.pyo" --exclude=".git" "${var.connector_local_path}/" "$SOURCE_DIR/"
+        
+        # Ensure we have a Procfile for the Python buildpack
+        if [ ! -f "$SOURCE_DIR/Procfile" ]; then
+          echo "Creating default Procfile for connector"
+          echo "web: ./bin/boot_server_in_docker" > "$SOURCE_DIR/Procfile"
+        fi
+        
+        # Make sure boot_server_in_docker is executable if it exists
+        if [ -f "$SOURCE_DIR/bin/boot_server_in_docker" ]; then
+          chmod +x "$SOURCE_DIR/bin/boot_server_in_docker"
+        fi
+        
+        # Create runtime.txt to specify Python version
+        echo "${var.connector_python_version}" > "$SOURCE_DIR/runtime.txt"
+      fi
+      
+      # Create the output directory if it doesn't exist
+      mkdir -p "$(dirname "$OUTPUT_PATH")"
+      
+      # Create the zip file
+      echo "Creating zip file from $SOURCE_DIR to $OUTPUT_PATH"
+      cd "$SOURCE_DIR" && zip -r "$OUTPUT_PATH" . -x "*.git*" -x "*__pycache__*" -x "*.pyc" -x "*.pyo" -x "*.venv*" -x "*.cache*"
+      
+      # Check if the zip file was created successfully
+      if [ -f "$OUTPUT_PATH" ]; then
+        echo "Successfully created $OUTPUT_PATH with size: $(du -h "$OUTPUT_PATH" | cut -f1)"
+        ls -la "$OUTPUT_PATH"
+      else
+        echo "Error: Failed to create $OUTPUT_PATH"
+        exit 1
+      fi
+    EOT
+  }
+
+  # Create a trigger to re-run when the source directory changes
+  triggers = {
+    source_dir = local.connector_dir
+    # Add any other triggers that might cause the connector to change
+    connector_local_path = var.connector_local_path
+  }
 }
 
 # -----------------------------------------------------------------------------
@@ -112,10 +190,17 @@ resource "cloudfoundry_app" "connector" {
   health_check_http_endpoint = "/liveness"
 
   # Conditional properties based on deployment method
-  docker_image = var.connector_deployment_method == "container" ? "${local.connector_baseimage}@${data.docker_registry_image.connector[0].sha256_digest}" : null
-  path = var.connector_deployment_method == "buildpack" ? archive_file.connector_code[0].output_path : null
-  source_code_hash = var.connector_deployment_method == "buildpack" ? archive_file.connector_code[0].output_base64sha256 : null
-  
+  docker_image = var.connector_deployment_method == "container" ? (
+    var.connector_deployment_method == "container" && length(data.docker_registry_image.connector) > 0 ?
+    "${local.connector_baseimage}@${data.docker_registry_image.connector[0].sha256_digest}" :
+    var.connector_imageref
+  ) : null
+  path = var.connector_deployment_method == "buildpack" ? local.connector_package_path : null
+  # Only calculate the hash if the file exists to avoid errors
+  source_code_hash = var.connector_deployment_method == "buildpack" ? (
+    fileexists(local.connector_package_path) ? filebase64sha256(local.connector_package_path) : null
+  ) : null
+
   # Command is only needed for container deployment
   command = var.connector_deployment_method == "buildpack" ? null : <<-COMMAND
     # Make sure the Cloud Foundry-provided CA is recognized when making TLS connections
@@ -145,7 +230,7 @@ resource "cloudfoundry_app" "connector" {
 # Clean up connector artifacts when the module is destroyed - only for buildpack deployment
 resource "null_resource" "connector_cleanup" {
   count      = var.connector_deployment_method == "buildpack" ? 1 : 0
-  depends_on = [archive_file.connector_code]
+  depends_on = [null_resource.create_connector_zip]
 
   # Only run cleanup on destroy
   triggers = {
