@@ -203,10 +203,7 @@ resource "cloudfoundry_app" "connector" {
 
   # Command is only needed for container deployment
   command = var.connector_deployment_method == "buildpack" ? null : <<-COMMAND
-    # Make sure the Cloud Foundry-provided CA is recognized when making TLS connections
-    cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt
-    /usr/sbin/update-ca-certificates
-    /app/bin/boot_server_in_docker
+    /app/bin/run_in_cloudgov
     COMMAND
 
   # Add buildpack requirements for Python when using buildpack deployment
