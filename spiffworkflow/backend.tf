@@ -35,8 +35,24 @@ locals {
   package_filename = "${local.prefix}-backend.zip"
   package_path     = "${local.dist_dir}/${local.package_filename}"
 
+  # Hash of all inputs that determine the content of the backend zip file
+  # This is used as source_code_hash to trigger app updates when any of these change
+  backend_content_hash = sha256(jsonencode({
+    backend_gitref              = var.backend_gitref
+    backend_process_models_path = var.backend_process_models_path
+    backend_python_version      = var.backend_python_version
+    # Hash of all files in the process models directory
+    process_models_hash = var.backend_process_models_path != "" ? sha1(join("", [
+      for f in fileset(var.backend_process_models_path, "**/*") :
+      filesha1("${var.backend_process_models_path}/${f}")
+    ])) : ""
+    # Hash of the build script itself
+    build_script = filesha1("${path.module}/build-backend.sh")
+  }))
+
   # Common backend environment variables used by both deployment methods
   backend_env = merge({
+    REQUESTS_CA_BUNDLE: "/etc/ssl/certs/ca-certificates.crt"
     APPLICATION_ROOT : "/"
     FLASK_SESSION_SECRET_KEY : random_password.backend_flask_secret_key.result
     FLASK_DEBUG : "0"
@@ -116,108 +132,47 @@ data "docker_registry_image" "backend" {
 resource "null_resource" "build_package" {
   count = var.backend_deployment_method == "buildpack" ? 1 : 0
 
-  # Re-run if the git ref, the process models, python version, or the build script itself change
+  # Re-run if any of the content-determining inputs change
   triggers = {
-    backend_gitref              = var.backend_gitref
-    backend_process_models_path = var.backend_process_models_path
-    backend_python_version      = var.backend_python_version
-    # Use sha1 of a file listing (that itself includes sha1s)to detect changes in the 
-    # process models directory and all subdirectories
-    process_models_hash = var.backend_process_models_path != "" ? sha1(join("", [
-      for f in fileset(var.backend_process_models_path, "**/*") :
-      filesha1("${var.backend_process_models_path}/${f}")
-    ])) : ""
-    build_script = filesha1("${path.module}/build-backend.sh")
+    content_hash = local.backend_content_hash
   }
 
   provisioner "local-exec" {
     command = <<-EOT
+      set -euo pipefail  # Exit on any error, undefined variable, or pipe failure
+      
       echo "Running build script for backend..."
       echo "PATH_ROOT: ${path.root}"
       echo "Backend GitRef: ${var.backend_gitref}"
       echo "Process Models Path: ${var.backend_process_models_path}"
       echo "Python Version: ${var.backend_python_version}"
+      echo "Package Path: ${local.package_path}"
+      echo "Package Filename: ${local.package_filename}"
+      echo "Dist Dir: ${local.dist_dir}"
+      echo "Backend Dir: ${local.backend_dir}"
+      echo "Prefix: ${local.prefix}"
       
-      echo "Checking if process models directory exists:"
-      ls -la "${var.backend_process_models_path}" || echo "Warning: Process models path does not exist or is inaccessible"
+      # Run the build script - it now handles all validation and zip creation
+      if ! bash "${path.module}/build-backend.sh" "${path.root}" "${var.backend_gitref}" "${var.backend_process_models_path}" "${var.backend_python_version}" "${local.package_path}"; then
+        build_exit_code=$?
+        echo "ERROR: Build script failed with exit code $build_exit_code"
+        echo "Check the build script output above for details"
+        exit $build_exit_code
+      fi
       
-      bash "${path.module}/build-backend.sh" "${path.root}" "${var.backend_gitref}" "${var.backend_process_models_path}" "${var.backend_python_version}"
-      
-      echo "Build script completed, checking output directory:"
-      ls -la "${local.backend_dir}" || echo "Warning: Backend directory was not created"
+      echo "Build and packaging completed successfully"
     EOT
+    
+    # Ensure Terraform fails if the build script fails
+    on_failure = fail
   }
 }
 
-# Create a zip file containing the backend code and process models for buildpack deployment
-resource "local_file" "backend_paths" {
+# Validate that the zip file was created successfully before allowing CloudFoundry deployment
+data "local_file" "backend_package_validation" {
   count      = var.backend_deployment_method == "buildpack" ? 1 : 0
   depends_on = [null_resource.build_package]
-
-  # Write paths to a file so they can be read from the Terraform module context
-  filename = "${path.module}/backend_paths.txt"
-  content  = <<-EOF
-  SOURCE_DIR=${local.backend_dir}
-  OUTPUT_PATH=${local.package_path}
-  EOF
-}
-
-resource "null_resource" "create_backend_zip" {
-  count      = var.backend_deployment_method == "buildpack" ? 1 : 0
-  depends_on = [local_file.backend_paths, null_resource.build_package]
-
-  # Create the zip file using a shell script that can handle absolute paths
-  provisioner "local-exec" {
-    command = <<-EOT
-      # Read paths from the paths file
-      source "${path.module}/backend_paths.txt"
-      
-      echo "Creating backend zip file..."
-      echo "SOURCE_DIR: $SOURCE_DIR"
-      echo "OUTPUT_PATH: $OUTPUT_PATH"
-      echo "Current directory: $(pwd)"
-      
-      # Make sure the source directory exists
-      if [ ! -d "$SOURCE_DIR" ]; then
-        echo "Error: Source directory $SOURCE_DIR does not exist"
-        echo "Creating the necessary directory structure"
-        mkdir -p "$SOURCE_DIR"
-        echo "Running the build script to populate directory"
-        bash "${path.module}/build-backend.sh" "${path.root}" "${var.backend_gitref}" "${var.backend_process_models_path}" "${var.backend_python_version}"
-      fi
-      
-      # Check if the source directory has content
-      if [ -z "$(ls -A $SOURCE_DIR 2>/dev/null)" ]; then
-        echo "Warning: Source directory $SOURCE_DIR is empty"
-        echo "Running the build script again to ensure content is available"
-        bash "${path.module}/build-backend.sh" "${path.root}" "${var.backend_gitref}" "${var.backend_process_models_path}" "${var.backend_python_version}"
-      fi
-      
-      # Create the output directory if it doesn't exist
-      mkdir -p "$(dirname "$OUTPUT_PATH")"
-      
-      # Create the zip file
-      echo "Creating zip file from $SOURCE_DIR to $OUTPUT_PATH"
-      cd "$SOURCE_DIR" && zip -r "$OUTPUT_PATH" . -x "*.git*" -x "*__pycache__*" -x "*.pyc" -x "*.pyo"
-      
-      # Check if the zip file was created successfully
-      if [ -f "$OUTPUT_PATH" ]; then
-        echo "Successfully created $OUTPUT_PATH with size: $(du -h "$OUTPUT_PATH" | cut -f1)"
-      else
-        echo "Error: Failed to create $OUTPUT_PATH"
-        exit 1
-      fi
-    EOT
-  }
-
-  # Create a trigger to re-run when the source directory changes
-  triggers = {
-    source_dir = local.backend_dir
-    # Use the same triggers as build_package to ensure consistency
-    backend_gitref              = var.backend_gitref
-    backend_process_models_path = var.backend_process_models_path
-    backend_python_version      = var.backend_python_version
-  }
+  filename   = local.package_path
 }
 
 # -----------------------------------------------------------------------------
@@ -232,6 +187,9 @@ resource "cloudfoundry_app" "backend" {
   org_name   = var.cf_org_name
   space_name = var.cf_space_name
 
+  # For buildpack deployment, ensure build completes successfully before app deployment
+  depends_on = [data.local_file.backend_package_validation]
+
   # Conditional properties based on deployment method
   buildpacks = var.backend_deployment_method == "buildpack" ? ["python_buildpack"] : null
   docker_image = var.backend_deployment_method == "container" ? (
@@ -240,10 +198,8 @@ resource "cloudfoundry_app" "backend" {
     var.backend_imageref
   ) : null
   path = var.backend_deployment_method == "buildpack" ? local.package_path : null
-  # Only calculate the hash if the file exists to avoid errors
-  source_code_hash = var.backend_deployment_method == "buildpack" ? (
-    fileexists(local.package_path) ? filebase64sha256(local.package_path) : null
-  ) : null
+  # Use the content hash to trigger app updates when the zip content would change
+  source_code_hash = var.backend_deployment_method == "buildpack" ? local.backend_content_hash : null
 
   # Common properties
   disk_quota                 = var.backend_disk
@@ -289,7 +245,7 @@ resource "cloudfoundry_app" "backend" {
 # Clean up artifacts when the module is destroyed - only for buildpack deployment
 resource "null_resource" "cleanup" {
   count      = var.backend_deployment_method == "buildpack" ? 1 : 0
-  depends_on = [null_resource.create_backend_zip]
+  depends_on = [null_resource.build_package]
 
   # Only run cleanup on destroy
   triggers = {
