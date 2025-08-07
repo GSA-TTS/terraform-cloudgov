@@ -52,7 +52,7 @@ locals {
 
   # Common backend environment variables used by both deployment methods
   backend_env = merge({
-    REQUESTS_CA_BUNDLE: "/etc/ssl/certs/ca-certificates.crt"
+    REQUESTS_CA_BUNDLE : "/etc/ssl/certs/ca-certificates.crt"
     APPLICATION_ROOT : "/"
     FLASK_SESSION_SECRET_KEY : random_password.backend_flask_secret_key.result
     FLASK_DEBUG : "0"
@@ -162,7 +162,7 @@ resource "null_resource" "build_package" {
       
       echo "Build and packaging completed successfully"
     EOT
-    
+
     # Ensure Terraform fails if the build script fails
     on_failure = fail
   }
