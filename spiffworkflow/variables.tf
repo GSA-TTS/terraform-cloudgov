@@ -212,6 +212,29 @@ variable "connector_disk" {
   default     = "3G"
 }
 
+# Example of additional service bindings:
+# connector_additional_service_bindings = {
+#   "my-service" = "",
+#   (module.my-other-service.name) = "",
+#   "yet-another-service" = <<-EOT
+#      {
+#        "astring"     : "foo",
+#        "anarray"     : ["bar", "baz"],
+#        "anarrayobjs" : [
+#          {
+#            "name": "bat",
+#            "value": "boz"
+#          }
+#        ]
+#      }
+#      EOT
+# }
+variable "connector_additional_service_bindings" {
+  description = "A map of additional service instance names to JSON parameter strings for optional service bindings for the connector."
+  type        = map(string)
+  default     = {}
+}
+
 ###############################################################################
 # Frontend Variables
 ###############################################################################
