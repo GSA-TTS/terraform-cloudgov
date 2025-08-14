@@ -7,7 +7,7 @@ set -euo pipefail
 # It handles:
 # - Downloading the source code from GitHub at the specified reference (backend_gitref)
 # - Copying process models from the local directory (backend_process_models_path)
-# - Generating requirements.txt using Poetry
+# - Generating requirements.txt using uv
 # - Adding files and configuration necessary for the Python buildpack
 #
 # USAGE EXAMPLES:
@@ -94,7 +94,7 @@ echo "✓ Process models directory validated: $PROCESS_MODELS_PATH"
 
 # Validate other required tools
 echo "Checking required tools..."
-for tool in git poetry zip; do
+for tool in git uv zip; do
   if ! command -v "$tool" >/dev/null 2>&1; then
     echo "ERROR: Required tool '$tool' is not installed or not in PATH"
     exit 1
@@ -208,29 +208,27 @@ echo "Process models copied to: ${PROCESS_MODELS_DEST}"
 echo "Removing any .bpmn.png files from process models directory..."
 find "${PROCESS_MODELS_DEST}" -type f -name "*.bpmn.png" -delete
 
-# Generate requirements.txt from poetry.lock
-echo "Generating requirements.txt from poetry files..."
-if [ -f "${BACKEND_DIR}/poetry.lock" ] && [ -f "${BACKEND_DIR}/pyproject.toml" ]; then
-  # Ensure poetry is installed
-  if ! command -v poetry &> /dev/null; then
-    echo "ERROR: Poetry is required but not installed"
-    echo "Please install Poetry using one of these methods:"
-    echo "  - curl -sSL https://install.python-poetry.org | python3 -"
-    echo "  - brew install poetry"
-    echo "  - pip install poetry"
+# Generate requirements.txt from uv.lock
+echo "Generating requirements.txt from uv files..."
+if [ -f "${BACKEND_DIR}/uv.lock" ] && [ -f "${BACKEND_DIR}/pyproject.toml" ]; then
+  # Ensure uv is installed
+  if ! command -v uv &> /dev/null; then
+    echo "ERROR: uv is required but not installed"
+    echo "Please install uv using one of the methods documented here:"
+    echo "https://docs.astral.sh/uv/getting-started/installation/"
     exit 1
   fi
   
-  # Use poetry to export requirements
-  echo "Using Poetry to generate requirements.txt..."
-  if ! (cd "${BACKEND_DIR}" && poetry export -f requirements.txt --without-hashes -o requirements.txt); then
-    echo "ERROR: Poetry export failed"
+  # Use uv to export requirements
+  echo "Using uv to generate requirements.txt..."
+  if ! (cd "${BACKEND_DIR}" && uv pip compile --output-file requirements.txt pyproject.toml); then
+    echo "ERROR: uv export failed"
     exit 1
   fi
 
   # Verify requirements.txt was created
   if [ ! -f "${BACKEND_DIR}/requirements.txt" ]; then
-    echo "ERROR: requirements.txt was not created by Poetry export"
+    echo "ERROR: requirements.txt was not created by uv export"
     exit 1
   fi
 
@@ -240,7 +238,7 @@ if [ -f "${BACKEND_DIR}/poetry.lock" ] && [ -f "${BACKEND_DIR}/pyproject.toml" ]
   # echo "First 10 lines of requirements.txt:"
   # head -n 10 "${BACKEND_DIR}/requirements.txt"
 else
-  echo "ERROR: Could not find poetry.lock or pyproject.toml"
+  echo "ERROR: Could not find uv.lock or pyproject.toml"
   echo "These files are required for generating dependencies"
   exit 1
 fi

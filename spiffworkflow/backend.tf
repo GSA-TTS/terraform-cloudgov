@@ -11,13 +11,13 @@
 #    - Deploys using a .zip file and the Python buildpack
 #    - Uses the specified git reference for the SpiffWorkflow code
 #    - Includes process models from the specified local path
-#    - Requires Poetry to be installed locally
+#    - Requires UV to be installed locally
 #
 # 2. CONTAINER DEPLOYMENT (backend_deployment_method = "container")
 #    - Deploys using a Docker container image specified by backend_imageref
 #    - Process models need to be baked into the container image
 #    - No local process_models_path is needed
-#    - Doesn't require Poetry or other build tools locally
+#    - Doesn't require UV or other build tools locally
 #
 # The process models will be available at `/app/process_models` when deployed.
 #
@@ -38,16 +38,17 @@ locals {
   # Hash of all inputs that determine the content of the backend zip file
   # This is used as source_code_hash to trigger app updates when any of these change
   backend_content_hash = sha256(jsonencode({
-    backend_gitref              = var.backend_gitref
-    backend_process_models_path = var.backend_process_models_path
-    backend_python_version      = var.backend_python_version
-    # Hash of all files in the process models directory
-    process_models_hash = var.backend_process_models_path != "" ? sha1(join("", [
-      for f in fileset(var.backend_process_models_path, "**/*") :
-      filesha1("${var.backend_process_models_path}/${f}")
-    ])) : ""
-    # Hash of the build script itself
-    build_script = filesha1("${path.module}/build-backend.sh")
+    backend_gitref         = var.backend_gitref
+    backend_python_version = var.backend_python_version
+    build_script           = filesha1("${path.module}/build-backend.sh")
+    # Only include these for buildpack deployments
+    backend_process_models_path = var.backend_deployment_method == "buildpack" ? var.backend_process_models_path : null
+    process_models_hash = var.backend_deployment_method == "buildpack" && var.backend_process_models_path != "" ? (
+      sha1(join("", [
+        for f in fileset(var.backend_process_models_path, "**/*") :
+        filesha1("${var.backend_process_models_path}/${f}")
+      ]))
+    ) : null
   }))
 
   # Common backend environment variables used by both deployment methods
