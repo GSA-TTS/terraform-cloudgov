@@ -100,7 +100,6 @@ locals {
 
   # Buildpack-specific environment variables
   buildpack_env = {
-    FLASK_APP : "/home/vcap/app/src/spiffworkflow_backend"
     PYTHONPATH : "/home/vcap/app:/home/vcap/app/src:/home/vcap/deps/0"
   }
 
