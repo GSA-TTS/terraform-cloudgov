@@ -299,6 +299,18 @@ export PYTHONPATH="/home/vcap/app:/home/vcap/app/src:/home/vcap/deps/0/python:/h
 
 # Get the postgres URI from the service binding. (SQL Alchemy insists on "postgresql://".🙄)
 export SPIFFWORKFLOW_BACKEND_DATABASE_URI=$( echo ${VCAP_SERVICES:-} | jq -r '.["aws-rds"][].credentials.uri' | sed -e s/postgres/postgresql/ )
+
+# If there's a bound redis service, configure SpiffWorkflow to use it
+REDIS_URI=$(echo "${VCAP_SERVICES}" | jq -r '.["redis"]?[0]?.credentials.uri // empty')
+if [ -n "$REDIS_URI" ]; then
+  # Enable Celery for background processing
+  export SPIFFWORKFLOW_BACKEND_CELERY_ENABLED=true
+  export SPIFFWORKFLOW_BACKEND_CELERY_BROKER_URL="$REDIS_URI"
+  export SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND="$REDIS_URI"
+
+  # Enable the metadata backfill feature
+  SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_METADATA_BACKFILL_ENABLED=true
+fi
 EOF
 chmod +x "${BACKEND_DIR}/.profile"
 

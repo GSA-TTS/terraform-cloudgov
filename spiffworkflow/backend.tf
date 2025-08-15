@@ -193,8 +193,8 @@ resource "cloudfoundry_app" "backend" {
   # Conditional properties based on deployment method
   buildpacks = var.backend_deployment_method == "buildpack" ? ["python_buildpack"] : null
   docker_image = var.backend_deployment_method == "container" ? (
-    var.backend_deployment_method == "container" && length(data.docker_registry_image.backend) > 0 ?
-    "${local.backend_baseimage}@${data.docker_registry_image.backend[0].sha256_digest}" :
+    length(data.docker_registry_image.backend) > 0 ?
+    data.docker_registry_image.backend[0].name :
     var.backend_imageref
   ) : null
   path = var.backend_deployment_method == "buildpack" ? local.package_path : null
