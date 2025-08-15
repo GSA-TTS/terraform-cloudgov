@@ -356,8 +356,6 @@ if [ ! -d "$BACKEND_DIR" ]; then
   exit 1
 fi
 
-echo "Backend directory contents BEFORE zip creation:"
-ls -la "$BACKEND_DIR" || echo "Could not list backend directory"
 
 echo "Checking for required files in backend directory:"
 for required_file in "Procfile" "requirements.txt" "bin/boot_server_in_docker" ".profile" "runtime.txt"; do
@@ -367,13 +365,6 @@ for required_file in "Procfile" "requirements.txt" "bin/boot_server_in_docker" "
     echo "✗ Missing $required_file in backend directory"
   fi
 done
-
-echo "Contents of bin directory (if it exists):"
-if [ -d "$BACKEND_DIR/bin" ]; then
-  ls -la "$BACKEND_DIR/bin"
-else
-  echo "bin directory does not exist in $BACKEND_DIR"
-fi
 
 # Create the output directory if it doesn't exist
 echo "Creating output directory: $(dirname "$PACKAGE_PATH")"
@@ -387,7 +378,7 @@ if [[ "$PACKAGE_PATH" == "$BACKEND_DIR"* ]]; then
 fi
 
 # shellcheck disable=SC2164
-(cd "$BACKEND_DIR" && zip -r "$PACKAGE_PATH" .)
+(cd "$BACKEND_DIR" && zip -rq "$PACKAGE_PATH" .)
 
 # Verify the zip file was created successfully
 if [ ! -f "$PACKAGE_PATH" ]; then
@@ -409,10 +400,6 @@ critical_files=("Procfile" "requirements.txt" "bin/boot_server_in_docker" ".prof
 missing_count=0
 
 zip_file_list=$(unzip -Z1 "$PACKAGE_PATH")
-
-echo "--- ZIP FILE CONTENTS ---"
-echo "$zip_file_list"
-echo "--------------------------"
 
 for required_file in "${critical_files[@]}"; do
   echo "Checking for: $required_file"
