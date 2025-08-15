@@ -299,15 +299,6 @@ export PYTHONPATH="/home/vcap/app:/home/vcap/app/src:/home/vcap/deps/0/python:/h
 
 # Get the postgres URI from the service binding. (SQL Alchemy insists on "postgresql://".🙄)
 export SPIFFWORKFLOW_BACKEND_DATABASE_URI=$( echo ${VCAP_SERVICES:-} | jq -r '.["aws-rds"][].credentials.uri' | sed -e s/postgres/postgresql/ )
-
-# Flatten all S3 backend_secret credentials into a key-value file
-tmpfile=$(mktemp)
-echo "${VCAP_SERVICES:-}" | jq -r '.s3[] | select(.tags[]? == "backend_secret") | . as $service | .credentials | to_entries[] | "\($service.name)_\(.key)=\(.value)"' > "$tmpfile"
-if [ -s "$tmpfile" ] && [ "$(cat "$tmpfile")" != "{}" ]; then
-  # Set secrets based on the temporary file; service name -> secret name
-  ./bin/run_local_python_script bin/save_to_secrets_from_file "$tmpfile"
-fi
-rm -f "$tmpfile"
 EOF
 chmod +x "${BACKEND_DIR}/.profile"
 
