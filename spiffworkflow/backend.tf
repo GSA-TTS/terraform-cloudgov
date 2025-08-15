@@ -11,13 +11,13 @@
 #    - Deploys using a .zip file and the Python buildpack
 #    - Uses the specified git reference for the SpiffWorkflow code
 #    - Includes process models from the specified local path
-#    - Requires Poetry to be installed locally
+#    - Requires UV to be installed locally
 #
 # 2. CONTAINER DEPLOYMENT (backend_deployment_method = "container")
 #    - Deploys using a Docker container image specified by backend_imageref
 #    - Process models need to be baked into the container image
 #    - No local process_models_path is needed
-#    - Doesn't require Poetry or other build tools locally
+#    - Doesn't require UV or other build tools locally
 #
 # The process models will be available at `/app/process_models` when deployed.
 #
@@ -25,17 +25,35 @@
 # - Only one deployment method can be used at a time.
 # - The backend_process_models_path variable is only used with buildpack deployment.
 # - Container images should already contain the process models.
+#   - TODO: Say more about configuring a git remote for the process models
 ###############################################################################
 
 
 locals {
-  dist_dir         = "${path.root}/dist"
+  dist_dir         = abspath("${path.root}/dist")
   backend_dir      = "${local.dist_dir}/backend"
   package_filename = "${local.prefix}-backend.zip"
   package_path     = "${local.dist_dir}/${local.package_filename}"
 
+  # Hash of all inputs that determine the content of the backend zip file
+  # This is used as source_code_hash to trigger app updates when any of these change
+  backend_content_hash = sha256(jsonencode({
+    backend_gitref         = var.backend_gitref
+    backend_python_version = var.backend_python_version
+    build_script           = filesha1("${path.module}/build-backend.sh")
+    # Only include these for buildpack deployments
+    backend_process_models_path = var.backend_deployment_method == "buildpack" ? var.backend_process_models_path : null
+    process_models_hash = var.backend_deployment_method == "buildpack" && var.backend_process_models_path != "" ? (
+      sha1(join("", [
+        for f in fileset(var.backend_process_models_path, "**/*") :
+        filesha1("${var.backend_process_models_path}/${f}")
+      ]))
+    ) : null
+  }))
+
   # Common backend environment variables used by both deployment methods
   backend_env = merge({
+    REQUESTS_CA_BUNDLE : "/etc/ssl/certs/ca-certificates.crt"
     APPLICATION_ROOT : "/"
     FLASK_SESSION_SECRET_KEY : random_password.backend_flask_secret_key.result
     FLASK_DEBUG : "0"
@@ -82,7 +100,6 @@ locals {
 
   # Buildpack-specific environment variables
   buildpack_env = {
-    FLASK_APP : "/home/vcap/app/src/spiffworkflow_backend"
     PYTHONPATH : "/home/vcap/app:/home/vcap/app/src:/home/vcap/deps/0"
   }
 
@@ -115,33 +132,47 @@ data "docker_registry_image" "backend" {
 resource "null_resource" "build_package" {
   count = var.backend_deployment_method == "buildpack" ? 1 : 0
 
-  # Re-run if the git ref, the process models, python version, or the build script itself change
+  # Re-run if any of the content-determining inputs change
   triggers = {
-    backend_gitref              = var.backend_gitref
-    backend_process_models_path = var.backend_process_models_path
-    backend_python_version      = var.backend_python_version
-    # Use sha1 of a file listing (that itself includes sha1s)to detect changes in the 
-    # process models directory and all subdirectories
-    process_models_hash = var.backend_process_models_path != "" ? sha1(join("", [
-      for f in fileset(var.backend_process_models_path, "**/*") :
-      filesha1("${var.backend_process_models_path}/${f}")
-    ])) : ""
-    build_script = filesha1("${path.module}/build.sh")
+    content_hash = local.backend_content_hash
   }
 
   provisioner "local-exec" {
-    command = "bash ${path.module}/build.sh \"${path.root}\" \"${var.backend_gitref}\" \"${var.backend_process_models_path}\" \"${var.backend_python_version}\""
+    command = <<-EOT
+      set -euo pipefail  # Exit on any error, undefined variable, or pipe failure
+      
+      echo "Running build script for backend..."
+      echo "PATH_ROOT: ${path.root}"
+      echo "Backend GitRef: ${var.backend_gitref}"
+      echo "Process Models Path: ${var.backend_process_models_path}"
+      echo "Python Version: ${var.backend_python_version}"
+      echo "Package Path: ${local.package_path}"
+      echo "Package Filename: ${local.package_filename}"
+      echo "Dist Dir: ${local.dist_dir}"
+      echo "Backend Dir: ${local.backend_dir}"
+      echo "Prefix: ${local.prefix}"
+      
+      # Run the build script - it now handles all validation and zip creation
+      if ! bash "${path.module}/build-backend.sh" "${path.root}" "${var.backend_gitref}" "${var.backend_process_models_path}" "${var.backend_python_version}" "${local.package_path}"; then
+        build_exit_code=$?
+        echo "ERROR: Build script failed with exit code $build_exit_code"
+        echo "Check the build script output above for details"
+        exit $build_exit_code
+      fi
+      
+      echo "Build and packaging completed successfully"
+    EOT
+
+    # Ensure Terraform fails if the build script fails
+    on_failure = fail
   }
 }
 
-# Create a zip file containing the backend code and process models for buildpack deployment
-resource "archive_file" "code" {
-  count       = var.backend_deployment_method == "buildpack" ? 1 : 0
-  depends_on  = [null_resource.build_package]
-  type        = "zip"
-  source_dir  = local.backend_dir
-  output_path = local.package_path
-  excludes    = [".git", "__pycache__", "*.pyc", "*.pyo"]
+# Validate that the zip file was created successfully before allowing CloudFoundry deployment
+data "local_file" "backend_package_validation" {
+  count      = var.backend_deployment_method == "buildpack" ? 1 : 0
+  depends_on = [null_resource.build_package]
+  filename   = local.package_path
 }
 
 # -----------------------------------------------------------------------------
@@ -156,15 +187,19 @@ resource "cloudfoundry_app" "backend" {
   org_name   = var.cf_org_name
   space_name = var.cf_space_name
 
+  # For buildpack deployment, ensure build completes successfully before app deployment
+  depends_on = [data.local_file.backend_package_validation]
+
   # Conditional properties based on deployment method
   buildpacks = var.backend_deployment_method == "buildpack" ? ["python_buildpack"] : null
   docker_image = var.backend_deployment_method == "container" ? (
-    var.backend_deployment_method == "container" && length(data.docker_registry_image.backend) > 0 ?
-    "${local.backend_baseimage}@${data.docker_registry_image.backend[0].sha256_digest}" :
+    length(data.docker_registry_image.backend) > 0 ?
+    data.docker_registry_image.backend[0].name :
     var.backend_imageref
   ) : null
-  path             = var.backend_deployment_method == "buildpack" ? archive_file.code[0].output_path : null
-  source_code_hash = var.backend_deployment_method == "buildpack" ? archive_file.code[0].output_base64sha256 : null
+  path = var.backend_deployment_method == "buildpack" ? local.package_path : null
+  # Use the content hash to trigger app updates when the zip content would change
+  source_code_hash = var.backend_deployment_method == "buildpack" ? local.backend_content_hash : null
 
   # Common properties
   disk_quota                 = var.backend_disk
@@ -210,7 +245,7 @@ resource "cloudfoundry_app" "backend" {
 # Clean up artifacts when the module is destroyed - only for buildpack deployment
 resource "null_resource" "cleanup" {
   count      = var.backend_deployment_method == "buildpack" ? 1 : 0
-  depends_on = [archive_file.code]
+  depends_on = [null_resource.build_package]
 
   # Only run cleanup on destroy
   triggers = {
