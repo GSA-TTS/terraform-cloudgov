@@ -98,22 +98,56 @@ variable "backend_python_version" {
   default     = "python-3.12.x"
 }
 
-variable "backend_disk" {
-  description = "Disk quota for the SpiffWorkflow backend app, including unit"
+variable "backend_web_disk" {
+  description = "Disk quota for the SpiffWorkflow backend web app, including unit"
   type        = string
   default     = "1024M"
 }
 
-variable "backend_memory" {
-  description = "Memory allocation for the SpiffWorkflow backend app, including unit"
+variable "backend_web_memory" {
+  description = "Memory allocation for the SpiffWorkflow backend web app, including unit"
   type        = string
   default     = "512M"
 }
 
-variable "backend_instances" {
-  description = "Number of instances for the SpiffWorkflow backend app"
+variable "backend_web_instances" {
+  description = "Number of instances for the SpiffWorkflow backend web app"
   type        = number
   default     = 1
+}
+
+variable "backend_worker_disk" {
+  description = "Disk quota for the SpiffWorkflow backend worker app, including unit"
+  type        = string
+  default     = "1024M"
+}
+
+variable "backend_worker_memory" {
+  description = "Memory allocation for the SpiffWorkflow backend worker app, including unit"
+  type        = string
+  default     = "1024M"
+}
+
+variable "backend_worker_instances" {
+  description = "Number of instances for the SpiffWorkflow backend worker app"
+  type        = number
+  default     = 0
+  validation {
+    condition     = var.backend_queue_service_instance == "" || (var.backend_worker_instances >= 1)
+    error_message = "If backend_queue_service_instance is set, backend_worker_instances must be at least 1."
+  }
+}
+
+variable "backend_scheduler_disk" {
+  description = "Disk quota for the SpiffWorkflow backend scheduler app, including unit"
+  type        = string
+  default     = "1024M"
+}
+
+variable "backend_scheduler_memory" {
+  description = "Memory allocation for the SpiffWorkflow backend scheduler app, including unit"
+  type        = string
+  default     = "512M"
 }
 
 variable "backend_environment" {
@@ -129,6 +163,18 @@ variable "backend_database_service_instance" {
 
 variable "backend_database_params" {
   description = "JSON parameter string for the database service binding. Empty string means no parameters."
+  type        = string
+  default     = ""
+}
+
+variable "backend_queue_service_instance" {
+  description = "Name of the message queue service instance to bind to the backend app. Currently only Redis is supported. Leave empty to disable queue functionality."
+  type        = string
+  default     = ""
+}
+
+variable "backend_queue_service_params" {
+  description = "JSON parameter string for the message queue service binding. Empty string means no parameters."
   type        = string
   default     = ""
 }

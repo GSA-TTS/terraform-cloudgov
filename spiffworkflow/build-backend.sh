@@ -243,11 +243,12 @@ else
   exit 1
 fi
 
-# Add a Procfile for the Python buildpack if it doesn't exist
+# Add a Procfile for the Python buildpack, which requires that one exist
+# However, we're specifying the start commands in the cloudfoundry_app processes attributes
 if [ ! -f "${BACKEND_DIR}/Procfile" ]; then
   echo "Creating Procfile for Python buildpack..."
   cat > "${BACKEND_DIR}/Procfile" << EOF
-web: ./bin/boot_server_in_docker
+web: specify-the-command-in-the-processes-attribute
 EOF
   if [ ! -f "${BACKEND_DIR}/Procfile" ]; then
     echo "ERROR: Failed to create Procfile"
@@ -279,6 +280,19 @@ if [ -d "${BACKEND_DIR}/bin" ]; then
   done
 fi
 
+# Ensure bash scripts in bin/ only start .py scripts with python3
+# For example, 
+#   exec ./bin/start_blocking_apscheduler.py
+# should be
+#   exec python3 ./bin/start_blocking_apscheduler.py
+for binfile in "${BACKEND_DIR}/bin/"*; do
+  if [ -f "$binfile" ] && head -1 "$binfile" | grep -qE '^#!.*bash'; then
+    # Replace 'exec ./bin/*.py' or 'exec ./bin/*.py args' with 'exec python3 ./bin/*.py args'
+    safe_sed 's|exec  *\(\./bin/[^ ]*\.py\)|exec python3 \1|g' "$binfile"
+  fi
+done
+
+
 # Add Python buildpack runtime.txt if it doesn't exist
 if [ ! -f "${BACKEND_DIR}/runtime.txt" ]; then
   echo "Creating runtime.txt for Python buildpack with version: ${PYTHON_VERSION}..."
@@ -300,16 +314,24 @@ export PYTHONPATH="/home/vcap/app:/home/vcap/app/src:/home/vcap/deps/0/python:/h
 # Get the postgres URI from the service binding. (SQL Alchemy insists on "postgresql://".🙄)
 export SPIFFWORKFLOW_BACKEND_DATABASE_URI=$( echo ${VCAP_SERVICES:-} | jq -r '.["aws-rds"][].credentials.uri' | sed -e s/postgres/postgresql/ )
 
-# If there's a bound redis service, configure SpiffWorkflow to use it
-REDIS_URI=$(echo "${VCAP_SERVICES}" | jq -r '.["redis"]?[0]?.credentials.uri // empty')
-if [ -n "$REDIS_URI" ]; then
-  # Enable Celery for background processing
-  export SPIFFWORKFLOW_BACKEND_CELERY_ENABLED=true
-  export SPIFFWORKFLOW_BACKEND_CELERY_BROKER_URL="$REDIS_URI"
-  export SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND="$REDIS_URI"
+# Check if the backend queue service is set and is a type that we support (it supplies a .credentials.uri that's usable as is)
+if [ -n "${QUEUE_SERVICE_NAME:-}" ]; then
+  QUEUE_URI=$(echo "${VCAP_SERVICES}" | jq -r --arg name "$QUEUE_SERVICE_NAME" '
+    to_entries[]
+    | select(.value[0].instance_name == $name)
+    | .value[0].credentials.uri // empty
+  ')
+  if [ -n "$QUEUE_URI" ]; then
+    # Enable Celery for background processing
+    export SPIFFWORKFLOW_BACKEND_CELERY_ENABLED=true
+    export SPIFFWORKFLOW_BACKEND_CELERY_BROKER_URL="$QUEUE_URI"
+    export SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND="$QUEUE_URI"
 
-  # Enable the metadata backfill feature
-  SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_METADATA_BACKFILL_ENABLED=true
+    # Enable the metadata backfill feature
+    SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_METADATA_BACKFILL_ENABLED=true
+  else 
+    echo "WARNING: QUEUE_SERVICE_NAME is set but no matching service found in VCAP_SERVICES; skipping configuration"
+  fi
 fi
 EOF
 chmod +x "${BACKEND_DIR}/.profile"

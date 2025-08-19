@@ -101,12 +101,42 @@ locals {
   # Buildpack-specific environment variables
   buildpack_env = {
     PYTHONPATH : "/home/vcap/app:/home/vcap/app/src:/home/vcap/deps/0"
+    QUEUE_SERVICE_NAME : var.backend_queue_service_instance != "" ? var.backend_queue_service_instance : null
   }
 
   # Container-specific environment variables
   container_env = {
     # No container-specific env vars needed at this time
   }
+
+  # Process configurations - defined once and used in both processes block and hash generation
+  backend_processes = [
+    {
+      type                       = "web"
+      command                    = var.backend_deployment_method == "buildpack" ? "bash -c 'source .profile && ./bin/boot_server_in_docker'" : "cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt && /usr/sbin/update-ca-certificates && ./bin/boot_server_in_docker"
+      instances                  = var.backend_web_instances
+      disk_quota                 = var.backend_web_disk
+      memory                     = var.backend_web_memory
+      health_check_type          = "http"
+      health_check_http_endpoint = "/api/v1.0/status"
+    },
+    {
+      type              = "worker"
+      command           = var.backend_deployment_method == "buildpack" ? "bash -c 'source .profile && ./bin/start_celery_worker'" : "cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt && /usr/sbin/update-ca-certificates && ./bin/start_celery_worker"
+      instances         = var.backend_worker_instances
+      disk_quota        = var.backend_worker_disk
+      memory            = var.backend_worker_memory
+      health_check_type = "process"
+    },
+    {
+      type              = "scheduler"
+      command           = var.backend_deployment_method == "buildpack" ? "bash -c 'source .profile && ./bin/start_blocking_apscheduler'" : "cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt && /usr/sbin/update-ca-certificates && ./bin/start_blocking_apscheduler"
+      instances         = var.backend_queue_service_instance != "" ? 1 : 0
+      disk_quota        = var.backend_scheduler_disk
+      memory            = var.backend_scheduler_memory
+      health_check_type = "process"
+    }
+  ]
 }
 
 resource "random_password" "backend_flask_secret_key" {
@@ -201,37 +231,36 @@ resource "cloudfoundry_app" "backend" {
   # Use the content hash to trigger app updates when the zip content would change
   source_code_hash = var.backend_deployment_method == "buildpack" ? local.backend_content_hash : null
 
-  # Common properties
-  disk_quota                 = var.backend_disk
-  memory                     = var.backend_memory
-  instances                  = var.backend_instances
-  health_check_type          = "http"
-  health_check_http_endpoint = "/api/v1.0/status"
-
-  command = var.backend_deployment_method == "buildpack" ? "./bin/boot_server_in_docker" : <<-EOT
-      cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt && 
-      /usr/sbin/update-ca-certificates && 
-      ./bin/boot_server_in_docker
-      EOT
+  processes = local.backend_processes
 
   # Environment variables for the app - merge common env with deployment-method-specific env  
   environment = merge(
     local.backend_env,
-    var.backend_deployment_method == "buildpack" ? local.buildpack_env : local.container_env
+    var.backend_deployment_method == "buildpack" ? local.buildpack_env : local.container_env,
+    {
+      # This hash will change whenever process configurations change; env var changes force an application restart
+      TERRAFORM_PROCESS_HASH = md5(jsonencode(local.backend_processes))
+    }
   )
 
   # Service bindings - always include the required database plus any additional bindings
+  # Optionally include the queue service instance if set
   service_bindings = concat(
     # Required database service binding
     [{
       service_instance = var.backend_database_service_instance
-      params           = (var.backend_database_params == "" ? "{}" : var.backend_database_params) # Empty string -> Minimal JSON
+      params           = (var.backend_database_params == "" ? "{}" : var.backend_database_params)
     }],
+    # Optional queue service binding
+    var.backend_queue_service_instance != "" ? [{
+      service_instance = var.backend_queue_service_instance
+      params           = (var.backend_queue_service_params == "" ? "{}" : var.backend_queue_service_params)
+    }] : [],
     # Optional additional service bindings
     [
       for service_name, params in var.backend_additional_service_bindings : {
         service_instance = service_name
-        params           = (params == "" ? "{}" : params) # Empty string -> Minimal JSON
+        params           = (params == "" ? "{}" : params)
       }
     ]
   )
