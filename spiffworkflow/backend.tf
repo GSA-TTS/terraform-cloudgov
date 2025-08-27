@@ -88,6 +88,7 @@ locals {
     SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID : var.backend_oidc_client_id != null ? var.backend_oidc_client_id : "spiffworkflow-backend"
     SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY : var.backend_oidc_client_secret != null ? var.backend_oidc_client_secret : random_password.backend_openid_secret.result
     SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL : var.backend_oidc_server_url != null ? var.backend_oidc_server_url : "${local.backend_url}/openid"
+    SPIFFWORKFLOW_BACKEND_OPEN_ID_SCOPES : var.backend_oidc_scope != null ? var.backend_oidc_scope : "openid,profile,email,groups"
     SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_CLIENT_IDS : var.backend_oidc_additional_valid_client_ids != null ? var.backend_oidc_additional_valid_client_ids : null
     SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_ISSUERS : var.backend_oidc_additional_valid_issuers != null ? var.backend_oidc_additional_valid_issuers : null
     SPIFFWORKFLOW_BACKEND_AUTHENTICATION_PROVIDERS : var.backend_oidc_authentication_providers != null ? var.backend_oidc_authentication_providers : null
