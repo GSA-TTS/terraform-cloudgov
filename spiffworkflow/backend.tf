@@ -35,6 +35,13 @@ locals {
   package_filename = "${local.prefix}-backend.zip"
   package_path     = "${local.dist_dir}/${local.package_filename}"
 
+  # OIDC validation
+  oidc_configured = var.backend_oidc_client_id != null
+  oidc_valid = var.backend_oidc_client_id == null || (
+    var.backend_oidc_client_secret != null &&
+    var.backend_oidc_server_url != null
+  )
+
   # Hash of all inputs that determine the content of the backend zip file
   # This is used as source_code_hash to trigger app updates when any of these change
   backend_content_hash = sha256(jsonencode({
@@ -77,11 +84,13 @@ locals {
     SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA : "false"
     SPIFFWORKFLOW_BACKEND_LOG_LEVEL : "INFO"
 
-    # TODO: We should make these configurable with variables so
-    # you can specify an external OIDC IDP.
-    SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID : "spiffworkflow-backend"
-    SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY : random_password.backend_openid_secret.result
-    SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL : "${local.backend_url}/openid"
+    # OIDC Configuration - Use external OIDC if configured, otherwise use internal OIDC
+    SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID : var.backend_oidc_client_id != null ? var.backend_oidc_client_id : "spiffworkflow-backend"
+    SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY : var.backend_oidc_client_secret != null ? var.backend_oidc_client_secret : random_password.backend_openid_secret.result
+    SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL : var.backend_oidc_server_url != null ? var.backend_oidc_server_url : "${local.backend_url}/openid"
+    SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_CLIENT_IDS : var.backend_oidc_additional_valid_client_ids != null ? var.backend_oidc_additional_valid_client_ids : null
+    SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_ISSUERS : var.backend_oidc_additional_valid_issuers != null ? var.backend_oidc_additional_valid_issuers : null
+    SPIFFWORKFLOW_BACKEND_AUTHENTICATION_PROVIDERS : var.backend_oidc_authentication_providers != null ? var.backend_oidc_authentication_providers : null
 
     # TODO: static creds are in this path in the image:
     #   /config/permissions/example.yml
@@ -219,6 +228,13 @@ resource "cloudfoundry_app" "backend" {
 
   # For buildpack deployment, ensure build completes successfully before app deployment
   depends_on = [data.local_file.backend_package_validation]
+
+  lifecycle {
+    precondition {
+      condition     = local.oidc_valid
+      error_message = "When backend_oidc_client_id is provided, backend_oidc_client_secret and backend_oidc_server_url must also be provided."
+    }
+  }
 
   # Conditional properties based on deployment method
   buildpacks = var.backend_deployment_method == "buildpack" ? ["python_buildpack"] : null
