@@ -243,6 +243,12 @@ variable "backend_oidc_authentication_providers" {
   default     = null
 }
 
+variable "backend_oidc_scope" {
+  description = "Optional OAuth scopes for OIDC authentication (e.g., 'openid profile email groups'). Defaults to 'openid' for cloud.gov compatibility."
+  type        = string
+  default     = null
+}
+
 ###############################################################################
 # Connector Variables
 ###############################################################################
