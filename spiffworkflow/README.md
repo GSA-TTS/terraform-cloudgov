@@ -99,6 +99,33 @@ module "spiffworkflow" {
 }
 ```
 
+### OIDC Authentication Configuration
+
+By default, SpiffWorkflow uses an internal OIDC provider for authentication. You can optionally configure an external OIDC provider such as cloud.gov's identity provider service or login.gov:
+
+```hcl
+module "spiffworkflow" {
+  source = "github.com/GSA-TTS/terraform-cloudgov//spiffworkflow"
+  
+  cf_org_name   = "my-org"
+  cf_space_name = "my-space"
+  
+  backend_database_service_instance = "my-postgres-db"
+  
+  # External OIDC Configuration (e.g., cloud.gov identity provider)
+  backend_oidc_client_id           = "your-client-id"
+  backend_oidc_client_secret       = "your-client-secret"
+  backend_oidc_server_url          = "https://login.fr.cloud.gov"
+  backend_oidc_authentication_providers = "default:openid"
+  
+  # Optional: Additional client IDs and issuers
+  backend_oidc_additional_valid_client_ids = "astro-frontend,other-client"
+  backend_oidc_additional_valid_issuers   = "https://login.fr.cloud.gov"
+}
+```
+
+**Note:** When using external OIDC, you must provide at minimum the `backend_oidc_client_id`, `backend_oidc_client_secret`, and `backend_oidc_server_url`. If these are not provided, the module will use the internal OIDC configuration.
+
 ## Inputs
 
 | Name | Description | Type | Default | Required |
@@ -113,6 +140,12 @@ module "spiffworkflow" {
 | backend_database_params | JSON parameter string for the database service binding | `string` | `""` | no |
 | backend_python_version | Python version to use for the backend when using buildpack deployment | `string` | `"python-3.12.x"` | no |
 | backend_additional_service_bindings | Map of additional service instance names to JSON parameter strings for optional service bindings | `map(string)` | `{}` | no |
+| backend_oidc_client_id | Optional OIDC client ID for external authentication provider | `string` | `null` | no |
+| backend_oidc_client_secret | Optional OIDC client secret for external authentication provider | `string` | `null` | no |
+| backend_oidc_server_url | Optional OIDC server URL for external authentication provider | `string` | `null` | no |
+| backend_oidc_additional_valid_client_ids | Optional comma-separated list of additional valid client IDs | `string` | `null` | no |
+| backend_oidc_additional_valid_issuers | Optional comma-separated list of additional valid issuers | `string` | `null` | no |
+| backend_oidc_authentication_providers | Optional authentication providers configuration | `string` | `null` | no |
 
 See [variables.tf](./variables.tf) for all available options.
 

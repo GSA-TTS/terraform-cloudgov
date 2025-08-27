@@ -203,6 +203,47 @@ variable "backend_additional_service_bindings" {
 }
 
 ###############################################################################
+# Backend OIDC Authentication Variables
+###############################################################################
+
+variable "backend_oidc_client_id" {
+  description = "Optional OIDC client ID for external authentication provider. If not provided, internal OIDC will be used."
+  type        = string
+  default     = null
+}
+
+variable "backend_oidc_client_secret" {
+  description = "Optional OIDC client secret for external authentication provider. Required if backend_oidc_client_id is provided."
+  type        = string
+  sensitive   = true
+  default     = null
+}
+
+variable "backend_oidc_server_url" {
+  description = "Optional OIDC server URL for external authentication provider. Required if backend_oidc_client_id is provided."
+  type        = string
+  default     = null
+}
+
+variable "backend_oidc_additional_valid_client_ids" {
+  description = "Optional comma-separated list of additional valid client IDs for OIDC authentication."
+  type        = string
+  default     = null
+}
+
+variable "backend_oidc_additional_valid_issuers" {
+  description = "Optional comma-separated list of additional valid issuers for OIDC authentication."
+  type        = string
+  default     = null
+}
+
+variable "backend_oidc_authentication_providers" {
+  description = "Optional authentication providers configuration (e.g., 'default:openid')."
+  type        = string
+  default     = null
+}
+
+###############################################################################
 # Connector Variables
 ###############################################################################
 
