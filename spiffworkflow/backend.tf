@@ -179,13 +179,20 @@ resource "null_resource" "build_package" {
 
   # Re-run if any of the content-determining inputs change
   triggers = {
+    # v-- The robot came up with this, I'm gobsmacked. -Bret
     # Rebuild whenever any inputs that affect content change OR when the existing
-    # built zip (if present) has different content / was deleted. Using try() so
-    # initial plan (before zip exists) yields an empty string and later plans
-    # capture the real hash. Deleting the zip resets this to empty, triggering rebuild.
-    # ^-- The robot came up with this, I'm gobsmacked. -Bret
-    content_hash = local.backend_content_hash
-    package_hash = try(filesha1(local.package_path), "")
+    # backend directory's actual file contents (not mtimes) change. We avoid
+    # hashing the produced zip because zip entry mtimes make that nondeterministic.
+    # Instead we compute a stable hash of all files that exist (after first build)
+    # so subsequent plans only rebuild if some file content really changed.
+    # Before the first build the directory likely doesn't exist; try() safely
+    # yields an empty list producing a stable empty hash which differs from any
+    # real populated hash, triggering the initial build once.
+    content_hash    = local.backend_content_hash
+    directory_hash  = sha256(join("", [
+      for f in try(fileset(local.backend_dir, "**"), []) :
+      filesha1("${local.backend_dir}/${f}")
+    ]))
   }
 
   provisioner "local-exec" {
