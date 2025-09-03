@@ -174,7 +174,13 @@ resource "null_resource" "build_package" {
 
   # Re-run if any of the content-determining inputs change
   triggers = {
+    # Rebuild whenever any inputs that affect content change OR when the existing
+    # built zip (if present) has different content / was deleted. Using try() so
+    # initial plan (before zip exists) yields an empty string and later plans
+    # capture the real hash. Deleting the zip resets this to empty, triggering rebuild.
+    # ^-- The robot came up with this, I'm gobsmacked. -Bret
     content_hash = local.backend_content_hash
+    package_hash = try(filesha1(local.package_path), "")
   }
 
   provisioner "local-exec" {
@@ -208,13 +214,6 @@ resource "null_resource" "build_package" {
   }
 }
 
-# Validate that the zip file was created successfully before allowing CloudFoundry deployment
-data "local_file" "backend_package_validation" {
-  count      = var.backend_deployment_method == "buildpack" ? 1 : 0
-  depends_on = [null_resource.build_package]
-  filename   = local.package_path
-}
-
 # -----------------------------------------------------------------------------
 # CLOUD FOUNDRY APP - Common resource with conditional properties based on deployment method
 # -----------------------------------------------------------------------------
@@ -227,8 +226,7 @@ resource "cloudfoundry_app" "backend" {
   org_name   = var.cf_org_name
   space_name = var.cf_space_name
 
-  # For buildpack deployment, ensure build completes successfully before app deployment
-  depends_on = [data.local_file.backend_package_validation]
+  depends_on = [null_resource.build_package]
 
   lifecycle {
     precondition {
