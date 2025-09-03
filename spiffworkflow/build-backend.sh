@@ -54,13 +54,46 @@ fi
 
 # Parse arguments
 PATH_ROOT="$1"
-GIT_REF="$2"
+# Second argument now may be a composite like: github.com/sartography/spiff-arena?ref=v1.1.2
+# or it may still be a simple ref (legacy usage). We derive GIT_URL and GIT_REF.
+RAW_GIT_SPEC="$2"
 PROCESS_MODELS_PATH="$3"
 PYTHON_VERSION="$4"
 PACKAGE_PATH="$5"
 
+# Derive GIT_URL and GIT_REF from RAW_GIT_SPEC
+# Accept inputs with or without scheme (http/https). Default to https.
+if [[ "$RAW_GIT_SPEC" == *"?ref="* ]]; then
+  # Split on ?ref=
+  BASE_PART="${RAW_GIT_SPEC%%\?ref=*}"
+  REF_PART="${RAW_GIT_SPEC##*?ref=}"  # everything after last ?ref=
+else
+  # Legacy: argument itself is the ref; use default repo
+  BASE_PART="github.com/sartography/spiff-arena"
+  REF_PART="$RAW_GIT_SPEC"
+fi
+
+# Normalize scheme
+if [[ "$BASE_PART" =~ ^https?:// ]]; then
+  GIT_URL="${BASE_PART%%\?*}"
+else
+  GIT_URL="https://${BASE_PART%%\?*}"
+fi
+
+# Strip any trailing slash
+GIT_URL="${GIT_URL%/}"
+
+GIT_REF="$REF_PART"
+
+if [[ -z "$GIT_REF" ]]; then
+  echo "ERROR: Could not determine GIT_REF from backend_gitref argument: $RAW_GIT_SPEC" >&2
+  exit 1
+fi
+
 echo "Build script starting with parameters:"
 echo "  PATH_ROOT: $PATH_ROOT"
+echo "  backend_gitref (raw): $RAW_GIT_SPEC"
+echo "  GIT_URL: $GIT_URL"
 echo "  GIT_REF: $GIT_REF"
 echo "  PROCESS_MODELS_PATH: $PROCESS_MODELS_PATH"
 echo "  PYTHON_VERSION: $PYTHON_VERSION"
@@ -107,7 +140,7 @@ DIST_DIR="${PATH_ROOT}/dist"
 DOWNLOAD_DIR="${DIST_DIR}/temp-spiff-arena"
 BACKEND_DIR="${DIST_DIR}/backend"
 PROCESS_MODELS_DEST="${BACKEND_DIR}/process_models"
-GITHUB_URL="https://github.com/sartography/spiff-arena"
+
 # Include git_ref in the zip filename to identify the version
 SAFE_GIT_REF=$(echo "${GIT_REF}" | tr '/' '_')
 DOWNLOAD_ZIP="${DOWNLOAD_DIR}/spiff-arena-${SAFE_GIT_REF}.zip"
@@ -142,20 +175,41 @@ if [ -d "${BACKEND_DIR}" ]; then
   rm -rf "${BACKEND_DIR}"
 fi
 
-# Download the source code directly as a ZIP file from GitHub if it doesn't exist
+# Download the source code directly as a ZIP file if it doesn't exist
 if [ -f "${DOWNLOAD_ZIP}" ]; then
   echo "Using existing download for reference: ${GIT_REF} from ${DOWNLOAD_ZIP##*/}"
 else
-  echo "Downloading source code from GitHub for reference: ${GIT_REF}..."
-  if curl -L -o "${DOWNLOAD_ZIP}" "${GITHUB_URL}/archive/refs/tags/${GIT_REF}.zip" || \
-     curl -L -o "${DOWNLOAD_ZIP}" "${GITHUB_URL}/archive/refs/heads/${GIT_REF}.zip" || \
-     curl -L -o "${DOWNLOAD_ZIP}" "${GITHUB_URL}/archive/${GIT_REF}.zip"; then
-    echo "Source code downloaded successfully"
-  else
-    echo "ERROR: Failed to download source code for reference: ${GIT_REF}"
-    echo "Please ensure the reference exists on GitHub"
+  echo "Downloading source code (trying tag, branch, generic) for ref: ${GIT_REF}..."
+  TMP_ZIP="${DOWNLOAD_ZIP}.tmp"
+  rm -f "$TMP_ZIP"
+  set +e
+  curl -fsSL -o "$TMP_ZIP" "${GIT_URL}/archive/refs/tags/${GIT_REF}.zip" || \
+  curl -fsSL -o "$TMP_ZIP" "${GIT_URL}/archive/refs/heads/${GIT_REF}.zip" || \
+  curl -fsSL -o "$TMP_ZIP" "${GIT_URL}/archive/${GIT_REF}.zip"
+  CURL_RC=$?
+  set -e
+  if [ $CURL_RC -ne 0 ]; then
+    echo "ERROR: Could not download a valid archive for ref '${GIT_REF}' from ${GIT_URL}" >&2
+    echo "Tried URLs:" >&2
+    echo "  ${GIT_URL}/archive/refs/tags/${GIT_REF}.zip" >&2
+    echo "  ${GIT_URL}/archive/refs/heads/${GIT_REF}.zip" >&2
+    echo "  ${GIT_URL}/archive/${GIT_REF}.zip" >&2
+    rm -f "$TMP_ZIP" || true
     exit 1
   fi
+  # Ensure non-empty & valid zip
+  if [ ! -s "$TMP_ZIP" ]; then
+    echo "ERROR: Downloaded archive is empty (ref: ${GIT_REF})" >&2
+    rm -f "$TMP_ZIP"
+    exit 1
+  fi
+  if ! unzip -t "$TMP_ZIP" >/dev/null 2>&1; then
+    echo "ERROR: Downloaded file is not a valid zip (ref: ${GIT_REF})" >&2
+    rm -f "$TMP_ZIP"
+    exit 1
+  fi
+  mv "$TMP_ZIP" "$DOWNLOAD_ZIP"
+  echo "Source code downloaded successfully: ${DOWNLOAD_ZIP##*/}"
 fi
 
 # Clean up previous extraction if it exists
