@@ -233,6 +233,9 @@ resource "cloudfoundry_app" "backend" {
 
   depends_on = [null_resource.build_package]
 
+  app_lifecycle = var.backend_deployment_method
+  stack = "cflinuxfs4"
+
   lifecycle {
     precondition {
       condition     = local.oidc_valid
