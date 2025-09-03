@@ -249,6 +249,18 @@ variable "backend_oidc_scope" {
   default     = null
 }
 
+variable "backend_oidc_acr_values" {
+  description = "Optional ACR values for OIDC authentication (e.g., 'urn:acr.login.gov:auth-only')."
+  type        = string
+  default     = null
+}
+
+variable "backend_oidc_private_pem_string" {
+  description = "Optional private PEM string for OIDC client authentication using private_key_jwt. Required if backend_oidc_client_id is provided."
+  type        = string
+  sensitive   = true
+  default     = null
+}
 ###############################################################################
 # Connector Variables
 ###############################################################################

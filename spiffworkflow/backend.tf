@@ -93,6 +93,11 @@ locals {
     SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_ISSUERS : var.backend_oidc_additional_valid_issuers != null ? var.backend_oidc_additional_valid_issuers : null
     SPIFFWORKFLOW_BACKEND_AUTHENTICATION_PROVIDERS : var.backend_oidc_authentication_providers != null ? var.backend_oidc_authentication_providers : null
 
+    SPIFFWORKFLOW_BACKEND_OPEN_ID_ASSERTION_TYPE: "private_key_jwt"
+    SPIFFWORKFLOW_BACKEND_OPEN_ID_ACR_VALUES: var.backend_oidc_acr_values != null ? var.backend_oidc_acr_values : ""
+    SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ASSERTION_TYPE: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+    SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM_STRING: var.backend_oidc_client_id != null ? var.backend_oidc_private_pem_string : ""
+
     # TODO: static creds are in this path in the image:
     #   /config/permissions/example.yml
     # We should probably generate credentials only for the admin
