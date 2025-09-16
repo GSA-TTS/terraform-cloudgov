@@ -83,7 +83,8 @@ locals {
     SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY : var.process_models_ssh_key
     SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA : "false"
     SPIFFWORKFLOW_BACKEND_LOG_LEVEL : "INFO"
-
+    SPIFFWORKFLOW_BACKEND_LOG_LOGIN_LOGOUT : "true"
+    SPIFFWORKFLOW_BACKEND_LOG_MILESTONES : "true"
     # OIDC Configuration - Use external OIDC if configured, otherwise use internal OIDC
     SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID : var.backend_oidc_client_id != null ? var.backend_oidc_client_id : "spiffworkflow-backend"
     SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY : var.backend_oidc_client_secret != null ? var.backend_oidc_client_secret : random_password.backend_openid_secret.result
