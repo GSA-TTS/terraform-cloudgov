@@ -94,10 +94,10 @@ locals {
     SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_ISSUERS : var.backend_oidc_additional_valid_issuers != null ? var.backend_oidc_additional_valid_issuers : null
     SPIFFWORKFLOW_BACKEND_AUTHENTICATION_PROVIDERS : var.backend_oidc_authentication_providers != null ? var.backend_oidc_authentication_providers : null
 
-    SPIFFWORKFLOW_BACKEND_OPEN_ID_ASSERTION_TYPE: "private_key_jwt"
-    SPIFFWORKFLOW_BACKEND_OPEN_ID_ACR_VALUES: var.backend_oidc_acr_values != null ? var.backend_oidc_acr_values : ""
-    SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ASSERTION_TYPE: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
-    SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM_STRING: var.backend_oidc_client_id != null ? var.backend_oidc_private_pem_string : ""
+    SPIFFWORKFLOW_BACKEND_OPEN_ID_ASSERTION_TYPE : "private_key_jwt"
+    SPIFFWORKFLOW_BACKEND_OPEN_ID_ACR_VALUES : var.backend_oidc_acr_values != null ? var.backend_oidc_acr_values : ""
+    SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ASSERTION_TYPE : "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+    SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM_STRING : var.backend_oidc_client_id != null ? var.backend_oidc_private_pem_string : ""
 
     # TODO: static creds are in this path in the image:
     #   /config/permissions/example.yml
@@ -189,8 +189,8 @@ resource "null_resource" "build_package" {
     # Before the first build the directory likely doesn't exist; try() safely
     # yields an empty list producing a stable empty hash which differs from any
     # real populated hash, triggering the initial build once.
-    content_hash    = local.backend_content_hash
-    directory_hash  = sha256(join("", [
+    content_hash = local.backend_content_hash
+    directory_hash = sha256(join("", [
       for f in try(fileset(local.backend_dir, "**"), []) :
       filesha1("${local.backend_dir}/${f}")
     ]))
