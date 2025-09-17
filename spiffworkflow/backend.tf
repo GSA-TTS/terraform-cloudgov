@@ -241,7 +241,8 @@ resource "cloudfoundry_app" "backend" {
 
   depends_on = [null_resource.build_package]
 
-  app_lifecycle = var.backend_deployment_method
+  # Commented out until the provider supports it
+  # app_lifecycle = var.backend_deployment_method
   stack = "cflinuxfs4"
 
   lifecycle {
