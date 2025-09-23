@@ -117,7 +117,7 @@ locals {
   # Buildpack-specific environment variables
   buildpack_env = {
     PYTHONPATH : "/home/vcap/app:/home/vcap/app/src:/home/vcap/deps/0"
-    QUEUE_SERVICE_NAME : var.backend_queue_service_instance != "" ? var.backend_queue_service_instance : null
+    QUEUE_SERVICE_NAME : var.backend_queue_service_instance != "" ? var.backend_queue_service_instance : ""
   }
 
   # Container-specific environment variables
