@@ -136,7 +136,7 @@ for tool in git uv zip; do
 done
 
 # Set up standard directories
-DIST_DIR="${PATH_ROOT}/dist"
+DIST_DIR="${PATH_ROOT}/dist/spiffworkflow"
 DOWNLOAD_DIR="${DIST_DIR}/temp-spiff-arena"
 BACKEND_DIR="${DIST_DIR}/backend"
 PROCESS_MODELS_DEST="${BACKEND_DIR}/process_models"
