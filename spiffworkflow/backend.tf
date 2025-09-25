@@ -30,7 +30,7 @@
 
 
 locals {
-  dist_dir         = "${path.root}/dist"
+  dist_dir         = "${path.root}/dist/spiffworkflow"
   backend_dir      = "${local.dist_dir}/backend"
   package_filename = "${local.prefix}-backend.zip"
   package_path     = "${local.dist_dir}/${local.package_filename}"
