@@ -200,9 +200,9 @@ resource "null_resource" "build_package" {
     # will show exactly which element changed when the hash differs remotely.
     # These individual trigger keys do NOT themselves cause extra rebuilds unless
     # their underlying value changes; they simply make the plan diff granular.
-    backend_gitref          = var.backend_gitref
-    backend_python_version  = var.backend_python_version
-    build_script_sha1       = filesha1("${path.module}/build-backend.sh")
+    backend_gitref         = var.backend_gitref
+    backend_python_version = var.backend_python_version
+    build_script_sha1      = filesha1("${path.module}/build-backend.sh")
     process_models_hash_dbg = var.backend_deployment_method == "buildpack" && var.backend_process_models_path != "" ? sha1(join("", [
       for f in fileset(var.backend_process_models_path, "**/*") :
       filesha1("${var.backend_process_models_path}/${f}")
