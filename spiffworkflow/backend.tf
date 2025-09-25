@@ -180,27 +180,17 @@ resource "null_resource" "build_package" {
 
   # Re-run if any of the content-determining inputs change
   triggers = {
-    # v-- The robot came up with this, I'm gobsmacked. -Bret
-    # Rebuild whenever any inputs that affect content change OR when the existing
-    # backend directory's actual file contents (not mtimes) change. We avoid
-    # hashing the produced zip because zip entry mtimes make that nondeterministic.
-    # Instead we compute a stable hash of all files that exist (after first build)
-    # so subsequent plans only rebuild if some file content really changed.
-    # Before the first build the directory likely doesn't exist; try() safely
-    # yields an empty list producing a stable empty hash which differs from any
-    # real populated hash, triggering the initial build once.
-    # We also include the hash of the produced package file (package_file_hash) to
-    # ensure changes to the zip file itself (e.g., manual edits or corruption) trigger a rebuild.
-    content_hash = local.backend_content_hash
-    directory_hash = sha256(join("", [
-      for f in try(fileset(local.backend_dir, "**"), []) :
-      filesha1("${local.backend_dir}/${f}")
-    ]))
-    # Include the current package file hash or sentinel so a deleted/changed zip forces rebuild
-    package_file_hash = fileexists(local.package_path) ? filesha1(local.package_path) : "MISSING"
-    # Force rebuild if the dist directory or package path changes (e.g., we introduce a subdirectory)
-    dist_dir = local.dist_dir
-    package_path = local.package_path
+    # Single, deterministic trigger derived only from true inputs that affect the
+    # package CONTENT (git ref, build script hash, python version, process models hash).
+    # This prevents perpetual rebuilds caused by non-deterministic artifacts like:
+    #  - Zip entry timestamps
+    #  - Tooling that may inject variable metadata into generated files (e.g. requirements.txt)
+    backend_content_hash = local.backend_content_hash
+
+    # If you need to force a rebuild without changing inputs, run:
+    #   terraform taint module.workflow.module.workflow.null_resource.build_package[0]
+    # Or, just remove local.package_path; here we ensure rebuilds if there's no file
+    package_exists = fileexists(local.package_path) ? "present" : "missing"
   }
 
   provisioner "local-exec" {
