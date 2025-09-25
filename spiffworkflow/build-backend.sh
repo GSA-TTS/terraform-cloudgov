@@ -449,7 +449,9 @@ mkdir -p "$(dirname "$PACKAGE_PATH")"
 [[ "$PACKAGE_PATH" == "$BACKEND_DIR"* ]] && fatal "PACKAGE_PATH ($PACKAGE_PATH) must not be inside BACKEND_DIR ($BACKEND_DIR)"
 
 # shellcheck disable=SC2164
-(cd "$BACKEND_DIR" && zip -rq "$PACKAGE_PATH" .)
+PACKAGE_BASENAME="$(basename "$PACKAGE_PATH")"
+echo "Zipping backend contents to parent directory as $PACKAGE_BASENAME ..."
+(cd "$BACKEND_DIR" && zip -rq "../$PACKAGE_BASENAME" .)
 
 # Verify the zip file was created successfully
 [ -f "$PACKAGE_PATH" ] || fatal "Zip file $PACKAGE_PATH was not created"
