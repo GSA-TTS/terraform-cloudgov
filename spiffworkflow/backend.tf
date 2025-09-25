@@ -201,7 +201,7 @@ resource "null_resource" "build_package" {
     ])) : "N/A"
 
     # If you need to force a rebuild without changing inputs, run:
-    #   terraform taint module.workflow.module.workflow.null_resource.build_package[0]
+    #   terraform taint 'module.workflow.module.workflow.null_resource.build_package[0]'
     # Or, just remove local.package_path; here we ensure rebuilds if there's no file
     package_exists = fileexists(local.package_path) ? "present" : "missing"
   }
