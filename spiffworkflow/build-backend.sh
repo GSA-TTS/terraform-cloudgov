@@ -1,6 +1,30 @@
 #!/bin/bash
 set -euo pipefail
 
+# Robust error handling
+FAILURE_REASON=""
+cleanup_on_error() {
+  local ec=$?
+  if [ $ec -ne 0 ]; then
+    echo "\n============================================================" >&2
+    echo "BUILD SCRIPT FAILED (exit code $ec)" >&2
+    if [ -n "$FAILURE_REASON" ]; then
+      echo "Reason: $FAILURE_REASON" >&2
+    fi
+    echo "Working directory: $(pwd)" >&2
+    echo "PACKAGE_PATH: ${PACKAGE_PATH:-<unset>}" >&2
+    if [ -n "${BACKEND_DIR:-}" ] && [ -d "${BACKEND_DIR:-}" ]; then
+      echo "Listing backend dir for diagnostics:" >&2
+      ls -al "${BACKEND_DIR}" || true
+    fi
+    echo "============================================================\n" >&2
+  fi
+  exit $ec
+}
+trap cleanup_on_error ERR
+
+fatal() { FAILURE_REASON="$1"; echo "ERROR: $1" >&2; exit 1; }
+
 # This script prepares the content for the SpiffWorkflow backend application
 # It is used only for buildpack-based deployment (backend_deployment_method = "buildpack")
 # 
@@ -48,8 +72,7 @@ safe_sed() {
 
 # Required parameters
 if [ $# -lt 5 ]; then
-  echo "Usage: $0 <path_root> <backend_gitref> <backend_process_models_path> <backend_python_version> <package_path>"
-  exit 1
+  fatal "Usage: $0 <path_root> <backend_gitref> <backend_process_models_path> <backend_python_version> <package_path>"
 fi
 
 # Parse arguments
@@ -85,10 +108,7 @@ GIT_URL="${GIT_URL%/}"
 
 GIT_REF="$REF_PART"
 
-if [[ -z "$GIT_REF" ]]; then
-  echo "ERROR: Could not determine GIT_REF from backend_gitref argument: $RAW_GIT_SPEC" >&2
-  exit 1
-fi
+[[ -z "$GIT_REF" ]] && fatal "Could not determine GIT_REF from backend_gitref argument: $RAW_GIT_SPEC"
 
 echo "Build script starting with parameters:"
 echo "  PATH_ROOT: $PATH_ROOT"
@@ -112,16 +132,10 @@ echo "Validating inputs..."
 # Check if process models directory exists and is accessible
 echo "Checking if process models directory exists:"
 if [ ! -d "$PROCESS_MODELS_PATH" ]; then
-  echo "ERROR: Process models path does not exist: $PROCESS_MODELS_PATH"
-  echo "Expected path: $PROCESS_MODELS_PATH"
-  echo "Absolute path: $(readlink -f "$PROCESS_MODELS_PATH" 2>/dev/null || echo "Path resolution failed")"
-  exit 1
+  fatal "Process models path does not exist: $PROCESS_MODELS_PATH (abs: $(readlink -f "$PROCESS_MODELS_PATH" 2>/dev/null || echo "Path resolution failed"))"
 fi
 
-if ! ls -la "$PROCESS_MODELS_PATH" >/dev/null 2>&1; then
-  echo "ERROR: Process models path is not accessible: $PROCESS_MODELS_PATH"
-  exit 1
-fi
+! ls -la "$PROCESS_MODELS_PATH" >/dev/null 2>&1 && fatal "Process models path not accessible: $PROCESS_MODELS_PATH"
 
 echo "✓ Process models directory validated: $PROCESS_MODELS_PATH"
 
@@ -195,18 +209,16 @@ else
     echo "  ${GIT_URL}/archive/refs/heads/${GIT_REF}.zip" >&2
     echo "  ${GIT_URL}/archive/${GIT_REF}.zip" >&2
     rm -f "$TMP_ZIP" || true
-    exit 1
+    fatal "Could not download a valid archive for ref '${GIT_REF}' from ${GIT_URL}"
   fi
   # Ensure non-empty & valid zip
   if [ ! -s "$TMP_ZIP" ]; then
-    echo "ERROR: Downloaded archive is empty (ref: ${GIT_REF})" >&2
     rm -f "$TMP_ZIP"
-    exit 1
+    fatal "Downloaded archive is empty (ref: ${GIT_REF})"
   fi
   if ! unzip -t "$TMP_ZIP" >/dev/null 2>&1; then
-    echo "ERROR: Downloaded file is not a valid zip (ref: ${GIT_REF})" >&2
     rm -f "$TMP_ZIP"
-    exit 1
+    fatal "Downloaded file is not a valid zip (ref: ${GIT_REF})"
   fi
   mv "$TMP_ZIP" "$DOWNLOAD_ZIP"
   echo "Source code downloaded successfully: ${DOWNLOAD_ZIP##*/}"
@@ -225,10 +237,7 @@ unzip -q "${DOWNLOAD_ZIP}" -d "${DOWNLOAD_DIR}/extract"
 
 # Find the extracted directory (it might have a suffix based on the reference)
 EXTRACT_DIR=$(find "${DOWNLOAD_DIR}/extract" -type d -name "spiff-arena*" | head -n 1)
-if [ -z "${EXTRACT_DIR}" ]; then
-  echo "ERROR: Could not find extracted spiff-arena directory"
-  exit 1
-fi
+[[ -z "${EXTRACT_DIR}" ]] && fatal "Could not find extracted spiff-arena directory"
 
 echo "Source code extracted to: ${EXTRACT_DIR}"
 
@@ -239,10 +248,9 @@ if [ -d "${EXTRACT_DIR}/spiffworkflow-backend" ]; then
 elif [ -d "${EXTRACT_DIR}/backend" ]; then
   BACKEND_SRC="${EXTRACT_DIR}/backend"
 else
-  echo "ERROR: Could not find backend directory in the extracted source code"
-  echo "Directory structure:"
-  find "${EXTRACT_DIR}" -type d -maxdepth 2
-  exit 1
+  echo "Directory structure:" >&2
+  find "${EXTRACT_DIR}" -type d -maxdepth 2 >&2 || true
+  fatal "Could not find backend directory in the extracted source code"
 fi
 
 echo "Backend source directory: ${BACKEND_SRC}"
@@ -275,16 +283,10 @@ if [ -f "${BACKEND_DIR}/uv.lock" ] && [ -f "${BACKEND_DIR}/pyproject.toml" ]; th
   
   # Use uv to export requirements
   echo "Using uv to generate requirements.txt..."
-  if ! (cd "${BACKEND_DIR}" && uv pip compile --output-file requirements.txt pyproject.toml); then
-    echo "ERROR: uv export failed"
-    exit 1
-  fi
+  (cd "${BACKEND_DIR}" && uv pip compile --output-file requirements.txt pyproject.toml) || fatal "uv pip compile failed"
 
   # Verify requirements.txt was created
-  if [ ! -f "${BACKEND_DIR}/requirements.txt" ]; then
-    echo "ERROR: requirements.txt was not created by uv export"
-    exit 1
-  fi
+  [ ! -f "${BACKEND_DIR}/requirements.txt" ] && fatal "requirements.txt was not created by uv export"
 
   echo "✓ Generated requirements.txt with $(wc -l < "${BACKEND_DIR}/requirements.txt") dependencies"
   
@@ -292,9 +294,7 @@ if [ -f "${BACKEND_DIR}/uv.lock" ] && [ -f "${BACKEND_DIR}/pyproject.toml" ]; th
   # echo "First 10 lines of requirements.txt:"
   # head -n 10 "${BACKEND_DIR}/requirements.txt"
 else
-  echo "ERROR: Could not find uv.lock or pyproject.toml"
-  echo "These files are required for generating dependencies"
-  exit 1
+  fatal "Missing uv.lock or pyproject.toml required for dependency generation"
 fi
 
 # Add a Procfile for the Python buildpack, which requires that one exist
@@ -314,13 +314,9 @@ else
 fi
 
 # Make sure boot_server_in_docker is executable
-if [ -f "${BACKEND_DIR}/bin/boot_server_in_docker" ]; then
-  chmod +x "${BACKEND_DIR}/bin/boot_server_in_docker"
-  echo "✓ Made boot_server_in_docker executable"
-else
-  echo "ERROR: boot_server_in_docker not found at ${BACKEND_DIR}/bin/boot_server_in_docker"
-  exit 1
-fi
+[ -f "${BACKEND_DIR}/bin/boot_server_in_docker" ] || fatal "boot_server_in_docker not found at ${BACKEND_DIR}/bin/boot_server_in_docker"
+chmod +x "${BACKEND_DIR}/bin/boot_server_in_docker"
+echo "✓ Made boot_server_in_docker executable"
 
 # Don't use poetry run or uv run inside the container environment; the 
 # buildpack lifecycle is responsible for setting up the environment
@@ -366,10 +362,7 @@ fi
 if [ ! -f "${BACKEND_DIR}/runtime.txt" ]; then
   echo "Creating runtime.txt for Python buildpack with version: ${PYTHON_VERSION}..."
   echo "${PYTHON_VERSION}" > "${BACKEND_DIR}/runtime.txt"
-  if [ ! -f "${BACKEND_DIR}/runtime.txt" ]; then
-    echo "ERROR: Failed to create runtime.txt"
-    exit 1
-  fi
+  [ -f "${BACKEND_DIR}/runtime.txt" ] || fatal "Failed to create runtime.txt"
   echo "✓ Created runtime.txt"
 else
   echo "✓ runtime.txt already exists"
@@ -405,10 +398,7 @@ fi
 EOF
 chmod +x "${BACKEND_DIR}/.profile"
 
-if [ ! -f "${BACKEND_DIR}/.profile" ]; then
-  echo "ERROR: Failed to create .profile"
-  exit 1
-fi
+[ -f "${BACKEND_DIR}/.profile" ] || fatal "Failed to create .profile"
 echo "✓ Created .profile"
 
 # Final validation - ensure all critical files were created
@@ -416,7 +406,7 @@ echo "Performing final validation of build artifacts..."
 missing_files=""
 for required_file in "Procfile" "requirements.txt" "bin/boot_server_in_docker" ".profile" "runtime.txt"; do
   if [ ! -f "${BACKEND_DIR}/$required_file" ]; then
-    echo "ERROR: Required file $required_file is missing from ${BACKEND_DIR}"
+    echo "ERROR: Required file $required_file is missing from ${BACKEND_DIR}" >&2
     missing_files="$missing_files $required_file"
   else
     echo "✓ Found $required_file"
@@ -424,20 +414,13 @@ for required_file in "Procfile" "requirements.txt" "bin/boot_server_in_docker" "
 done
 
 if [ -n "$missing_files" ]; then
-  echo "ERROR: The following required files are missing:$missing_files"
-  echo "This indicates the build script did not complete successfully"
-  echo "Contents of backend directory:"
-  ls -la "${BACKEND_DIR}/" || echo "Could not list backend directory"
-  echo "CRITICAL: Build failed - stopping before zip creation"
-  exit 1
+  echo "Contents of backend directory:" >&2
+  ls -la "${BACKEND_DIR}/" || true
+  fatal "Missing required files:$missing_files"
 fi
 
 # Validate that the backend directory has content
-if [ -z "$(ls -A ${BACKEND_DIR} 2>/dev/null)" ]; then
-  echo "ERROR: Backend directory ${BACKEND_DIR} is empty"
-  echo "This indicates the build failed to populate the directory"
-  exit 1
-fi
+[ -z "$(ls -A ${BACKEND_DIR} 2>/dev/null)" ] && fatal "Backend directory ${BACKEND_DIR} is empty"
 
 echo "✓ All required files created successfully"
 
@@ -445,10 +428,7 @@ echo "✓ All required files created successfully"
 echo "Creating deployment zip file: $PACKAGE_PATH"
 
 # Verify the backend directory exists and has content
-if [ ! -d "$BACKEND_DIR" ]; then
-  echo "ERROR: Backend directory does not exist: $BACKEND_DIR"
-  exit 1
-fi
+[ -d "$BACKEND_DIR" ] || fatal "Backend directory does not exist: $BACKEND_DIR"
 
 
 echo "Checking for required files in backend directory:"
@@ -466,25 +446,16 @@ mkdir -p "$(dirname "$PACKAGE_PATH")"
 
 # Create the zip file
 # Ensure the zip file is created outside the backend directory to avoid recursion and path issues
-if [[ "$PACKAGE_PATH" == "$BACKEND_DIR"* ]]; then
-  echo "ERROR: PACKAGE_PATH ($PACKAGE_PATH) must not be inside BACKEND_DIR ($BACKEND_DIR)"
-  exit 1
-fi
+[[ "$PACKAGE_PATH" == "$BACKEND_DIR"* ]] && fatal "PACKAGE_PATH ($PACKAGE_PATH) must not be inside BACKEND_DIR ($BACKEND_DIR)"
 
 # shellcheck disable=SC2164
 (cd "$BACKEND_DIR" && zip -rq "$PACKAGE_PATH" .)
 
 # Verify the zip file was created successfully
-if [ ! -f "$PACKAGE_PATH" ]; then
-  echo "ERROR: Zip file $PACKAGE_PATH was not created"
-  exit 1
-fi
+[ -f "$PACKAGE_PATH" ] || fatal "Zip file $PACKAGE_PATH was not created"
 
 # Check zip file integrity
-if ! zip -T "$PACKAGE_PATH" >/dev/null 2>&1; then
-  echo "ERROR: Created zip file $PACKAGE_PATH is corrupted"
-  exit 1
-fi
+zip -T "$PACKAGE_PATH" >/dev/null 2>&1 || fatal "Created zip file $PACKAGE_PATH failed integrity test"
 
 echo "Successfully created $PACKAGE_PATH with size: $(du -h "$PACKAGE_PATH" | cut -f1)"
 
@@ -502,15 +473,14 @@ for required_file in "${critical_files[@]}"; do
   if [ -n "$match" ]; then
     echo "✓ Found: $required_file as: $match"
   else
-    echo "✗ Missing: $required_file (no match for /$required_file$ or ^$required_file$)"
+    echo "✗ Missing: $required_file (no match for /$required_file$ or ^$required_file$)" >&2
     ((missing_count++))
   fi
 done
 
 if [ $missing_count -gt 0 ]; then
-  echo "ERROR: $missing_count critical files missing from zip"
-  rm -f "$PACKAGE_PATH"
-  exit 1
+  rm -f "$PACKAGE_PATH" || true
+  fatal "$missing_count critical files missing from zip"
 fi
 
 echo "✓ Zip file validation completed successfully"
