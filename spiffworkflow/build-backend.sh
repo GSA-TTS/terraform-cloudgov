@@ -283,7 +283,7 @@ if [ -f "${BACKEND_DIR}/uv.lock" ] && [ -f "${BACKEND_DIR}/pyproject.toml" ]; th
   
   # Use uv to export requirements
   echo "Using uv to generate requirements.txt..."
-  (cd "${BACKEND_DIR}" && uv pip compile --output-file requirements.txt pyproject.toml) || fatal "uv pip compile failed"
+  (cd "${BACKEND_DIR}" && uv pip compile --output-file requirements.txt pyproject.toml > /dev/null 2>&1) || fatal "uv pip compile failed"
 
   # Verify requirements.txt was created
   [ ! -f "${BACKEND_DIR}/requirements.txt" ] && fatal "requirements.txt was not created by uv export"
