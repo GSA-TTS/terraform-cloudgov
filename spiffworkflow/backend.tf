@@ -189,11 +189,18 @@ resource "null_resource" "build_package" {
     # Before the first build the directory likely doesn't exist; try() safely
     # yields an empty list producing a stable empty hash which differs from any
     # real populated hash, triggering the initial build once.
+    # We also include the hash of the produced package file (package_file_hash) to
+    # ensure changes to the zip file itself (e.g., manual edits or corruption) trigger a rebuild.
     content_hash = local.backend_content_hash
     directory_hash = sha256(join("", [
       for f in try(fileset(local.backend_dir, "**"), []) :
       filesha1("${local.backend_dir}/${f}")
     ]))
+    # Include the current package file hash or sentinel so a deleted/changed zip forces rebuild
+    package_file_hash = fileexists(local.package_path) ? filesha1(local.package_path) : "MISSING"
+    # Force rebuild if the dist directory or package path changes (e.g., we introduce a subdirectory)
+    dist_dir = local.dist_dir
+    package_path = local.package_path
   }
 
   provisioner "local-exec" {
