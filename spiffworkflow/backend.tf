@@ -187,6 +187,19 @@ resource "null_resource" "build_package" {
     #  - Tooling that may inject variable metadata into generated files (e.g. requirements.txt)
     backend_content_hash = local.backend_content_hash
 
+    # --- Debug instrumentation (safe to remove later) ---
+    # Expose each component that feeds the composite hash so a Terraform plan in CI
+    # will show exactly which element changed when the hash differs remotely.
+    # These individual trigger keys do NOT themselves cause extra rebuilds unless
+    # their underlying value changes; they simply make the plan diff granular.
+    backend_gitref          = var.backend_gitref
+    backend_python_version  = var.backend_python_version
+    build_script_sha1       = filesha1("${path.module}/build-backend.sh")
+    process_models_hash_dbg = var.backend_deployment_method == "buildpack" && var.backend_process_models_path != "" ? sha1(join("", [
+      for f in fileset(var.backend_process_models_path, "**/*") :
+      filesha1("${var.backend_process_models_path}/${f}")
+    ])) : "N/A"
+
     # If you need to force a rebuild without changing inputs, run:
     #   terraform taint module.workflow.module.workflow.null_resource.build_package[0]
     # Or, just remove local.package_path; here we ensure rebuilds if there's no file
