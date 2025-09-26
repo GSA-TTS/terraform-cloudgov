@@ -44,17 +44,24 @@ locals {
 
   # Hash of all inputs that determine the content of the backend zip file
   # This is used as source_code_hash to trigger app updates when any of these change
+  backend_scripts_path = var.backend_scripts_path
   backend_content_hash = sha256(jsonencode({
-    backend_gitref         = var.backend_gitref
-    backend_python_version = var.backend_python_version
-    build_script           = filesha1("${path.module}/build-backend.sh")
-    # Only include these for buildpack deployments
+    backend_gitref              = var.backend_gitref
+    backend_python_version      = var.backend_python_version
+    build_script                = filesha1("${path.module}/build-backend.sh")
     backend_process_models_path = var.backend_deployment_method == "buildpack" ? var.backend_process_models_path : null
+    backend_scripts_path        = var.backend_deployment_method == "buildpack" ? var.backend_scripts_path : null
     process_models_hash = var.backend_deployment_method == "buildpack" && var.backend_process_models_path != "" ? (
       sha1(join("", [
         for f in fileset(var.backend_process_models_path, "**/*") :
         filesha1("${var.backend_process_models_path}/${f}")
       ]))
+    ) : null
+    backend_scripts_hash = var.backend_deployment_method == "buildpack" ? (
+      try(sha1(join("", [
+        for f in fileset(var.backend_scripts_path, "**/*") :
+        filesha1("${var.backend_scripts_path}/${f}")
+      ])), null)
     ) : null
   }))
 
@@ -207,9 +214,10 @@ resource "null_resource" "build_package" {
       echo "Dist Dir: ${local.dist_dir}"
       echo "Backend Dir: ${local.backend_dir}"
       echo "Prefix: ${local.prefix}"
+      echo "Scripts Path: ${var.backend_scripts_path}"
       
       # Run the build script - it now handles all validation and zip creation
-      if ! bash "${path.module}/build-backend.sh" "${path.root}" "${var.backend_gitref}" "${var.backend_process_models_path}" "${var.backend_python_version}" "${local.package_path}"; then
+      if ! bash "${path.module}/build-backend.sh" "${path.root}" "${var.backend_gitref}" "${var.backend_process_models_path}" "${var.backend_python_version}" "${local.package_path}" "${var.backend_scripts_path}"; then
         build_exit_code=$?
         echo "ERROR: Build script failed with exit code $build_exit_code"
         echo "Check the build script output above for details"
