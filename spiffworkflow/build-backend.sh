@@ -417,6 +417,17 @@ if [ -n "${QUEUE_SERVICE_NAME:-}" ]; then
   if [ -n "$QUEUE_URI" ] && [ "${QUEUE_URI#redis://}" != "$QUEUE_URI" ]; then
     QUEUE_URI="rediss://${QUEUE_URI#redis://}"
   fi
+  # If we have a rediss URL but no ssl_cert_reqs parameter, append one so Celery's Redis backend
+  # doesn't raise: "A rediss:// URL must have parameter ssl_cert_reqs ..."
+  # Allow override via QUEUE_SSL_CERT_REQS env var (values: CERT_REQUIRED, CERT_OPTIONAL, CERT_NONE).
+  QUEUE_SSL_CERT_REQS_VALUE="${QUEUE_SSL_CERT_REQS:-CERT_OPTIONAL}"
+  if [ -n "$QUEUE_URI" ] && [ "${QUEUE_URI#rediss://}" != "$QUEUE_URI" ] && ! echo "$QUEUE_URI" | grep -qi 'ssl_cert_reqs='; then
+    if echo "$QUEUE_URI" | grep -q '?'; then
+      QUEUE_URI="${QUEUE_URI}&ssl_cert_reqs=${QUEUE_SSL_CERT_REQS_VALUE}"
+    else
+      QUEUE_URI="${QUEUE_URI}?ssl_cert_reqs=${QUEUE_SSL_CERT_REQS_VALUE}"
+    fi
+  fi
   if [ -n "$QUEUE_URI" ]; then
     # Enable Celery for background processing
     export SPIFFWORKFLOW_BACKEND_CELERY_ENABLED=true
