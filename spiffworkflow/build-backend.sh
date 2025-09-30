@@ -413,6 +413,10 @@ if [ -n "${QUEUE_SERVICE_NAME:-}" ]; then
     | select(.value[0].instance_name == $name)
     | .value[0].credentials.uri // empty
   ')
+  # Force TLS if a non-TLS Redis URI is provided (convert redis:// -> rediss://)
+  if [ -n "$QUEUE_URI" ] && [ "${QUEUE_URI#redis://}" != "$QUEUE_URI" ]; then
+    QUEUE_URI="rediss://${QUEUE_URI#redis://}"
+  fi
   if [ -n "$QUEUE_URI" ]; then
     # Enable Celery for background processing
     export SPIFFWORKFLOW_BACKEND_CELERY_ENABLED=true
