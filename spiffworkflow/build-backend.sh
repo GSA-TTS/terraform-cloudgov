@@ -151,13 +151,58 @@ echo "✓ Process models directory validated: $PROCESS_MODELS_PATH"
 
 # Validate other required tools
 echo "Checking required tools..."
-for tool in git uv zip; do
+
+# Check for git and zip (required, no auto-install)
+for tool in git zip; do
   if ! command -v "$tool" >/dev/null 2>&1; then
     echo "ERROR: Required tool '$tool' is not installed or not in PATH"
     exit 1
   fi
   echo "✓ Found $tool"
 done
+
+# Check for uv and auto-install if missing
+if ! command -v uv >/dev/null 2>&1; then
+  echo "⚠ UV not found, attempting to install..."
+  
+  # Try installing via pip first (most compatible)
+  if command -v pip >/dev/null 2>&1 || command -v pip3 >/dev/null 2>&1; then
+    echo "Installing UV via pip..."
+    if command -v pip3 >/dev/null 2>&1; then
+      pip3 install --user uv || pip3 install uv
+    else
+      pip install --user uv || pip install uv
+    fi
+    
+    # Add user's local bin to PATH if needed
+    if [ -d "$HOME/.local/bin" ]; then
+      export PATH="$HOME/.local/bin:$PATH"
+    fi
+  else
+    # Fall back to curl installation
+    echo "Installing UV via curl..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    
+    # Add cargo bin to PATH
+    if [ -d "$HOME/.cargo/bin" ]; then
+      export PATH="$HOME/.cargo/bin:$PATH"
+    fi
+  fi
+  
+  # Verify installation succeeded
+  if ! command -v uv >/dev/null 2>&1; then
+    echo "ERROR: Failed to install UV automatically"
+    echo "Please install UV manually using one of these methods:"
+    echo "  1. pip install uv"
+    echo "  2. curl -LsSf https://astral.sh/uv/install.sh | sh"
+    echo "  3. Visit https://docs.astral.sh/uv/getting-started/installation/"
+    exit 1
+  fi
+  
+  echo "✓ UV installed successfully"
+else
+  echo "✓ Found uv"
+fi
 
 # Set up standard directories
 DIST_DIR="${PATH_ROOT}/dist/spiffworkflow"
