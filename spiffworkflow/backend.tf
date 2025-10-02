@@ -201,8 +201,8 @@ resource "null_resource" "build_package" {
   }
 
   provisioner "local-exec" {
+    interpreter = ["bash", "-c"]
     command = <<-EOT
-      #!/bin/bash 
       set -euo pipefail  # Exit on any error, undefined variable, or pipe failure
       
       echo "Running build script for backend..."
