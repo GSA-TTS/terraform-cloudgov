@@ -201,7 +201,6 @@ resource "null_resource" "build_package" {
   }
 
   provisioner "local-exec" {
-    interpreter = ["bash", "-c"]
     command = <<-EOT
       echo "=== TERRAFORM BUILD SCRIPT STARTING ==="
       echo "Current working directory: $(pwd)"
@@ -215,7 +214,7 @@ resource "null_resource" "build_package" {
       echo "Package Path: ${local.package_path}"
       echo "=== END INITIAL CHECK ==="
       
-      set -euo pipefail  # Exit on any error, undefined variable, or pipe failure
+      set -eo pipefail  # Exit on any error, undefined variable, or pipe failure
       
       echo "Running build script for backend..."
       echo "Backend GitRef: ${var.backend_gitref}"
