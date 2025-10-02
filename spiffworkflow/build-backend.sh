@@ -152,14 +152,56 @@ echo "✓ Process models directory validated: $PROCESS_MODELS_PATH"
 # Validate other required tools
 echo "Checking required tools..."
 
-# Check for git and zip (required, no auto-install)
-for tool in git zip; do
-  if ! command -v "$tool" >/dev/null 2>&1; then
-    echo "ERROR: Required tool '$tool' is not installed or not in PATH"
+# Check for git (required, no auto-install - should be in all CI/CD environments)
+if ! command -v git >/dev/null 2>&1; then
+  echo "ERROR: Required tool 'git' is not installed or not in PATH"
+  exit 1
+fi
+echo "✓ Found git"
+
+# Check for zip and auto-install if missing
+if ! command -v zip >/dev/null 2>&1; then
+  echo "⚠ zip not found, attempting to install..."
+  
+  # Detect OS and install zip accordingly
+  if [ -f /etc/debian_version ]; then
+    # Debian/Ubuntu
+    echo "Installing zip via apt..."
+    sudo apt-get update && sudo apt-get install -y zip
+  elif [ -f /etc/redhat-release ]; then
+    # RHEL/CentOS/Fedora
+    echo "Installing zip via yum/dnf..."
+    if command -v dnf >/dev/null 2>&1; then
+      sudo dnf install -y zip
+    else
+      sudo yum install -y zip
+    fi
+  elif [ "$(uname)" = "Darwin" ]; then
+    # macOS
+    echo "Installing zip via Homebrew..."
+    if command -v brew >/dev/null 2>&1; then
+      brew install zip
+    else
+      echo "ERROR: Homebrew not found. Please install zip manually: brew install zip"
+      exit 1
+    fi
+  else
+    echo "ERROR: Unable to determine package manager for auto-installing zip"
+    echo "Please install zip manually for your system"
     exit 1
   fi
-  echo "✓ Found $tool"
-done
+  
+  # Verify installation succeeded
+  if ! command -v zip >/dev/null 2>&1; then
+    echo "ERROR: Failed to install zip automatically"
+    echo "Please install zip manually for your system"
+    exit 1
+  fi
+  
+  echo "✓ zip installed successfully"
+else
+  echo "✓ Found zip"
+fi
 
 # Check for uv and auto-install if missing
 if ! command -v uv >/dev/null 2>&1; then
