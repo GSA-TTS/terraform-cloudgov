@@ -207,20 +207,6 @@ fi
 if ! command -v uv >/dev/null 2>&1; then
   echo "⚠ UV not found, attempting to install..."
   
-  # Try installing via pip first (most compatible)
-  if command -v pip >/dev/null 2>&1 || command -v pip3 >/dev/null 2>&1; then
-    echo "Installing UV via pip..."
-    if command -v pip3 >/dev/null 2>&1; then
-      pip3 install --user uv || pip3 install uv
-    else
-      pip install --user uv || pip install uv
-    fi
-    
-    # Add user's local bin to PATH if needed
-    if [ -d "$HOME/.local/bin" ]; then
-      export PATH="$HOME/.local/bin:$PATH"
-    fi
-  else
     # Fall back to curl installation
     echo "Installing UV via curl..."
     curl -LsSf https://astral.sh/uv/install.sh | sh
