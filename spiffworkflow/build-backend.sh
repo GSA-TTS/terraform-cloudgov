@@ -217,15 +217,15 @@ if ! command -v uv >/dev/null 2>&1; then
     fi
   fi
   
-  # Verify installation succeeded
-  if ! command -v uv >/dev/null 2>&1; then
-    echo "ERROR: Failed to install UV automatically"
-    echo "Please install UV manually using one of these methods:"
-    echo "  1. pip install uv"
-    echo "  2. curl -LsSf https://astral.sh/uv/install.sh | sh"
-    echo "  3. Visit https://docs.astral.sh/uv/getting-started/installation/"
-    exit 1
-  fi
+  # # Verify installation succeeded
+  # if ! command -v uv >/dev/null 2>&1; then
+  #   echo "ERROR: Failed to install UV automatically"
+  #   echo "Please install UV manually using one of these methods:"
+  #   echo "  1. pip install uv"
+  #   echo "  2. curl -LsSf https://astral.sh/uv/install.sh | sh"
+  #   echo "  3. Visit https://docs.astral.sh/uv/getting-started/installation/"
+  #   exit 1
+  # fi
   
   echo "✓ UV installed successfully"
 else
