@@ -202,6 +202,7 @@ resource "null_resource" "build_package" {
 
   provisioner "local-exec" {
     command = <<-EOT
+      #!/bin/bash 
       set -euo pipefail  # Exit on any error, undefined variable, or pipe failure
       
       echo "Running build script for backend..."
