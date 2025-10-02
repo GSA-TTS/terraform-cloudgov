@@ -167,14 +167,14 @@ if ! command -v zip >/dev/null 2>&1; then
   if [ -f /etc/debian_version ]; then
     # Debian/Ubuntu
     echo "Installing zip via apt..."
-    sudo apt-get update && sudo apt-get install -y zip
+    apt-get update && apt-get install -y zip
   elif [ -f /etc/redhat-release ]; then
     # RHEL/CentOS/Fedora
     echo "Installing zip via yum/dnf..."
     if command -v dnf >/dev/null 2>&1; then
-      sudo dnf install -y zip
+      dnf install -y zip
     else
-      sudo yum install -y zip
+      yum install -y zip
     fi
   elif [ "$(uname)" = "Darwin" ]; then
     # macOS
