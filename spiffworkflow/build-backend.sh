@@ -216,6 +216,9 @@ if ! command -v uv >/dev/null 2>&1; then
       export PATH="$HOME/.cargo/bin:$PATH"
     fi
   
+  # source install path
+  source $HOME/.local/bin/env  
+  
   # Verify installation succeeded
   if ! command -v uv >/dev/null 2>&1; then
     echo "ERROR: Failed to install UV automatically"
