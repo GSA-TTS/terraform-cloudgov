@@ -203,19 +203,33 @@ resource "null_resource" "build_package" {
   provisioner "local-exec" {
     interpreter = ["bash", "-c"]
     command = <<-EOT
+      echo "=== TERRAFORM BUILD SCRIPT STARTING ==="
+      echo "Current working directory: $(pwd)"
+      echo "Current user: $(whoami)"
+      echo "Bash version: $BASH_VERSION"
+      echo "Available tools:"
+      command -v git && echo "✓ git found" || echo "✗ git missing"
+      command -v uv && echo "✓ uv found" || echo "✗ uv missing"
+      command -v zip && echo "✓ zip found" || echo "✗ zip missing"
+      echo "PATH_ROOT: ${path.root}"
+      echo "Package Path: ${local.package_path}"
+      echo "=== END INITIAL CHECK ==="
+      
       set -euo pipefail  # Exit on any error, undefined variable, or pipe failure
       
       echo "Running build script for backend..."
-      echo "PATH_ROOT: ${path.root}"
       echo "Backend GitRef: ${var.backend_gitref}"
       echo "Process Models Path: ${var.backend_process_models_path}"
       echo "Python Version: ${var.backend_python_version}"
-      echo "Package Path: ${local.package_path}"
       echo "Package Filename: ${local.package_filename}"
       echo "Dist Dir: ${local.dist_dir}"
       echo "Backend Dir: ${local.backend_dir}"
       echo "Prefix: ${local.prefix}"
       echo "Scripts Path: ${var.backend_scripts_path}"
+      
+      # Ensure the output directory exists
+      mkdir -p "${local.dist_dir}"
+      echo "Created output directory: ${local.dist_dir}"
       
       # Run the build script - it now handles all validation and zip creation
       if ! bash "${path.module}/build-backend.sh" "${path.root}" "${var.backend_gitref}" "${var.backend_process_models_path}" "${var.backend_python_version}" "${local.package_path}" "${var.backend_scripts_path}"; then
@@ -225,7 +239,16 @@ resource "null_resource" "build_package" {
         exit $build_exit_code
       fi
       
+      # Verify the zip file was created
+      if [ ! -f "${local.package_path}" ]; then
+        echo "ERROR: Expected zip file was not created: ${local.package_path}"
+        echo "Directory contents:"
+        ls -la "${local.dist_dir}" || echo "Directory does not exist"
+        exit 1
+      fi
+      
       echo "Build and packaging completed successfully"
+      echo "Created zip file: ${local.package_path} ($(du -h '${local.package_path}' | cut -f1))"
     EOT
 
     # Ensure Terraform fails if the build script fails
