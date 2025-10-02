@@ -118,6 +118,7 @@ GIT_REF="$REF_PART"
 
 [[ -z "$GIT_REF" ]] && fatal "Could not determine GIT_REF from backend_gitref argument: $RAW_GIT_SPEC"
 
+echo "Build trigger..."
 echo "Build script starting with parameters:"
 echo "  PATH_ROOT: $PATH_ROOT"
 echo "  backend_gitref (raw): $RAW_GIT_SPEC"
