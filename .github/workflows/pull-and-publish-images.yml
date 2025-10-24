@@ -27,6 +27,9 @@ jobs:
             short-name: spiffarena-connector
           - name: ghcr.io/gsa-tts/clamav-rest/clamav:latest
             short-name: clamav-proxy-support
+          - name: quay.io/keycloak/keycloak:26.4
+            short-name: keycloak-server
+
 
     steps:
       - name: Checkout
