@@ -65,6 +65,14 @@ locals {
     ) : null
   }))
 
+  # Normalize potentially multi-line PEM to eliminate drift due to
+  # trailing whitespace, Windows CRLF line endings, or superfluous blank lines.
+  normalized_backend_oidc_private_pem = (
+    var.backend_oidc_private_pem_string != null && var.backend_oidc_private_pem_string != "" ?
+    replace(replace(trimspace(var.backend_oidc_private_pem_string), "\r\n", "\n"), "\n\n", "\n") :
+    ""
+  )
+
   # Common backend environment variables used by both deployment methods
   backend_env = merge({
     REQUESTS_CA_BUNDLE : "/etc/ssl/certs/ca-certificates.crt"
@@ -100,6 +108,11 @@ locals {
     SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_CLIENT_IDS : var.backend_oidc_additional_valid_client_ids != null ? var.backend_oidc_additional_valid_client_ids : null
     SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_ISSUERS : var.backend_oidc_additional_valid_issuers != null ? var.backend_oidc_additional_valid_issuers : null
     SPIFFWORKFLOW_BACKEND_AUTHENTICATION_PROVIDERS : var.backend_oidc_authentication_providers != null ? var.backend_oidc_authentication_providers : null
+
+    SPIFFWORKFLOW_BACKEND_OPEN_ID_ASSERTION_TYPE : "private_key_jwt"
+    SPIFFWORKFLOW_BACKEND_OPEN_ID_ACR_VALUES : var.backend_oidc_acr_values != null ? var.backend_oidc_acr_values : ""
+    SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ASSERTION_TYPE : "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+    SPIFFWORKFLOW_BACKEND_OPEN_ID_PRIVATE_PEM_STRING : var.backend_oidc_client_id != null ? local.normalized_backend_oidc_private_pem : ""
 
     # TODO: static creds are in this path in the image:
     #   /config/permissions/example.yml

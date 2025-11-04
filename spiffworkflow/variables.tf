@@ -261,6 +261,12 @@ variable "backend_oidc_acr_values" {
   default     = null
 }
 
+variable "backend_oidc_private_pem_string" {
+  description = "Optional private PEM string for OIDC client authentication using private_key_jwt. Required if backend_oidc_client_id is provided."
+  type        = string
+  sensitive   = true
+  default     = null
+}
 ###############################################################################
 # Connector Variables
 ###############################################################################
