@@ -19,11 +19,11 @@ jobs:
       fail-fast: false
       matrix:
         image:
-          - name: ghcr.io/sartography/spiffworkflow-backend:v1.0.0
+          - name: ghcr.io/sartography/spiffworkflow-backend:v1.1.5
             short-name: spiffarena-backend
-          - name: ghcr.io/sartography/spiffworkflow-frontend:v1.0.0
+          - name: ghcr.io/sartography/spiffworkflow-frontend:v1.1.5
             short-name: spiffarena-frontend
-          - name: ghcr.io/sartography/connector-proxy-demo:v1.0.0
+          - name: ghcr.io/sartography/connector-proxy-demo:v1.1.5
             short-name: spiffarena-connector
           - name: ghcr.io/gsa-tts/clamav-rest/clamav:latest
             short-name: clamav-proxy-support
@@ -78,3 +78,4 @@ jobs:
 
       - name: Push Image
         run: docker push --all-tags ghcr.io/${{ env.GH_REPO }}/${{ matrix.image.short-name }}
+
