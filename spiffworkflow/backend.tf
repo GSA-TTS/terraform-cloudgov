@@ -189,7 +189,7 @@ resource "null_resource" "build_package" {
 
   provisioner "local-exec" {
     interpreter = ["bash", "-c"]
-    command = <<-EOT
+    command     = <<-EOT
       echo "=== TERRAFORM BUILD SCRIPT STARTING ==="
       echo "Current working directory: $(pwd)"
       echo "Current user: $(whoami)"

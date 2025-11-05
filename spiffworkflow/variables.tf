@@ -72,7 +72,7 @@ variable "backend_deployment_method" {
 variable "backend_gitref" {
   description = "Git reference (branch, tag, or commit hash) for the upstream spiffworkflow-backend source. Only used when backend_deployment_method = 'buildpack'."
   type        = string
-  default     = "github.com/sartography/spiff-arena?ref=v1.1.2"
+  default     = "github.com/sartography/spiff-arena?ref=v1.1.5"
 }
 
 variable "backend_imageref" {
