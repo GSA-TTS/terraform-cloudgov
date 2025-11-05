@@ -448,22 +448,6 @@ for binfile in "${BACKEND_DIR}/bin/"*; do
   fi
 done
 
-# Increase token field length in migration files from 1024 to 2048
-echo "Updating token field length in migration files..."
-if [ -d "${BACKEND_DIR}/migrations/versions" ]; then
-  for migration_file in "${BACKEND_DIR}/migrations/versions/"*.py; do
-    if [ -f "$migration_file" ]; then
-      # Update only the 'token' column definition from length=1024 to length=2048
-      # This pattern matches: sa.Column('token', sa.String(length=1024), ...
-      safe_sed "s/sa\.Column('token', sa\.String(length=1024)/sa.Column('token', sa.String(length=2048)/g" "$migration_file"
-      echo "Updated token column length in $(basename "$migration_file")"
-    fi
-  done
-  echo "✓ Token column length updates completed"
-else
-  echo "No migrations directory found, skipping token column length update"
-fi
-
 # Add Python buildpack runtime.txt if it doesn't exist
 if [ ! -f "${BACKEND_DIR}/runtime.txt" ]; then
   echo "Creating runtime.txt for Python buildpack with version: ${PYTHON_VERSION}..."
