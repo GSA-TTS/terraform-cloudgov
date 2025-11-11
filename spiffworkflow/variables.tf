@@ -98,6 +98,12 @@ variable "backend_scripts_path" {
   default     = ""
 }
 
+variable "backend_build_id" {
+  description = "Optional identifier (for example, a CI run id) that forces a backend package rebuild when it changes."
+  type        = string
+  default     = ""
+}
+
 variable "backend_python_version" {
   description = "Python version to use for the backend when using buildpack deployment"
   type        = string

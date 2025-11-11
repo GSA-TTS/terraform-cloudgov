@@ -185,6 +185,7 @@ resource "null_resource" "build_package" {
     # If you need to force a rebuild without changing inputs, run:
     #   terraform taint 'module.workflow.module.workflow.null_resource.build_package[0]'
     backend_content_hash = local.backend_content_hash
+    backend_build_id     = var.backend_build_id != null ? var.backend_build_id : ""
   }
 
   provisioner "local-exec" {
