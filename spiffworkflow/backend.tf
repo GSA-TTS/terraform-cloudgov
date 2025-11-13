@@ -137,6 +137,7 @@ locals {
       memory                     = var.backend_web_memory
       health_check_type          = "http"
       health_check_http_endpoint = "/api/v1.0/status"
+      timeout                    = 600
     },
     {
       type              = "worker"
@@ -145,6 +146,7 @@ locals {
       disk_quota        = var.backend_worker_disk
       memory            = var.backend_worker_memory
       health_check_type = "process"
+      timeout           = 600
     },
     {
       type              = "scheduler"
@@ -153,6 +155,7 @@ locals {
       disk_quota        = var.backend_scheduler_disk
       memory            = var.backend_scheduler_memory
       health_check_type = "process"
+      timeout           = 600
     }
   ]
 }
@@ -255,7 +258,6 @@ resource "cloudfoundry_app" "backend" {
   name       = "${local.prefix}-backend"
   org_name   = var.cf_org_name
   space_name = var.cf_space_name
-  timeout    = 600
   depends_on = [null_resource.build_package]
 
   # Commented out until the provider supports it
