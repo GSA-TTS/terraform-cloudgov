@@ -262,7 +262,7 @@ resource "cloudfoundry_app" "backend" {
 
   # Commented out until the provider supports it
   # app_lifecycle = var.backend_deployment_method
-  strategy = "rolling"
+  # strategy = "rolling"
   stack    = "cflinuxfs4"
 
   lifecycle {
