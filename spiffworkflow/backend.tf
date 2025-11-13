@@ -137,7 +137,7 @@ locals {
       memory                     = var.backend_web_memory
       health_check_type          = "http"
       health_check_http_endpoint = "/api/v1.0/status"
-      timeout                    = 600
+      timeout                    = 180
     },
     {
       type              = "worker"
@@ -146,7 +146,7 @@ locals {
       disk_quota        = var.backend_worker_disk
       memory            = var.backend_worker_memory
       health_check_type = "process"
-      timeout           = 600
+      timeout           = 180
     },
     {
       type              = "scheduler"
@@ -155,7 +155,7 @@ locals {
       disk_quota        = var.backend_scheduler_disk
       memory            = var.backend_scheduler_memory
       health_check_type = "process"
-      timeout           = 600
+      timeout           = 180
     }
   ]
 }
