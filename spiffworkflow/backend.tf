@@ -254,8 +254,8 @@ resource "null_resource" "build_package" {
 resource "cloudfoundry_app" "backend" {
   name       = "${local.prefix}-backend"
   org_name   = var.cf_org_name
-  space_name = var.space.name
-
+  space_name = var.cf_space_name
+  timeout    = 600
   depends_on = [null_resource.build_package]
 
   # Commented out until the provider supports it
