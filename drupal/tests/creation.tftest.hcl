@@ -10,6 +10,7 @@ variables {
   rds_plan_name  = "small-mysql"
   s3_plan_name   = "basic-sandbox"
   source_dir     = "."
+  domain         = "fr-stage.cloud.gov"
   extra_excludes = ["dist", ".terraform*"]
 }
 

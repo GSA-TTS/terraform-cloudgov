@@ -9,6 +9,7 @@ variables {
   name                  = "logshipper"
   https_proxy_url       = "https://egress-proxy-user:egress-proxy-password@some-internal-route.test.foo:00000"
   new_relic_license_key = "NRAKTHISISATESTKEY"
+  domain                = "fr-stage.cloud.gov"
 }
 
 run "application_tests" {
