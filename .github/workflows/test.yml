@@ -20,7 +20,7 @@ jobs:
       - name: terraform test ${{ matrix.module }}
         uses: dflook/terraform-test@v1
         env:
-          CF_API_URL: "https://api.fr.cloud.gov"
+          CF_API_URL: "https://api.fr-stage.cloud.gov"
           CF_USER: ${{ secrets.CF_USER }}
           CF_PASSWORD: ${{ secrets.CF_PASSWORD }}
         with:
@@ -44,7 +44,7 @@ jobs:
       - name: terraform test ${{ matrix.module }}
         uses: dflook/terraform-test@v1
         env:
-          CF_API_URL: "https://api.fr.cloud.gov"
+          CF_API_URL: "https://api.fr-stage.cloud.gov"
           CF_USER: ${{ secrets.CF_USER }}
           CF_PASSWORD: ${{ secrets.CF_PASSWORD }}
         with:

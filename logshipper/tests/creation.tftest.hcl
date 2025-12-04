@@ -1,14 +1,15 @@
 provider "cloudfoundry" {}
 
 variables {
-  cf_org_name = "gsa-tts-devtools-prototyping"
+  cf_org_name = "cloud-gov-devtools-development"
   cf_space = {
-    id   = "15836eb6-a57e-4579-bca7-99764c5a01a4"
-    name = "terraform-cloudgov-ci-tests"
+    id   = "f23cbf69-66a1-4b1d-83d4-e497abdb8dcb"
+    name = "terraform-cloudgov-tf-tests"
   }
   name                  = "logshipper"
   https_proxy_url       = "https://egress-proxy-user:egress-proxy-password@some-internal-route.test.foo:00000"
   new_relic_license_key = "NRAKTHISISATESTKEY"
+  domain                = "fr-stage.cloud.gov"
 }
 
 run "application_tests" {
@@ -36,4 +37,3 @@ run "src_tests" {
     error_message = "The hash for the zip should be a valid sha256"
   }
 }
-

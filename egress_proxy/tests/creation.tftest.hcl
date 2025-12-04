@@ -12,10 +12,10 @@ mock_provider "cloudfoundry" {
 }
 
 variables {
-  cf_org_name = "gsa-tts-devtools-prototyping"
+  cf_org_name = "cloud-gov-devtools-development"
   cf_egress_space = {
     id   = "5178d8f5-d19a-4782-ad07-467822480c68"
-    name = "terraform-cloudgov-ci-tests-egress"
+    name = "terraform-cloudgov-tf-tests-egress"
   }
   name      = "terraform-egress-app"
   allowlist = ["raw.githubusercontent.com:443"]
@@ -61,7 +61,7 @@ run "test_proxy_creation" {
 
 run "test_specific_hostname_bug" {
   variables {
-    cf_org_name = "gsa-tts-devtools-prototyping"
+    cf_org_name = "cloud-gov-devtools-development"
     cf_egress_space = {
       id   = "169c6e21-2513-43f7-bbff-80cc5e456882"
       name = "rca-tfm-stage-egress"
