@@ -17,8 +17,8 @@ mock_provider "cloudfoundry" {
 }
 
 variables {
-  cf_org_name   = "gsa-tts-devtools-prototyping"
-  cf_space_name = "terraform-cloudgov-ci-tests"
+  cf_org_name   = "cloud-gov-devtools-development"
+  cf_space_name = "terraform-cloudgov-tf-tests"
   name          = "terraform-cloudgov-clamav-test"
   clamav_image  = "ghcr.io/gsa-tts/clamav-rest/clamav:TAG"
   max_file_size = "30M"

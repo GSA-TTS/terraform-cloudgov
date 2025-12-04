@@ -17,8 +17,8 @@ mock_provider "cloudfoundry" {
 }
 
 variables {
-  cf_org_name   = "gsa-tts-devtools-prototyping"
-  cf_space_name = "terraform-cloudgov-ci-tests"
+  cf_org_name   = "cloud-gov-devtools-development"
+  cf_space_name = "terraform-cloudgov-tf-tests"
   app_ids       = ["731ed210-af91-4e05-886e-a2fbaf5125cb"]
   hostname      = "my-host"
   domain        = "apps.internal"
