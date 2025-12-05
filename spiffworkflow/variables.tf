@@ -27,7 +27,9 @@ variable "tags" {
 }
 
 variable "https_proxy" {
-  description = "value"
+  type        = string
+  description = "the full string of the https proxy"
+  default     = ""
 }
 
 variable "process_models_repository" {
