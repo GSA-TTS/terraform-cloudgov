@@ -19,6 +19,7 @@ applications:
   command: |
     # Make sure the Cloud Foundry-provided CA is recognized when making TLS connections
     cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt
+    export HTTPS_PROXY = $PROXYROUTE
     /usr/sbin/update-ca-certificates
     /app/bin/boot_server_in_docker
   env:
