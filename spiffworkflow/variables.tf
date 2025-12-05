@@ -23,6 +23,10 @@ variable "tags" {
   default     = []
 }
 
+variable "https_proxy" {
+  description = "value"
+}
+
 variable "process_models_repository" {
   type        = string
   description = "Git repository with process models (use SSH-style 'git@github.com:...')"
