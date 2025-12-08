@@ -72,6 +72,8 @@ locals {
     FLASK_SESSION_SECRET_KEY : random_password.backend_flask_secret_key.result
     FLASK_DEBUG : "0"
 
+    PROXYROUTE = "${var.https_proxy}"
+
     # All of the configuration variables are documented here:
     # spiffworkflow-backend/src/spiffworkflow_backend/config/default.py
     SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR : "/app/process_models"
@@ -263,7 +265,7 @@ resource "cloudfoundry_app" "backend" {
   # Commented out until the provider supports it
   # app_lifecycle = var.backend_deployment_method
   # strategy = "rolling"
-  stack    = "cflinuxfs4"
+  stack = "cflinuxfs4"
 
   lifecycle {
     precondition {

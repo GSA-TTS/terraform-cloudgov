@@ -27,6 +27,7 @@ applications:
     FLASK_SESSION_SECRET_KEY: ((connector-flask-secret-key))
     CONNECTOR_PROXY_PORT: "8080"
     REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
+    HTTPS_PROXY = ${PROXYROUTE}
 
 #################################
 - name: spiffworkflow((slug))-backend

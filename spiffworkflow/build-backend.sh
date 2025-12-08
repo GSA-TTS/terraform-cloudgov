@@ -466,6 +466,9 @@ export PYTHONPATH="/home/vcap/app:/home/vcap/app/src:/home/vcap/deps/0/python:/h
 # Get the postgres URI from the service binding. (SQL Alchemy insists on "postgresql://".🙄)
 export SPIFFWORKFLOW_BACKEND_DATABASE_URI=$( echo ${VCAP_SERVICES:-} | jq -r '.["aws-rds"][].credentials.uri' | sed -e s/postgres/postgresql/ )
 
+# Set the HTTPS_PROXY
+export HTTPS_PROXY = $PROXYROUTE
+
 # Check if the backend queue service is set and is a type that we support (it supplies a .credentials.uri that's usable as is)
 if [ -n "${QUEUE_SERVICE_NAME:-}" ]; then
   QUEUE_URI=$(echo "${VCAP_SERVICES}" | jq -r --arg name "$QUEUE_SERVICE_NAME" '
