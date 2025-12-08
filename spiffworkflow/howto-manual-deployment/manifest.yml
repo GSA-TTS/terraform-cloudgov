@@ -19,7 +19,6 @@ applications:
   command: |
     # Make sure the Cloud Foundry-provided CA is recognized when making TLS connections
     cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt
-    export HTTPS_PROXY = $PROXYROUTE
     /usr/sbin/update-ca-certificates
     /app/bin/boot_server_in_docker
   env:
@@ -28,6 +27,7 @@ applications:
     FLASK_SESSION_SECRET_KEY: ((connector-flask-secret-key))
     CONNECTOR_PROXY_PORT: "8080"
     REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
+    HTTPS_PROXY = ${PROXYROUTE}
 
 #################################
 - name: spiffworkflow((slug))-backend
