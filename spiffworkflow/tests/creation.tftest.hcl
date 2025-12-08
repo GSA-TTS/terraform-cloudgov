@@ -34,8 +34,8 @@ mock_provider "docker" {
 }
 
 variables {
-  cf_org_name                       = "gsa-tts-devtools-prototyping"
-  cf_space_name                     = "terraform-cloudgov-ci-tests"
+  cf_org_name                       = "cloud-gov-devtools-development"
+  cf_space_name                     = "terraform-cloudgov-tf-tests"
   process_models_ssh_key            = ""
   backend_database_service_instance = "spiffworkflow-db"
   name                              = "spiffworkflow-backend"

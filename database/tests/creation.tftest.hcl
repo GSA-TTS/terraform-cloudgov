@@ -1,8 +1,8 @@
 provider "cloudfoundry" {}
 
 variables {
-  # this is the ID of the terraform-cloudgov-ci-tests space
-  cf_space_id   = "15836eb6-a57e-4579-bca7-99764c5a01a4"
+  # this is the ID of the terraform-cloudgov-tf-tests space
+  cf_space_id   = "f23cbf69-66a1-4b1d-83d4-e497abdb8dcb"
   rds_plan_name = "micro-psql"
   name          = "terraform-cloudgov-rds-test"
   tags          = ["terraform-cloudgov-managed", "tests"]
