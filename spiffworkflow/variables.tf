@@ -70,9 +70,9 @@ variable "backend_deployment_method" {
 }
 
 variable "backend_gitref" {
-  description = "Git reference (branch, tag, or commit hash) for the https://github.com/sartography/spiff-arena upstream repository. Only used when backend_deployment_method = 'buildpack'."
+  description = "Git reference (branch, tag, or commit hash) for the upstream spiffworkflow-backend source. Only used when backend_deployment_method = 'buildpack'."
   type        = string
-  default     = "v1.0.0"
+  default     = "github.com/sartography/spiff-arena?ref=v1.1.5"
 }
 
 variable "backend_imageref" {
@@ -92,28 +92,74 @@ variable "backend_process_models_path" {
   }
 }
 
+variable "backend_scripts_path" {
+  description = "Path to a directory of supplemental backend scripts (e.g. init_process.py, profile hooks). Ignored for container deployment."
+  type        = string
+  default     = ""
+}
+
+variable "backend_build_id" {
+  description = "Optional identifier (for example, a CI run id) that forces a backend package rebuild when it changes."
+  type        = string
+  default     = ""
+}
+
 variable "backend_python_version" {
   description = "Python version to use for the backend when using buildpack deployment"
   type        = string
   default     = "python-3.12.x"
 }
 
-variable "backend_disk" {
-  description = "Disk quota for the SpiffWorkflow backend app, including unit"
+variable "backend_web_disk" {
+  description = "Disk quota for the SpiffWorkflow backend web app, including unit"
   type        = string
   default     = "1024M"
 }
 
-variable "backend_memory" {
-  description = "Memory allocation for the SpiffWorkflow backend app, including unit"
+variable "backend_web_memory" {
+  description = "Memory allocation for the SpiffWorkflow backend web app, including unit"
   type        = string
   default     = "512M"
 }
 
-variable "backend_instances" {
-  description = "Number of instances for the SpiffWorkflow backend app"
+variable "backend_web_instances" {
+  description = "Number of instances for the SpiffWorkflow backend web app"
   type        = number
   default     = 1
+}
+
+variable "backend_worker_disk" {
+  description = "Disk quota for the SpiffWorkflow backend worker app, including unit"
+  type        = string
+  default     = "1024M"
+}
+
+variable "backend_worker_memory" {
+  description = "Memory allocation for the SpiffWorkflow backend worker app, including unit"
+  type        = string
+  default     = "1024M"
+}
+
+variable "backend_worker_instances" {
+  description = "Number of instances for the SpiffWorkflow backend worker app"
+  type        = number
+  default     = 0
+  validation {
+    condition     = var.backend_queue_service_instance == "" || (var.backend_worker_instances >= 1)
+    error_message = "If backend_queue_service_instance is set, backend_worker_instances must be at least 1."
+  }
+}
+
+variable "backend_scheduler_disk" {
+  description = "Disk quota for the SpiffWorkflow backend scheduler app, including unit"
+  type        = string
+  default     = "1024M"
+}
+
+variable "backend_scheduler_memory" {
+  description = "Memory allocation for the SpiffWorkflow backend scheduler app, including unit"
+  type        = string
+  default     = "512M"
 }
 
 variable "backend_environment" {
@@ -129,6 +175,18 @@ variable "backend_database_service_instance" {
 
 variable "backend_database_params" {
   description = "JSON parameter string for the database service binding. Empty string means no parameters."
+  type        = string
+  default     = ""
+}
+
+variable "backend_queue_service_instance" {
+  description = "Name of the message queue service instance to bind to the backend app. Currently only Redis is supported. Leave empty to disable queue functionality."
+  type        = string
+  default     = ""
+}
+
+variable "backend_queue_service_params" {
+  description = "JSON parameter string for the message queue service binding. Empty string means no parameters."
   type        = string
   default     = ""
 }
@@ -157,9 +215,66 @@ variable "backend_additional_service_bindings" {
 }
 
 ###############################################################################
+# Backend OIDC Authentication Variables
+###############################################################################
+
+variable "backend_oidc_client_id" {
+  description = "Optional OIDC client ID for external authentication provider. If not provided, internal OIDC will be used."
+  type        = string
+  default     = null
+}
+
+variable "backend_oidc_client_secret" {
+  description = "Optional OIDC client secret for external authentication provider. Required if backend_oidc_client_id is provided."
+  type        = string
+  sensitive   = true
+  default     = null
+}
+
+variable "backend_oidc_server_url" {
+  description = "Optional OIDC server URL for external authentication provider. Required if backend_oidc_client_id is provided."
+  type        = string
+  default     = null
+}
+
+variable "backend_oidc_additional_valid_client_ids" {
+  description = "Optional comma-separated list of additional valid client IDs for OIDC authentication."
+  type        = string
+  default     = null
+}
+
+variable "backend_oidc_additional_valid_issuers" {
+  description = "Optional comma-separated list of additional valid issuers for OIDC authentication."
+  type        = string
+  default     = null
+}
+
+variable "backend_oidc_authentication_providers" {
+  description = "Optional authentication providers configuration (e.g., 'default:openid')."
+  type        = string
+  default     = null
+}
+
+variable "backend_oidc_scope" {
+  description = "Optional OAuth scopes for OIDC authentication (e.g., 'openid profile email groups'). Defaults to 'openid' for cloud.gov compatibility."
+  type        = string
+  default     = "openid"
+}
+
+###############################################################################
 # Connector Variables
 ###############################################################################
 
+variable "connector_deployment_method" {
+  description = "Method to deploy the connector: 'buildpack' for Python buildpack or 'container' for a container image."
+  type        = string
+  default     = "container"
+
+  validation {
+    condition     = contains(["buildpack", "container"], var.connector_deployment_method)
+    error_message = "The connector_deployment_method must be either 'buildpack' or 'container'."
+  }
+}
 
 variable "connector_memory" {
   type        = string
@@ -177,6 +292,52 @@ variable "connector_instances" {
   type        = number
   description = "the number of instances of the connector application to run (default: 1)"
   default     = 1
+}
+
+variable "connector_local_path" {
+  description = "Path to the local connector directory to deploy. Only used when connector_deployment_method = 'buildpack'."
+  type        = string
+  default     = "service-connector"
+
+  validation {
+    condition     = var.connector_local_path != "" || var.connector_deployment_method == "container"
+    error_message = "connector_local_path must be provided when using connector_deployment_method = 'buildpack'."
+  }
+}
+
+variable "connector_python_version" {
+  description = "Python version to use for the connector when using buildpack deployment"
+  type        = string
+  default     = "python-3.12.x"
+}
+
+variable "connector_disk" {
+  description = "Disk quota for the connector app, including unit"
+  type        = string
+  default     = "3G"
+}
+
+# Example of additional service bindings:
+# connector_additional_service_bindings = {
+#   "my-service" = "",
+#   (module.my-other-service.name) = "",
+#   "yet-another-service" = <<-EOT
+#      {
+#        "astring"     : "foo",
+#        "anarray"     : ["bar", "baz"],
+#        "anarrayobjs" : [
+#          {
+#            "name": "bat",
+#            "value": "boz"
+#          }
+#        ]
+#      }
+#      EOT
+# }
+variable "connector_additional_service_bindings" {
+  description = "A map of additional service instance names to JSON parameter strings for optional service bindings for the connector."
+  type        = map(string)
+  default     = {}
 }
 
 ###############################################################################
@@ -199,4 +360,10 @@ variable "frontend_instances" {
   type        = number
   description = "the number of instances of the frontend application to run (default: 1)"
   default     = 1
+}
+
+variable "frontend_url_override" {
+  type = string
+  description = "Optional override for the Spiff UI URL. Specify this if you have a custom domain, e.g., my-domain.gov rather than my-domain.app.cloud.gov."
+  default = ""
 }
