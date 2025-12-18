@@ -361,3 +361,9 @@ variable "frontend_instances" {
   description = "the number of instances of the frontend application to run (default: 1)"
   default     = 1
 }
+
+variable "frontend_url_override" {
+  type = string
+  description = "Optional override for the Spiff UI URL. Specify this if you have a custom domain, e.g., my-domain.gov rather than my-domain.app.cloud.gov."
+  default = ""
+}
