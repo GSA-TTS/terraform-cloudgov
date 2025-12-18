@@ -11,7 +11,7 @@ locals {
 
   backend_url   = "https://${module.backend_route.endpoint}"
   connector_url = "https://${module.connector_route.endpoint}:61443"
-  frontend_url  = "https://${module.frontend_route.endpoint}"
+  frontend_url  = var.frontend_url_override != "" ? var.frontend_url_override : "https://${module.frontend_route.endpoint}"
 
   backend_app_id      = cloudfoundry_app.backend.id
   connector_app_id    = cloudfoundry_app.connector.id
