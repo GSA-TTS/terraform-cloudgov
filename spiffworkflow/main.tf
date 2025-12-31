@@ -52,5 +52,6 @@ resource "cloudfoundry_app" "frontend" {
     SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_APP_ROUTING_STRATEGY : "path_based"
     SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_BACKEND_BASE_URL : local.backend_url
     BACKEND_BASE_URL : local.backend_url
+    SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_TASK_METADATA : var.frontend_task_metadata
   }
 }

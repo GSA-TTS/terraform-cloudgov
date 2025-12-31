@@ -356,6 +356,12 @@ variable "frontend_imageref" {
   default     = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-frontend:latest"
 }
 
+variable "frontend_task_metadata" {
+  type        = string
+  description = ""
+  default     = "Variables available for the task metadata extraction path. See https://spiff-arena.readthedocs.io/en/latest/how_to_guides/use_human_task_metadata.html."
+}
+
 variable "frontend_instances" {
   type        = number
   description = "the number of instances of the frontend application to run (default: 1)"
@@ -363,7 +369,7 @@ variable "frontend_instances" {
 }
 
 variable "frontend_url_override" {
-  type = string
+  type        = string
   description = "Optional override for the Spiff UI URL. Specify this if you have a custom domain, e.g., my-domain.gov rather than my-domain.app.cloud.gov."
-  default = ""
+  default     = ""
 }
