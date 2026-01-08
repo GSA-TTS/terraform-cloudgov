@@ -125,20 +125,6 @@ module "spiffworkflow" {
 
 **Note:** When using external OIDC, you must provide at minimum the `backend_oidc_client_id`, `backend_oidc_client_secret`, and `backend_oidc_server_url`. If these are not provided, the module will use the internal OIDC configuration.
 
-## One-Time Initialization Process (Bootstrap Workflow)
-
-The module can run a single BPMN initialization workflow automatically at application start (buildpack-backend deployment only). Use this to seed permissions, create baseline configuration, or perform other idempotent bootstrap steps.
-
-### Enabling
-
-Set the Terraform variable `init_process_identifier` with a process model identifier (path-like) found under your provided `process_models` directory, for example:
-
-```hcl
-init_process_identifier = "site-administration/give-admin-permissions-to-developers"
-```
-
-This value is injected as the environment variable `SPIFFWORKFLOW_BACKEND_INIT_PROCESS` inside the backend. An empty string disables the feature (recommended in production once initial bootstrap is done or if not needed).
-
 ### Runtime Behavior
 
 | Concern | Behavior |
