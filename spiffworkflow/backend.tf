@@ -82,7 +82,7 @@ locals {
     SPIFFWORKFLOW_BACKEND_DATABASE_TYPE : "postgres"
     SPIFFWORKFLOW_BACKEND_ENV : "cloud_gov"
     SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED : "true"
-    SPIFFWORKFLOW_BACKEND_BOOTSTRAP_PROCESS_MODEL : var.bootstrap_process_model
+    SPIFFWORKFLOW_BACKEND_BOOTSTRAP_PROCESS_MODEL : var.backend_bootstrap_process_model
     SPIFFWORKFLOW_BACKEND_BOOTSTRAP_USERNAME : "adminX@bootstrap"
 
     # TODO: Can we turn this back on to enable a hosted development instance?
