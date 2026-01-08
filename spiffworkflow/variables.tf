@@ -92,7 +92,7 @@ variable "backend_process_models_path" {
   }
 }
 
-variable "bootstrap_process_model" {
+variable "backend_bootstrap_process_model" {
   description = "Initialization BPMN process model identifier to run once at startup (empty to disable)."
   type        = string
   default     = ""
