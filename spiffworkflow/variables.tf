@@ -92,8 +92,14 @@ variable "backend_process_models_path" {
   }
 }
 
+variable "backend_bootstrap_process_model" {
+  description = "Initialization BPMN process model identifier to run once at startup (empty to disable)."
+  type        = string
+  default     = ""
+}
+
 variable "backend_scripts_path" {
-  description = "Path to a directory of supplemental backend scripts (e.g. init_process.py, profile hooks). Ignored for container deployment."
+  description = "Path to a directory of supplemental backend scripts. Ignored for container deployment."
   type        = string
   default     = ""
 }
