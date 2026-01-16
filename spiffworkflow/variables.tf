@@ -379,3 +379,9 @@ variable "frontend_url_override" {
   description = "Optional override for the Spiff UI URL. Specify this if you have a custom domain, e.g., my-domain.gov rather than my-domain.app.cloud.gov."
   default     = ""
 }
+
+variable "backend_url_override" {
+  type        = string
+  description = "Optional override for the Spiff API URL. Specify this if you have a custom domain, e.g., my-domain.gov/api rather than my-domain.app.cloud.gov/api."
+  default     = ""
+}

@@ -9,7 +9,7 @@ locals {
   username = random_uuid.username.result
   password = random_password.password.result
 
-  backend_url   = "https://${module.backend_route.endpoint}"
+  backend_url   =  var.backend_url_override != "" ? var.backend_url_override : "https://${module.backend_route.endpoint}"
   connector_url = "https://${module.connector_route.endpoint}:61443"
   frontend_url  = var.frontend_url_override != "" ? var.frontend_url_override : "https://${module.frontend_route.endpoint}"
 
