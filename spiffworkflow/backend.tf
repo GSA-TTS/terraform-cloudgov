@@ -80,6 +80,8 @@ locals {
     SPIFFWORKFLOW_BACKEND_DATABASE_TYPE : "postgres"
     SPIFFWORKFLOW_BACKEND_ENV : "cloud_gov"
     SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED : "true"
+    SPIFFWORKFLOW_BACKEND_BOOTSTRAP_PROCESS_MODEL : var.backend_bootstrap_process_model
+    SPIFFWORKFLOW_BACKEND_BOOTSTRAP_USERNAME : "adminX@bootstrap"
 
     # TODO: Can we turn this back on to enable a hosted development instance?
     # This branch needs to exist, otherwise we can't clone it at startup and startup fails
@@ -100,6 +102,7 @@ locals {
     SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_CLIENT_IDS : var.backend_oidc_additional_valid_client_ids != null ? var.backend_oidc_additional_valid_client_ids : null
     SPIFFWORKFLOW_BACKEND_OPEN_ID_ADDITIONAL_VALID_ISSUERS : var.backend_oidc_additional_valid_issuers != null ? var.backend_oidc_additional_valid_issuers : null
     SPIFFWORKFLOW_BACKEND_AUTHENTICATION_PROVIDERS : var.backend_oidc_authentication_providers != null ? var.backend_oidc_authentication_providers : null
+
 
     # TODO: static creds are in this path in the image:
     #   /config/permissions/example.yml
@@ -263,7 +266,7 @@ resource "cloudfoundry_app" "backend" {
   # Commented out until the provider supports it
   # app_lifecycle = var.backend_deployment_method
   # strategy = "rolling"
-  stack    = "cflinuxfs4"
+  stack = "cflinuxfs4"
 
   lifecycle {
     precondition {
