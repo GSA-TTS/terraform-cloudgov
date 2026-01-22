@@ -355,6 +355,12 @@ echo "Process models copied to: ${PROCESS_MODELS_DEST}"
 echo "Removing any .bpmn.png files from process models directory..."
 find "${PROCESS_MODELS_DEST}" -type f -name "*.bpmn.png" -delete
 
+# Ensure we run the bootstrap process model, if it exists at all, on only one app instance
+if [[ "${CF_INSTANCE_INDEX:-0}" != "0" ]]; then
+  echo "Skipping the bootstrap script for app instance at index ${CF_INSTANCE_INDEX} by unsetting SPIFFWORKFLOW_BACKEND_BOOTSTRAP_PROCESS_MODEL"
+  unset SPIFFWORKFLOW_BACKEND_BOOTSTRAP_PROCESS_MODEL
+fi
+
 # Generate requirements.txt from uv.lock
 echo "Generating requirements.txt from uv files..."
 if [ -f "${BACKEND_DIR}/uv.lock" ] && [ -f "${BACKEND_DIR}/pyproject.toml" ]; then
