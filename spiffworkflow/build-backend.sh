@@ -355,10 +355,21 @@ echo "Process models copied to: ${PROCESS_MODELS_DEST}"
 echo "Removing any .bpmn.png files from process models directory..."
 find "${PROCESS_MODELS_DEST}" -type f -name "*.bpmn.png" -delete
 
-# Ensure we run the bootstrap process model, if it exists at all, on only one app instance
-if [[ "${CF_INSTANCE_INDEX:-0}" != "0" ]]; then
-  echo "Skipping the bootstrap script for app instance at index ${CF_INSTANCE_INDEX} by unsetting SPIFFWORKFLOW_BACKEND_BOOTSTRAP_PROCESS_MODEL"
-  unset SPIFFWORKFLOW_BACKEND_BOOTSTRAP_PROCESS_MODEL
+# ----------------------------------------------------------------------------
+# Include content of custom scripts directory (eg profile hooks)
+# Note these are copied relative to the root of the application!
+# ----------------------------------------------------------------------------
+if [ -n "${BACKEND_SCRIPTS_PATH}" ] && [ -d "${BACKEND_SCRIPTS_PATH}" ]; then
+  echo "Including custom scripts from ${BACKEND_SCRIPTS_PATH} ..."
+  cp -R "${BACKEND_SCRIPTS_PATH}/." "${BACKEND_DIR}/"
+  if ls "${BACKEND_DIR}/.profile.d"/*.sh >/dev/null 2>&1; then
+    echo "Found profile hook scripts:"
+    ls -1 "${BACKEND_DIR}/.profile.d"/*.sh || true
+  else
+    echo "No .profile.d hook scripts found in scripts directory (optional)."
+  fi
+else
+  echo "Scripts path not present or not a directory: ${BACKEND_SCRIPTS_PATH} (skipping script vendoring)"
 fi
 
 # Generate requirements.txt from uv.lock
