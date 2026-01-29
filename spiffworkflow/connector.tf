@@ -204,6 +204,11 @@ resource "cloudfoundry_app" "connector" {
   # Command is only needed for container deployment
   command = var.connector_deployment_method == "buildpack" ? null : <<-COMMAND
     # Make sure the Cloud Foundry-provided CA is recognized when making TLS connections
+    # Get the proxy uri
+    EGRESS_CREDENTIALS=$(echo "$VCAP_SERVICES" | jq '.[][] | select(.name == "workflow-egress-credentials") | .credentials')
+    if [ -n "$EGRESS_CREDENTIALS" ]; then
+      export HTTPS_PROXY = $(echo "$EGRESS_CREDENTIALS" | jq --raw-output ".https_uri")
+    fe
     cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt
     /usr/sbin/update-ca-certificates
     /app/bin/boot_server_in_docker
