@@ -356,16 +356,12 @@ echo "Removing any .bpmn.png files from process models directory..."
 find "${PROCESS_MODELS_DEST}" -type f -name "*.bpmn.png" -delete
 
 # ----------------------------------------------------------------------------
-# Include content of custom scripts directory (eg init process + profile hooks)
+# Include content of custom scripts directory (eg profile hooks)
 # Note these are copied relative to the root of the application!
 # ----------------------------------------------------------------------------
 if [ -n "${BACKEND_SCRIPTS_PATH}" ] && [ -d "${BACKEND_SCRIPTS_PATH}" ]; then
   echo "Including custom scripts from ${BACKEND_SCRIPTS_PATH} ..."
   cp -R "${BACKEND_SCRIPTS_PATH}/." "${BACKEND_DIR}/"
-  if [ -f "${BACKEND_DIR}/bin/init_process.py" ]; then
-    chmod +x "${BACKEND_DIR}/bin/init_process.py"
-    echo "✓ Added init_process.py"
-  fi
   if ls "${BACKEND_DIR}/.profile.d"/*.sh >/dev/null 2>&1; then
     echo "Found profile hook scripts:"
     ls -1 "${BACKEND_DIR}/.profile.d"/*.sh || true
@@ -520,18 +516,6 @@ for required_file in "Procfile" "requirements.txt" "bin/boot_server_in_docker" "
     echo "✓ Found $required_file"
   fi
 done
-
-# Optional (non-fatal) diagnostics: presence of init process assets
-if [ -f "${BACKEND_DIR}/bin/init_process.py" ]; then
-  echo "✓ Found bin/init_process.py (init process support)"
-else
-  echo "(Info) bin/init_process.py not present; init process bootstrap disabled unless provided elsewhere" >&2
-fi
-if ls "${BACKEND_DIR}/bin/.profile.d"/10-init-process.sh >/dev/null 2>&1; then
-  echo "✓ Found bin/.profile.d/10-init-process.sh (profile hook)"
-else
-  echo "(Info) profile hook 10-init-process.sh not present; no init run via .profile" >&2
-fi
 
 if [ -n "$missing_files" ]; then
   echo "Contents of backend directory:" >&2
