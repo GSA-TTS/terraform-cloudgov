@@ -209,6 +209,7 @@ resource "cloudfoundry_app" "connector" {
     if [ -n "$PROXYROUTE" ]; then
       echo "Setting the https proxy"
       export HTTPS_PROXY="$PROXYROUTE"
+      export NO_PROXY="apps.internal"  # For internal traffic
     fi
     /usr/sbin/update-ca-certificates
     /app/bin/boot_server_in_docker

@@ -466,6 +466,7 @@ export SPIFFWORKFLOW_BACKEND_DATABASE_URI=$( echo ${VCAP_SERVICES:-} | jq -r '.[
 if [ -n "$PROXYROUTE" ]; then
   echo "Setting the https proxy"
   export HTTPS_PROXY="$PROXYROUTE"
+  export NO_PROXY="apps.internal"  # For internal traffic
 fi
 
 # Check if the backend queue service is set and is a type that we support (it supplies a .credentials.uri that's usable as is)
