@@ -205,7 +205,11 @@ resource "cloudfoundry_app" "connector" {
   command = var.connector_deployment_method == "buildpack" ? null : <<-COMMAND
     # Make sure the Cloud Foundry-provided CA is recognized when making TLS connections
     cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt
-    export HTTPS_PROXY = $PROXYROUTE
+    # Set the HTTPS_PROXY
+    if [ -n "$PROXYROUTE" ]; then
+      echo "Setting the https proxy"
+      export HTTPS_PROXY="$PROXYROUTE"
+    fi
     /usr/sbin/update-ca-certificates
     /app/bin/boot_server_in_docker
     COMMAND
