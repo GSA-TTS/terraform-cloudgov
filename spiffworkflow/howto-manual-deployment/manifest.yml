@@ -61,6 +61,8 @@ applications:
       FLASK_DEBUG: "0"
       # This is necessary for Python to pick up custom CAs
       REQUESTS_CA_BUNDLE: "/etc/ssl/certs/ca-certificates.crt"
+      HTTPS_PROXY: ${PROXYROUTE}
+      NO_PROXY: apps.internal
 
       # All of the configuration variables are documented here:
       # spiffworkflow-backend/src/spiffworkflow_backend/config/default.py
