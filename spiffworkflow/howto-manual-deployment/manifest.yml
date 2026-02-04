@@ -19,6 +19,8 @@ applications:
       # Make sure the Cloud Foundry-provided CA is recognized when making TLS connections
       cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt
       /usr/sbin/update-ca-certificates
+      export HTTPS_PROXY='((https-proxy))'
+      export NO_PROXY='apps.internal'
       /app/bin/boot_server_in_docker
     env:
       FLASK_ENV: "${FLASK_ENV:-development}"
@@ -26,8 +28,6 @@ applications:
       FLASK_SESSION_SECRET_KEY: ((connector-flask-secret-key))
       CONNECTOR_PROXY_PORT: "8080"
       REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
-      HTTPS_PROXY: ${PROXYROUTE}
-      NO_PROXY: apps.internal
 
   #################################
   - name: spiffworkflow((slug))-backend
@@ -52,7 +52,8 @@ applications:
 
       # Verify that this is working. It should return '{"ok": true}'
       # curl https://spiffworkflow((slug))-connector.apps.internal:61443/liveness
-
+      export HTTPS_PROXY='((https-proxy))'
+      export NO_PROXY='apps.internal'
       /app/bin/clone_process_models
       /app/bin/boot_server_in_docker
     env:
@@ -61,8 +62,6 @@ applications:
       FLASK_DEBUG: "0"
       # This is necessary for Python to pick up custom CAs
       REQUESTS_CA_BUNDLE: "/etc/ssl/certs/ca-certificates.crt"
-      HTTPS_PROXY: ${PROXYROUTE}
-      NO_PROXY: apps.internal
 
       # All of the configuration variables are documented here:
       # spiffworkflow-backend/src/spiffworkflow_backend/config/default.py

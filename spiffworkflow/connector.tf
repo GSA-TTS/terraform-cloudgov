@@ -221,7 +221,7 @@ resource "cloudfoundry_app" "connector" {
   # Common environment variables for both deployment methods
   environment = merge(
     {
-      PROXYROUTE = "${var.https_proxy}",
+      PROXYROUTE : "${var.https_proxy}",
       FLASK_DEBUG : "0"
       FLASK_SESSION_SECRET_KEY : random_password.connector_flask_secret_key.result
       CONNECTOR_PROXY_PORT : "8080"
