@@ -1,15 +1,16 @@
 provider "cloudfoundry" {}
 
 variables {
-  cf_org_name = "gsa-tts-devtools-prototyping"
+  cf_org_name = "cloud-gov-devtools-development"
   cf_space = {
-    id   = "15836eb6-a57e-4579-bca7-99764c5a01a4"
-    name = "terraform-cloudgov-ci-tests"
+    id   = "f23cbf69-66a1-4b1d-83d4-e497abdb8dcb"
+    name = "terraform-cloudgov-tf-tests"
   }
   name           = "terraform-cloudgov-drupal-test"
   rds_plan_name  = "small-mysql"
   s3_plan_name   = "basic-sandbox"
   source_dir     = "."
+  domain         = "fr-stage.cloud.gov"
   extra_excludes = ["dist", ".terraform*"]
 }
 

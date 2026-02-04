@@ -3,7 +3,7 @@ name: Pull Third Party Containers, Scan, and Publish to GHCR
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 5 * * 0'
+    - cron: "0 5 * * 0"
 
 jobs:
   pull-and-scan:
@@ -19,14 +19,17 @@ jobs:
       fail-fast: false
       matrix:
         image:
-          - name: ghcr.io/sartography/spiffworkflow-backend:v1.0.0
+          - name: ghcr.io/sartography/spiffworkflow-backend:v1.1.5
             short-name: spiffarena-backend
-          - name: ghcr.io/sartography/spiffworkflow-frontend:v1.0.0
+          - name: ghcr.io/sartography/spiffworkflow-frontend:v1.1.5
             short-name: spiffarena-frontend
-          - name: ghcr.io/sartography/connector-proxy-demo:v1.0.0
+          - name: ghcr.io/gsa-tts/spiffworkflow-connector:latest
             short-name: spiffarena-connector
           - name: ghcr.io/gsa-tts/clamav-rest/clamav:latest
             short-name: clamav-proxy-support
+          - name: quay.io/keycloak/keycloak:26.4
+            short-name: keycloak-server
+
 
     steps:
       - name: Checkout
@@ -44,21 +47,21 @@ jobs:
           TRIVY_SKIP_JAVA_DB_UPDATE: true
           TRIVY_DISABLE_VEX_NOTICE: true
         with:
-          image-ref: '${{ matrix.image.name }}'
-          scan-type: 'image'
+          image-ref: "${{ matrix.image.name }}"
+          scan-type: "image"
           hide-progress: true
-          format: 'sarif'
-          output: '${{ matrix.image.short-name }}-results.sarif'
+          format: "sarif"
+          output: "${{ matrix.image.short-name }}-results.sarif"
           exit-code: 0
-          severity: 'CRITICAL,HIGH'
-          scanners: 'vuln'
+          severity: "CRITICAL,HIGH"
+          scanners: "vuln"
           timeout: 15m0s
           ignore-unfixed: true
 
       - name: Upload Trivy scan results to GitHub Security tab for Third Party Images
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: '${{ matrix.image.short-name }}-results.sarif'
+          sarif_file: "${{ matrix.image.short-name }}-results.sarif"
 
       - name: Tag Image
         run: |
@@ -75,3 +78,4 @@ jobs:
 
       - name: Push Image
         run: docker push --all-tags ghcr.io/${{ env.GH_REPO }}/${{ matrix.image.short-name }}
+

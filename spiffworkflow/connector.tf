@@ -205,6 +205,12 @@ resource "cloudfoundry_app" "connector" {
   command = var.connector_deployment_method == "buildpack" ? null : <<-COMMAND
     # Make sure the Cloud Foundry-provided CA is recognized when making TLS connections
     cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt
+    # Set the HTTPS_PROXY
+    if [ -n "$PROXYROUTE" ]; then
+      echo "Setting the https proxy"
+      export HTTPS_PROXY="$PROXYROUTE"
+      export NO_PROXY="apps.internal"  # For internal traffic
+    fi
     /usr/sbin/update-ca-certificates
     /app/bin/boot_server_in_docker
     COMMAND
@@ -215,6 +221,7 @@ resource "cloudfoundry_app" "connector" {
   # Common environment variables for both deployment methods
   environment = merge(
     {
+      PROXYROUTE : "${var.https_proxy}",
       FLASK_DEBUG : "0"
       FLASK_SESSION_SECRET_KEY : random_password.connector_flask_secret_key.result
       CONNECTOR_PROXY_PORT : "8080"

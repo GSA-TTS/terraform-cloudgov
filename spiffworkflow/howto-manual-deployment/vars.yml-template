@@ -10,6 +10,9 @@ openid-secret: flarblegarble
 source-branch: process-models-playground
 target-branch-for-publish: publish-staging-branch
 
+# Optional
+https-proxy: Specify the URI of your proxy, otherwise remove this line
+
 # Generate a Key to be used for pulling and pushing commits to the bpmn process models repo (refer to git-process-models-repo var above):
 # ssh-keygen -t rsa -b 4096 -C "my-git@email.blah"
 # Add the public key to:
