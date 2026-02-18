@@ -205,6 +205,8 @@ resource "cloudfoundry_app" "connector" {
   command = var.connector_deployment_method == "buildpack" ? null : <<-COMMAND
     # Make sure the Cloud Foundry-provided CA is recognized when making TLS connections
     cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt
+    # Add system certificates to /etc/ssl/certs/ca-certificates.crt for Chromium
+    cat /etc/ssl/certs/cf-system-certificates.pem >> /etc/ssl/certs/ca-certificates.crt
     # Set the HTTPS_PROXY
     if [ -n "$PROXYROUTE" ]; then
       echo "Setting the https proxy"
