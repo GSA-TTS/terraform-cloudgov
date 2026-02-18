@@ -203,19 +203,27 @@ resource "cloudfoundry_app" "connector" {
 
   # Command is only needed for container deployment
   command = var.connector_deployment_method == "buildpack" ? null : <<-COMMAND
-    # Make sure the Cloud Foundry-provided CA is recognized when making TLS connections
-    cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt
-    # Add system certificates to /etc/ssl/certs/ca-certificates.crt for Chromium
-    cat /etc/ssl/certs/cf-system-certificates.pem >> /etc/ssl/certs/ca-certificates.crt
-    # Set the HTTPS_PROXY
+    mkdir -p /usr/local/share/ca-certificates/cf
+    cp -v /etc/cf-system-certificates/* /usr/local/share/ca-certificates/cf/ 2>/dev/null || true
+
+    for f in /usr/local/share/ca-certificates/cf/*; do
+      [ -f "$f" ] || continue
+      case "$f" in
+        *.crt) : ;;
+        *.pem) mv "$f" "$${f%.pem}.crt" ;;
+        *) mv "$f" "$f.crt" ;;
+      esac
+    done
+
+    /usr/sbin/update-ca-certificates --fresh
+
     if [ -n "$PROXYROUTE" ]; then
-      echo "Setting the https proxy"
       export HTTPS_PROXY="$PROXYROUTE"
-      export NO_PROXY="apps.internal"  # For internal traffic
+      export NO_PROXY="apps.internal,.apps.internal,localhost,127.0.0.1"
     fi
-    /usr/sbin/update-ca-certificates
+
     /app/bin/boot_server_in_docker
-    COMMAND
+  COMMAND
 
   # Add buildpack requirements for Python when using buildpack deployment
   buildpacks = var.connector_deployment_method == "buildpack" ? ["python_buildpack"] : null
