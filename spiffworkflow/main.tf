@@ -47,6 +47,7 @@ resource "cloudfoundry_app" "frontend" {
   health_check_type = "port"
 
   environment = {
+    PROXYROUTE : var.https_proxy
     APPLICATION_ROOT : "/"
     PORT0 : "80"
     SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_APP_ROUTING_STRATEGY : "path_based"
