@@ -45,7 +45,7 @@ resource "cloudfoundry_app" "frontend" {
   instances         = var.frontend_instances
   strategy          = "rolling"
   health_check_type = "port"
-  command                    = <<-COMMAND
+  command           = <<-COMMAND
   # Make sure the Cloud Foundry-provided CA is recognized when making TLS connections
   cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt
   /usr/sbin/update-ca-certificates
