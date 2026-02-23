@@ -45,8 +45,23 @@ resource "cloudfoundry_app" "frontend" {
   instances         = var.frontend_instances
   strategy          = "rolling"
   health_check_type = "port"
+  command           = <<-COMMAND
+  # Make sure the Cloud Foundry-provided CA is recognized when making TLS connections
+  cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt
+  /usr/sbin/update-ca-certificates
+
+  # Set the HTTPS_PROXY
+  if [ -n "$PROXYROUTE" ]; then
+    echo "Setting the https proxy"
+    export HTTPS_PROXY="$PROXYROUTE"
+    export NO_PROXY="apps.internal"  # For internal traffic
+  fi
+
+  /app/bin/boot_server_in_docker
+  COMMAND
 
   environment = {
+    PROXYROUTE : var.https_proxy
     APPLICATION_ROOT : "/"
     PORT0 : "80"
     SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_APP_ROUTING_STRATEGY : "path_based"
