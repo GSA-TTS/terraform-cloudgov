@@ -101,6 +101,13 @@ applications:
       image: ((frontend-image))
     memory: 256M
     health-check-type: port
+    command: |
+      # Make sure the Cloud Foundry-provided CA is recognized when making TLS connections
+      cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt
+      /usr/sbin/update-ca-certificates
+      export HTTPS_PROXY='((https-proxy))'
+      export NO_PROXY='apps.internal'
+      /app/bin/boot_server_in_docker
     env:
       APPLICATION_ROOT: "/"
       PORT0: "80"
