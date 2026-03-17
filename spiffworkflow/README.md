@@ -262,3 +262,28 @@ module "spiffworkflow" {
   - The database service instance must be an aws-rds service instance with type postgres in cloud.gov.
   - You can specify parameters for the database service binding using the `backend_database_params` variable.
 - When using container-based deployment, the process models must be included in the container image.
+
+
+## File Layout
+
+| File | Purpose |
+|------|---------|
+| `main.tf` | Frontend app, shared locals (prefix, URLs, app IDs), random resources |
+| `backend.tf` | Backend app (web/worker/scheduler processes), environment variables, service bindings |
+| `connector.tf` | Connector app with buildpack and container deployment, null_resource for buildpack zip |
+| `routing.tf` | Route modules (frontend + backend share a hostname with `/api` path prefix; connector on `apps.internal`), network policy (backend → connector on port 61443) |
+| `variables.tf` | All input variables with cross-variable validations |
+| `outputs.tf` | URLs and app IDs for all three components |
+| `providers.tf` | Required providers (`cloudfoundry/cloudfoundry`, `kreuzwerker/docker`) |
+| `build-for-cloudfoundry.sh` | Pre-build script that produces a zip for buildpack deployment |
+| `templates/` | Shell scripts copied into the buildpack zip at build time (see [Templates](#templates-buildpack-deployment)) |
+| `tests/` | `terraform test` files with mock providers |
+
+### Templates (buildpack deployment)
+
+The `templates/` directory contains shell scripts that `build-for-cloudfoundry.sh` copies into the buildpack zip. These scripts run at app startup inside the Cloud Foundry container:
+
+| File | Installed as | Purpose |
+|------|-------------|---------|
+| `profile.sh` | `.profile` | Sets `PYTHONPATH`, extracts the database URI from `VCAP_SERVICES`, configures `HTTPS_PROXY`, and discovers a Redis queue service for Celery. Sourced by the Diego launcher before the start command. |
+| `10-init-process.sh` | `.profile.d/10-init-process.sh` | Ensures the bootstrap process model only runs on instance index `0`.
