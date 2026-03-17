@@ -48,7 +48,26 @@ module "spiffworkflow" {
 
 ### Buildpack-based Deployment
 
-Use this approach when you want to customize the content of the backend and/or connector:
+Use this approach when you want to customize the content of the backend and/or connector.
+
+The backend zip must be built **before** running `terraform plan/apply` using the
+`build-for-cloudfoundry.sh` script shipped with this module:
+
+```text
+#   ./build-for-cloudfoundry.sh <output_zip> <backend_gitref> <process_models_path> [python_version] [scripts_path]
+#
+# Example:
+#   ./build-for-cloudfoundry.sh /tmp/backend.zip github.com/sartography/spiff-arena?ref=v1.1.5 ./process_models python-3.12.x ./scripts
+#
+# Arguments:
+#   output_zip          - Output path for the generated zip file
+#   backend_gitref      - Git tag/branch/commit or URL?ref=REF format
+#   process_models_path - Path to local process_models directory
+#   python_version      - (optional) Python version string for buildpack (default: python-3.12.x)
+#   scripts_path        - (optional) Path to supplemental scripts directory (eg init process, profile hooks)
+```
+
+Then reference the zip in your Terraform configuration:
 
 ```hcl
 module "spiffworkflow" {
@@ -59,9 +78,7 @@ module "spiffworkflow" {
   
   # Use buildpack-based deployment for the backend
   backend_deployment_method = "buildpack"
-  backend_gitref = "v1.0.0"  # Specific version of SpiffWorkflow backend source to deploy
-  backend_process_models_path = "/somepath/my-process-models"  # Local path to process models
-  backend_python_version = "python-3.12.x"  # Python version for the buildpack
+  backend_zip_path = "/tmp/spiff-backend.zip"
   
   # Use buildpack-based deployment for the connector
   connector_deployment_method = "buildpack"
