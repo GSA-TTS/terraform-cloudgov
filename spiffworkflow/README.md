@@ -150,27 +150,11 @@ module "spiffworkflow" {
 
 **Note:** When using external OIDC, you must provide at minimum the `backend_oidc_client_id`, `backend_oidc_client_secret`, and `backend_oidc_server_url`. If these are not provided, the module will use the internal OIDC configuration.
 
-### Runtime Behavior
+### Runtime Behavior: Bootstrap Process
 
-| Concern | Behavior |
-|---------|----------|
-| Execution Instance | Only Cloud Foundry instance index `0` runs the init script (checked via `CF_INSTANCE_INDEX`). |
-| Idempotency | If a prior instance finished with status `complete` or acceptable `suspended` (no READY manual tasks), the script exits immediately. |
-| Concurrency Guard | If an instance of the same process is currently `not_started` or `running`, no new one is created. |
-| Manual Tasks | All READY Manual Tasks are auto-completed greedily each cycle. |
-| User Tasks | Any BPMN User Task causes a failure (interactive steps are disallowed). |
-| Success States | `complete` or `suspended` with zero remaining READY manual tasks. |
-| Migrations | Database migrations are run if enabled; core table presence can short‑circuit migration unless `INIT_PROCESS_FORCE_MIGRATION=true`. |
-| Non-blocking | Failure logs a warning but doesn’t block app startup. |
-| Logging Markers | Emits structured markers: `INIT_PROCESS_START`, `INIT_PROCESS_MANUAL_PROGRESS`, `INIT_PROCESS_SUMMARY`, `INIT_PROCESS_EXIT_SUCCESS`, and warnings for user tasks. |
+When `backend_bootstrap_process_model` is set, SpiffWorkflow’s backend runs the specified BPMN process model once at startup. The module includes a `.profile.d` script (`templates/10-init-process.sh`) that ensures the bootstrap only executes on Cloud Foundry instance index `0` — additional instances unset `SPIFFWORKFLOW_BACKEND_BOOTSTRAP_PROCESS_MODEL` so they skip the bootstrap entirely.
 
-### Environment Variables Influencing Behavior
-
-| Variable | Purpose |
-|----------|---------|
-| `SPIFFWORKFLOW_BACKEND_INIT_PROCESS` | Target process model identifier (empty disables). |
-| `INIT_PROCESS_FORCE_MIGRATION` | Force database upgrade even if core tables detected. |
-| `INIT_PROCESS_DEDUP_LOG` | Suppress duplicate consecutive log lines (default true). |
+The behavior of the bootstrap itself (idempotency, error handling, task completion) depends on the BPMN process model you supply and on SpiffWorkflow’s backend engine. Set `backend_bootstrap_process_model` to an empty string to disable bootstrapping.
 
 ### Example Module Block (Excerpt)
 
