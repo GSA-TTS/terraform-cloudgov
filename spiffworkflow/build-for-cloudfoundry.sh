@@ -281,23 +281,9 @@ find "${PROCESS_MODELS_DEST}" -type f -name "*.bpmn.png" -delete
 # Create the .profile.d init script that ensures the bootstrap process model
 # env var is only active on the first app instance (index 0).
 # ----------------------------------------------------------------------------
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 mkdir -p "${BACKEND_DIR}/.profile.d"
-cat > "${BACKEND_DIR}/.profile.d/10-init-process.sh" << 'INITEOF'
-#!/usr/bin/env bash
-set -euo pipefail
-
-# Ensure base .profile is sourced (not automatically sourced before profile.d scripts!)
-if [ -f /home/vcap/app/.profile ]; then
-  # shellcheck disable=SC1091
-  source /home/vcap/app/.profile || true
-fi
-
-if [[ "${CF_INSTANCE_INDEX:-0}" != "0" ]]; then
-  echo "Skipping bootstrap process for app at index ${CF_INSTANCE_INDEX} by unsetting env variable SPIFFWORKFLOW_BACKEND_BOOTSTRAP_PROCESS_MODEL"
-  unset SPIFFWORKFLOW_BACKEND_BOOTSTRAP_PROCESS_MODEL
-  return 0 2>/dev/null || exit 0
-fi
-INITEOF
+cp "${SCRIPT_DIR}/templates/10-init-process.sh" "${BACKEND_DIR}/.profile.d/10-init-process.sh"
 chmod +x "${BACKEND_DIR}/.profile.d/10-init-process.sh"
 echo "✓ Created .profile.d/10-init-process.sh"
 
@@ -386,55 +372,7 @@ else
 fi
 
 echo "Creating .profile file with environment setup..."
-cat > "${BACKEND_DIR}/.profile" << 'EOF'
-#!/usr/bin/env bash
-export PYTHONPATH="/home/vcap/app:/home/vcap/app/src:/home/vcap/deps/0/python:/home/vcap/deps/0"
-
-# Get the postgres URI from the service binding. (SQL Alchemy insists on "postgresql://".🙄)
-export SPIFFWORKFLOW_BACKEND_DATABASE_URI=$( echo ${VCAP_SERVICES:-} | jq -r '.["aws-rds"][].credentials.uri' | sed -e s/postgres/postgresql/ )
-
-# Set the HTTPS_PROXY
-if [ -n "$PROXYROUTE" ]; then
-  echo "Setting the https proxy"
-  export HTTPS_PROXY="$PROXYROUTE"
-  export NO_PROXY="apps.internal"  # For internal traffic
-fi
-
-# Check if the backend queue service is set and is a type that we support (it supplies a .credentials.uri that's usable as is)
-if [ -n "${QUEUE_SERVICE_NAME:-}" ]; then
-  QUEUE_URI=$(echo "${VCAP_SERVICES}" | jq -r --arg name "$QUEUE_SERVICE_NAME" '
-    to_entries[]
-    | select(.value[0].instance_name == $name)
-    | .value[0].credentials.uri // empty
-  ')
-  # Force TLS if a non-TLS Redis URI is provided (convert redis:// -> rediss://)
-  if [ -n "$QUEUE_URI" ] && [ "${QUEUE_URI#redis://}" != "$QUEUE_URI" ]; then
-    QUEUE_URI="rediss://${QUEUE_URI#redis://}"
-  fi
-  # If we have a rediss URL but no ssl_cert_reqs parameter, append one so Celery's Redis backend
-  # doesn't raise: "A rediss:// URL must have parameter ssl_cert_reqs ..."
-  # Allow override via QUEUE_SSL_CERT_REQS env var (values: CERT_REQUIRED, CERT_OPTIONAL, CERT_NONE).
-  QUEUE_SSL_CERT_REQS_VALUE="${QUEUE_SSL_CERT_REQS:-CERT_OPTIONAL}"
-  if [ -n "$QUEUE_URI" ] && [ "${QUEUE_URI#rediss://}" != "$QUEUE_URI" ] && ! echo "$QUEUE_URI" | grep -qi 'ssl_cert_reqs='; then
-    if echo "$QUEUE_URI" | grep -q '?'; then
-      QUEUE_URI="${QUEUE_URI}&ssl_cert_reqs=${QUEUE_SSL_CERT_REQS_VALUE}"
-    else
-      QUEUE_URI="${QUEUE_URI}?ssl_cert_reqs=${QUEUE_SSL_CERT_REQS_VALUE}"
-    fi
-  fi
-  if [ -n "$QUEUE_URI" ]; then
-    # Enable Celery for background processing
-    export SPIFFWORKFLOW_BACKEND_CELERY_ENABLED=true
-    export SPIFFWORKFLOW_BACKEND_CELERY_BROKER_URL="$QUEUE_URI"
-    export SPIFFWORKFLOW_BACKEND_CELERY_RESULT_BACKEND="$QUEUE_URI"
-
-    # Enable the metadata backfill feature
-    SPIFFWORKFLOW_BACKEND_PROCESS_INSTANCE_METADATA_BACKFILL_ENABLED=true
-  else 
-    echo "WARNING: QUEUE_SERVICE_NAME is set but no matching service found in VCAP_SERVICES; skipping configuration"
-  fi
-fi
-EOF
+cp "${SCRIPT_DIR}/templates/profile.sh" "${BACKEND_DIR}/.profile"
 chmod +x "${BACKEND_DIR}/.profile"
 
 [ -f "${BACKEND_DIR}/.profile" ] || fatal "Failed to create .profile"
