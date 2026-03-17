@@ -219,4 +219,4 @@ See [variables.tf](./variables.tf) for all available options.
   - The database service instance must be an aws-rds service instance with type postgres in cloud.gov.
   - You can specify parameters for the database service binding using the `backend_database_params` variable.
 - When using container-based deployment, the process models must be included in the container image.
-- When using buildpack-based deployment, Poetry must be installed locally to generate requirements.txt.
+- When using buildpack-based deployment, [uv](https://docs.astral.sh/uv/) must be installed locally for the build script to generate `requirements.txt`.
