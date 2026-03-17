@@ -135,10 +135,6 @@ variable "backend_worker_instances" {
   description = "Number of instances for the SpiffWorkflow backend worker app"
   type        = number
   default     = 0
-  validation {
-    condition     = var.backend_queue_service_instance == "" || (var.backend_worker_instances >= 1)
-    error_message = "If backend_queue_service_instance is set, backend_worker_instances must be at least 1."
-  }
 }
 
 variable "backend_scheduler_disk" {
