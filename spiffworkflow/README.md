@@ -63,7 +63,7 @@ The backend zip must be built **before** running `terraform plan/apply` using th
 #   output_zip          - Output path for the generated zip file
 #   backend_gitref      - Git tag/branch/commit or URL?ref=REF format
 #   process_models_path - Path to local process_models directory
-#   python_version      - (optional) Python version string for buildpack (default: python-3.12.x)
+#   python_version      - (optional) Python version string for buildpack (default: python-3.10.x)
 #   scripts_path        - (optional) Path to supplemental scripts directory (eg init process, profile hooks)
 ```
 
