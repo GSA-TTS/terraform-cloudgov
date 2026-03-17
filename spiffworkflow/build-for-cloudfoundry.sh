@@ -458,29 +458,16 @@ if [ -n "$missing_files" ]; then
   fatal "Missing required files:$missing_files"
 fi
 
-# Validate that the backend directory has content
-[ -z "$(ls -A ${BACKEND_DIR} 2>/dev/null)" ] && fatal "Backend directory ${BACKEND_DIR} is empty"
-
 echo "✓ All required files created successfully"
 
 # Create the zip file at the expected path
 echo "Creating deployment zip file: $PACKAGE_PATH"
-
-# Verify the backend directory exists and has content
-[ -d "$BACKEND_DIR" ] || fatal "Backend directory does not exist: $BACKEND_DIR"
-
-# Create the output directory if it doesn't exist
-echo "Creating output directory: $(dirname "$PACKAGE_PATH")"
 mkdir -p "$(dirname "$PACKAGE_PATH")"
 
-# Create the zip file from the backend directory contents
-echo "Zipping backend contents to $PACKAGE_PATH ..."
 (cd "$BACKEND_DIR" && zip -rq "$PACKAGE_PATH" .)
 
 # Verify the zip file was created successfully
 [ -f "$PACKAGE_PATH" ] || fatal "Zip file $PACKAGE_PATH was not created"
-
-# Check zip file integrity
 zip -T "$PACKAGE_PATH" >/dev/null 2>&1 || fatal "Created zip file $PACKAGE_PATH failed integrity test"
 
 echo "✓ Successfully created $PACKAGE_PATH with size: $(du -h "$PACKAGE_PATH" | cut -f1)"
