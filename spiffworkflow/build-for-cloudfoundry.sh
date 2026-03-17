@@ -49,7 +49,7 @@ fatal() { FAILURE_REASON="$1"; echo "ERROR: $1" >&2; exit 1; }
 #   output_zip          - Output path for the generated zip file
 #   backend_gitref      - Source URL in URL?ref=REF format (e.g. github.com/org/repo?ref=COMMIT)
 #   process_models_path - Path to local process_models directory
-#   python_version      - (optional) Python version string for buildpack (default: python-3.12.x)
+#   python_version      - (optional) Python version string for buildpack (default: python-3.10.x)
 #   scripts_path        - (optional) Path to supplemental scripts directory
 
 
