@@ -14,6 +14,8 @@ This Terraform module deploys the [SpiffWorkflow](https://github.com/sartography
   - Container-based deployment using a pre-built upstream Docker image
   - Buildpack-based deployment using upstream source and local process models (backend) or local source (connector)
 
+
+
 ## Usage
 
 **NOTE:**
@@ -33,22 +35,21 @@ module "spiffworkflow" {
   # Use container-based deployment for the backend
   backend_deployment_method = "container"  # This is the default
 
-  # Customize to point to an image that includes your process models
+  # Modify this to point to an image that includes your process models
   backend_imageref = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-backend:latest"
   
   # Required PostgreSQL database service instance
   backend_database_service_instance = "my-postgres-db"
   
-  # Optional additional service bindings if needed
-  backend_additional_service_bindings = {
-    "my-redis-service" = ""
-  }
+  # Optional: enable background task queue with Redis
+  backend_queue_service_instance = "my-redis-service"
+  backend_worker_instances       = 1
 }
 ```
 
 ### Buildpack-based Deployment
 
-Use this approach when you want to customize the content of the backend and/or connector.
+Use this approach when you want to customize the process models deployed with the backend and/or specify a custom connector.
 
 The backend zip must be built **before** running `terraform plan/apply` using the
 `build-for-cloudfoundry.sh` script shipped with this module:
@@ -88,10 +89,9 @@ module "spiffworkflow" {
   # Required PostgreSQL database service instance
   backend_database_service_instance = "my-postgres-db"
   
-  # Optional additional service bindings if needed
-  backend_additional_service_bindings = {
-    "my-redis-service" = ""
-  }
+  # Optional: enable background task queue with Redis
+  backend_queue_service_instance = "my-redis-service"
+  backend_worker_instances       = 1
 }
 ```
 
@@ -152,9 +152,9 @@ module "spiffworkflow" {
 
 ### Runtime Behavior: Bootstrap Process
 
-When `backend_bootstrap_process_model` is set, SpiffWorkflow’s backend runs the specified BPMN process model once at startup. The module includes a `.profile.d` script (`templates/10-init-process.sh`) that ensures the bootstrap only executes on Cloud Foundry instance index `0` — additional instances unset `SPIFFWORKFLOW_BACKEND_BOOTSTRAP_PROCESS_MODEL` so they skip the bootstrap entirely.
+When `backend_bootstrap_process_model` is set, SpiffWorkflow’s backend runs the specified BPMN process model once at startup. The module invokes the process once per deployment, and it's expected to be idempotent to ensure application restarts across host VMs aren't a problem.
 
-The behavior of the bootstrap itself (idempotency, error handling, task completion) depends on the BPMN process model you supply and on SpiffWorkflow’s backend engine. Set `backend_bootstrap_process_model` to an empty string to disable bootstrapping.
+The behavior of the bootstrap itself (error handling, task completion) depends on the BPMN process model you supply and on SpiffWorkflow’s backend engine. Set `backend_bootstrap_process_model` to an empty string to disable bootstrapping.
 
 ### Example Module Block (Excerpt)
 
@@ -168,7 +168,6 @@ module "spiffworkflow" {
   backend_database_service_instance = "my-postgres-db"
 }
 ```
-
 
 ## Inputs
 
@@ -263,4 +262,3 @@ module "spiffworkflow" {
   - The database service instance must be an aws-rds service instance with type postgres in cloud.gov.
   - You can specify parameters for the database service binding using the `backend_database_params` variable.
 - When using container-based deployment, the process models must be included in the container image.
-- When using buildpack-based deployment, [uv](https://docs.astral.sh/uv/) must be installed locally for the build script to generate `requirements.txt`.
