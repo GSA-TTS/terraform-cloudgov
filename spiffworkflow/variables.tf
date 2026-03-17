@@ -174,6 +174,11 @@ variable "backend_queue_service_instance" {
   description = "Name of the message queue service instance to bind to the backend app. Currently only Redis is supported. Leave empty to disable queue functionality."
   type        = string
   default     = ""
+
+  validation {
+    condition     = var.backend_queue_service_instance == "" || var.backend_worker_instances >= 1
+    error_message = "backend_worker_instances must be at least 1 when backend_queue_service_instance is set."
+  }
 }
 
 variable "backend_queue_service_params" {
