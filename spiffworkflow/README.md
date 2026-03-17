@@ -14,7 +14,46 @@ This Terraform module deploys the [SpiffWorkflow](https://github.com/sartography
   - Container-based deployment using a pre-built upstream Docker image
   - Buildpack-based deployment using upstream source and local process models (backend) or local source (connector)
 
+## Architecture
 
+```mermaid
+graph LR
+    User((User))
+    Client((API Client))
+
+    subgraph "cloud.gov space"
+        R1[/"&lt;name&gt;.app.cloud.gov"/]
+        R2[/"&lt;name&gt;.app.cloud.gov/api"/]
+        R3[/"&lt;name&gt;-connector<br/>.apps.internal"/]
+
+        FE[Frontend]
+        BE[Backend<br/>web / worker / scheduler]
+        CON[Connector]
+        DB[(Postgres)]
+        Q[(Optional<br/>Redis)]
+
+        R1 --> FE
+        R2 --> BE
+        R3 -- "port 61443<br/>network policy" --> CON
+    end
+
+    User --> R1
+    User --> R2
+    Client --> R2
+    FE --> R2
+    BE --> R3
+    BE --- DB
+    BE -.- Q
+
+    style R1 fill:#fff,stroke:#999
+    style R2 fill:#fff,stroke:#999
+    style R3 fill:#fff,stroke:#999
+    style CON fill:#e8f4fd,stroke:#369
+    style FE fill:#e8f4fd,stroke:#369
+    style BE fill:#e8f4fd,stroke:#369
+```
+
+The frontend and backend share a hostname; the backend is mounted at `/api`. The connector runs on the `apps.internal` domain and is reachable only from the backend via an explicit network policy on port 61443.
 
 ## Usage
 
