@@ -125,25 +125,11 @@ fi
 echo "✓ Process models directory validated: $PROCESS_MODELS_PATH"
 
 # Validate required tools
-echo "Checking required tools..."
-
-# Check for git (required, no auto-install - should be in all CI/CD environments)
-if ! command -v git >/dev/null 2>&1; then
-  fatal "Required tool 'git' is not installed or not in PATH"
-fi
-echo "✓ Found git"
-
-# Check for zip
-if ! command -v zip >/dev/null 2>&1; then
-  fatal "Required tool 'zip' is not installed or not in PATH"
-fi
-echo "✓ Found zip"
-
-# Check for uv
-if ! command -v uv >/dev/null 2>&1; then
-  fatal "Required tool 'uv' is not installed or not in PATH. Install from: https://docs.astral.sh/uv/getting-started/installation/"
-fi
-echo "✓ Found uv"
+# Validate required tools
+for tool in git zip uv; do
+  command -v "$tool" >/dev/null 2>&1 || fatal "Required tool '$tool' is not installed or not in PATH"
+done
+echo "✓ Required tools: git, zip, uv"
 
 # ---------------------------------------------------------------------------
 # Local validation passed — set up working directory and begin build
@@ -153,15 +139,7 @@ echo "✓ Found uv"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
-echo "Build script starting with parameters:"
-echo "  backend_gitref (raw): $RAW_GIT_SPEC"
-echo "  GIT_URL: $GIT_URL"
-echo "  GIT_REF: $GIT_REF"
-echo "  PROCESS_MODELS_PATH: $PROCESS_MODELS_PATH"
-echo "  PYTHON_VERSION: $PYTHON_VERSION"
-echo "  PACKAGE_PATH: $PACKAGE_PATH"
-echo "  BACKEND_SCRIPTS_PATH: ${BACKEND_SCRIPTS_PATH:-<none>}"
-echo "  WORK_DIR: $WORK_DIR"
+echo "Build starting: GIT_REF=${GIT_REF} PYTHON_VERSION=${PYTHON_VERSION} PACKAGE_PATH=${PACKAGE_PATH}"
 
 # Remove any existing zip file to ensure we create a fresh one
 if [ -f "$PACKAGE_PATH" ]; then
@@ -177,13 +155,6 @@ PROCESS_MODELS_DEST="${BACKEND_DIR}/process_models"
 # Include git_ref in the zip filename to identify the version
 SAFE_GIT_REF=$(echo "${GIT_REF}" | tr '/' '_')
 DOWNLOAD_ZIP="${DOWNLOAD_DIR}/spiff-arena-${SAFE_GIT_REF}.zip"
-
-echo "Preparing SpiffWorkflow backend content..."
-echo "Backend directory: ${BACKEND_DIR}"
-echo "Package path: ${PACKAGE_PATH}"
-echo "Git reference: ${GIT_REF}"
-echo "Process models path: ${PROCESS_MODELS_PATH}"
-echo "Python version: ${PYTHON_VERSION}"
 
 # Create directories
 mkdir -p "${DOWNLOAD_DIR}"
