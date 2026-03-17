@@ -166,16 +166,13 @@ module "spiffworkflow" {
 
 ### Example Module Block (Excerpt)
 
-```
-
+```hcl
 module "spiffworkflow" {
   source = "github.com/GSA-TTS/terraform-cloudgov//spiffworkflow"
   cf_org_name   = "my-org"
   cf_space_name = "my-space"
   backend_deployment_method         = "buildpack"
-  backend_gitref                    = "v1.1.2"
-  backend_process_models_path       = "../workflow/process_models"
-  backend_scripts_path              = "../workflow/scripts"
+  backend_zip_path                  = "/tmp/spiff-backend.zip"
   backend_database_service_instance = "my-postgres-db"
 }
 ```
