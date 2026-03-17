@@ -99,7 +99,7 @@ You can also mix deployment methods, for example using a container for the front
 
 ### Enabling saving and publishing changes
 
-The deployment can be configured to sync with an upstream repository. Saving will add your changes to a branch, while publishing will make a PR to the upstream repository.
+The deployment can be configured to sync with an upstream repository. Saving will add changes to a branch, while publishing will make a PR to the upstream repository. This is useful for providing non-technical users who don't know git well with an editing environment.
 
 **NOTE:**
 You must have a valid git key pairing. Generate with `ssh-keygen -t rsa -b 4096 -C "my-git@email"`, and add the public key to **https://github.com/settings/keys**. `var.process_models_ssh_key` is the private key. When you store `process_models_ssh_key` in a .tfvars file, ensure that the file format of the .tfvars file is in "LF" End Of Line Sequence. **This key is a profile level SSH key, and does not appear to work at the repo level**
@@ -110,8 +110,16 @@ module "spiffworkflow" {
   
   cf_org_name   = "my-org"
   cf_space_name = "my-space"
-  [TODO: Document the variables to use!]
-  [other configuration]
+  
+  backend_database_service_instance = "my-postgres-db"
+  
+  # Git sync configuration
+  process_models_repository        = "git@github.com:my-org/my-process-models.git"
+  process_models_ssh_key           = var.process_models_ssh_key  # SSH private key (sensitive)
+  source_branch_for_example_models = "main"   # Branch to read models from (default: "main")
+  target_branch_for_saving_changes = "draft"  # Branch to push saved changes to (default: "draft")
+  
+  # [other configuration]
 }
 ```
 
