@@ -107,7 +107,7 @@ locals {
   backend_processes = [
     {
       type                       = "web"
-      command                    = var.backend_deployment_method == "buildpack" ? "bash -c 'source .profile && ./bin/boot_server_in_docker'" : "cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt && /usr/sbin/update-ca-certificates && ./bin/boot_server_in_docker"
+      command                    = var.backend_deployment_method == "buildpack" ? "./bin/boot_server_in_docker" : "cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt && /usr/sbin/update-ca-certificates && ./bin/boot_server_in_docker"
       instances                  = var.backend_web_instances
       disk_quota                 = var.backend_web_disk
       memory                     = var.backend_web_memory
@@ -117,7 +117,7 @@ locals {
     },
     {
       type              = "worker"
-      command           = var.backend_deployment_method == "buildpack" ? "bash -c 'source .profile && ./bin/start_celery_worker'" : "cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt && /usr/sbin/update-ca-certificates && ./bin/start_celery_worker"
+      command           = var.backend_deployment_method == "buildpack" ? "./bin/start_celery_worker" : "cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt && /usr/sbin/update-ca-certificates && ./bin/start_celery_worker"
       instances         = var.backend_worker_instances
       disk_quota        = var.backend_worker_disk
       memory            = var.backend_worker_memory
@@ -126,7 +126,7 @@ locals {
     },
     {
       type              = "scheduler"
-      command           = var.backend_deployment_method == "buildpack" ? "bash -c 'source .profile && ./bin/start_blocking_apscheduler'" : "cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt && /usr/sbin/update-ca-certificates && ./bin/start_blocking_apscheduler"
+      command           = var.backend_deployment_method == "buildpack" ? "./bin/start_blocking_apscheduler" : "cat /etc/cf-system-certificates/* > /usr/local/share/ca-certificates/cf-system-certificates.crt && /usr/sbin/update-ca-certificates && ./bin/start_blocking_apscheduler"
       instances         = var.backend_queue_service_instance != "" ? 1 : 0
       disk_quota        = var.backend_scheduler_disk
       memory            = var.backend_scheduler_memory
