@@ -29,13 +29,6 @@
 
 
 locals {
-  # OIDC validation
-  oidc_configured = var.backend_oidc_client_id != null
-  oidc_valid = var.backend_oidc_client_id == null || (
-    var.backend_oidc_client_secret != null &&
-    var.backend_oidc_server_url != null
-  )
-
   # Common backend environment variables used by both deployment methods
   backend_env = merge({
     REQUESTS_CA_BUNDLE : "/etc/ssl/certs/ca-certificates.crt"
@@ -167,17 +160,6 @@ resource "cloudfoundry_app" "backend" {
   # app_lifecycle = var.backend_deployment_method
   # strategy = "rolling"
   stack = "cflinuxfs4"
-
-  lifecycle {
-    precondition {
-      condition     = local.oidc_valid
-      error_message = "When backend_oidc_client_id is provided, backend_oidc_client_secret and backend_oidc_server_url must also be provided."
-    }
-    precondition {
-      condition     = var.backend_deployment_method != "buildpack" || (var.backend_zip_path != null && var.backend_zip_path != "")
-      error_message = "backend_zip_path must be provided when backend_deployment_method is 'buildpack'. Run build-for-cloudfoundry.sh first to produce the zip."
-    }
-  }
 
   # Conditional properties based on deployment method
   buildpacks = var.backend_deployment_method == "buildpack" ? ["python_buildpack"] : null

@@ -79,6 +79,11 @@ variable "backend_zip_path" {
   description = "Path to a pre-built zip file for buildpack deployment. Required when backend_deployment_method = 'buildpack'. Produce this with build-for-cloudfoundry.sh."
   type        = string
   default     = null
+
+  validation {
+    condition     = var.backend_deployment_method != "buildpack" || (var.backend_zip_path != null && var.backend_zip_path != "")
+    error_message = "backend_zip_path is required when backend_deployment_method is 'buildpack'. Run build-for-cloudfoundry.sh first."
+  }
 }
 
 variable "backend_imageref" {
@@ -212,12 +217,22 @@ variable "backend_oidc_client_secret" {
   type        = string
   sensitive   = true
   default     = null
+
+  validation {
+    condition     = var.backend_oidc_client_id == null || var.backend_oidc_client_secret != null
+    error_message = "backend_oidc_client_secret is required when backend_oidc_client_id is provided."
+  }
 }
 
 variable "backend_oidc_server_url" {
   description = "Optional OIDC server URL for external authentication provider. Required if backend_oidc_client_id is provided."
   type        = string
   default     = null
+
+  validation {
+    condition     = var.backend_oidc_client_id == null || var.backend_oidc_server_url != null
+    error_message = "backend_oidc_server_url is required when backend_oidc_client_id is provided."
+  }
 }
 
 variable "backend_oidc_additional_valid_client_ids" {
