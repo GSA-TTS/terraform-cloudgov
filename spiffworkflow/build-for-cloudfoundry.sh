@@ -53,26 +53,16 @@ fatal() { FAILURE_REASON="$1"; echo "ERROR: $1" >&2; exit 1; }
 #   scripts_path        - (optional) Path to supplemental scripts directory
 
 
-# Cross-platform sed function that works on both BSD (macOS) and GNU (Linux) sed
-safe_sed() {
-  # Pattern is $1, file is $2
-  # Create a temporary file to test sed behavior
-  local temp_file
-  temp_file=$(mktemp)
-  echo "test" > "$temp_file"
-  
-  # Try BSD-style sed (macOS) first with empty string
-  if sed -i '' 's/test/TEST/' "$temp_file" 2>/dev/null && grep -q "TEST" "$temp_file"; then
-    # BSD sed detected, use it with empty string
-    sed -i '' "$1" "$2"
-  else
-    # GNU sed or other variant, try without empty string
-    sed -i "$1" "$2"
-  fi
-  
-  # Clean up temp file
-  rm -f "$temp_file"
-}
+# Cross-platform sed -i that works on both BSD (macOS) and GNU (Linux).
+# Detect once at startup; then safe_sed simply calls sed with the right flags.
+_sed_test_file=$(mktemp)
+echo "test" > "$_sed_test_file"
+if sed -i '' 's/test/TEST/' "$_sed_test_file" 2>/dev/null && grep -q "TEST" "$_sed_test_file"; then
+  safe_sed() { sed -i '' "$1" "$2"; }
+else
+  safe_sed() { sed -i "$1" "$2"; }
+fi
+rm -f "$_sed_test_file"
 
 # Required parameters
 if [ $# -lt 3 ] || [ $# -gt 5 ]; then
