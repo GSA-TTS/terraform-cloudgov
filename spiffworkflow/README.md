@@ -183,27 +183,82 @@ module "spiffworkflow" {
 
 ## Inputs
 
+### General
+
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | cf_org_name | cloud.gov organization name | `string` | n/a | yes |
 | cf_space_name | cloud.gov space in which to deploy the apps | `string` | n/a | yes |
-| backend_deployment_method | Method to deploy the backend: 'buildpack' for Python buildpack or 'container' for a container image | `string` | `"container"` | no |
-| backend_imageref | Container image reference for the backend when using container deployment | `string` | `"ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-backend:latest"` | no |
-| backend_gitref | Git reference for the SpiffWorkflow repository when using buildpack deployment | `string` | `"v1.0.0"` | no |
-| backend_process_models_path | Path to local process models when using buildpack deployment | `string` | `"process_models"` | no |
-| backend_scripts_path | (Buildpack backend only) Path to supplemental backend scripts (init process, profile hooks). Ignored for container deployment. | `string` | `""` | yes (buildpack) |
-| backend_database_service_instance | Name of the Postgres service instance to bind to the backend | `string` | n/a | yes |
-| backend_database_params | JSON parameter string for the database service binding | `string` | `""` | no |
-| backend_python_version | Python version to use for the backend when using buildpack deployment | `string` | `"python-3.12.x"` | no |
-| backend_additional_service_bindings | Map of additional service instance names to JSON parameter strings for optional service bindings | `map(string)` | `{}` | no |
-| backend_oidc_client_id | Optional OIDC client ID for external authentication provider | `string` | `null` | no |
-| backend_oidc_client_secret | Optional OIDC client secret for external authentication provider | `string` | `null` | no |
-| backend_oidc_server_url | Optional OIDC server URL for external authentication provider | `string` | `null` | no |
-| backend_oidc_additional_valid_client_ids | Optional comma-separated list of additional valid client IDs | `string` | `null` | no |
-| backend_oidc_additional_valid_issuers | Optional comma-separated list of additional valid issuers | `string` | `null` | no |
-| backend_oidc_authentication_providers | Optional authentication providers configuration | `string` | `null` | no |
+| name | Prefix for app names and route hostnames. Must be DNS-compatible, 3–53 chars. Auto-generated if omitted. | `string` | `null` | no |
+| tags | Tags to add to the module's resources | `set(string)` | `[]` | no |
+| https_proxy | Full URL of the HTTPS egress proxy (e.g. from the `egress_proxy` module) | `string` | `""` | no |
 
-See [variables.tf](./variables.tf) for all available options.
+### Git Sync (saving / publishing)
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| process_models_repository | Git repository with process models (use SSH-style `git@github.com:…`) | `string` | `""` | no |
+| process_models_ssh_key | Private SSH key with read/write access to the repository | `string` | `""` | no |
+| source_branch_for_example_models | Branch for reading process models | `string` | `"main"` | no |
+| target_branch_for_saving_changes | Branch for publishing process model changes | `string` | `"draft"` | no |
+
+### Backend
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| backend_deployment_method | `"buildpack"` or `"container"` | `string` | `"container"` | no |
+| backend_imageref | Container image reference (container deployment) | `string` | `"ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-backend:latest"` | no |
+| backend_zip_path | Path to the pre-built zip produced by `build-for-cloudfoundry.sh` (buildpack deployment) | `string` | `null` | yes (buildpack) |
+| backend_bootstrap_process_model | Init BPMN process model identifier to run at startup (empty to disable) | `string` | `""` | no |
+| backend_database_service_instance | Postgres service instance name to bind to the backend | `string` | n/a | yes |
+| backend_database_params | JSON parameters for the database service binding | `string` | `""` | no |
+| backend_queue_service_instance | Redis service instance name for background task queue (empty to disable) | `string` | `""` | no |
+| backend_queue_service_params | JSON parameters for the queue service binding | `string` | `""` | no |
+| backend_web_instances | Number of backend web instances | `number` | `1` | no |
+| backend_web_memory | Memory for each backend web instance | `string` | `"512M"` | no |
+| backend_web_disk | Disk quota for each backend web instance | `string` | `"1024M"` | no |
+| backend_worker_instances | Number of backend worker instances (must be ≥ 1 if queue is set) | `number` | `0` | no |
+| backend_worker_memory | Memory for each backend worker instance | `string` | `"1024M"` | no |
+| backend_worker_disk | Disk quota for each backend worker instance | `string` | `"1024M"` | no |
+| backend_scheduler_memory | Memory for the backend scheduler instance | `string` | `"512M"` | no |
+| backend_scheduler_disk | Disk quota for the backend scheduler instance | `string` | `"1024M"` | no |
+| backend_environment | Additional environment variables for the backend app | `map(string)` | `{}` | no |
+| backend_additional_service_bindings | Map of additional service instance names → JSON parameter strings | `map(string)` | `{}` | no |
+
+### Backend OIDC
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| backend_oidc_client_id | OIDC client ID for an external auth provider. Omit to use the built-in provider. | `string` | `null` | no |
+| backend_oidc_client_secret | OIDC client secret (required when `backend_oidc_client_id` is set) | `string` | `null` | conditional |
+| backend_oidc_server_url | OIDC server URL (required when `backend_oidc_client_id` is set) | `string` | `null` | conditional |
+| backend_oidc_scope | OAuth scopes | `string` | `"openid"` | no |
+| backend_oidc_authentication_providers | Authentication providers config (e.g. `"default:openid"`) | `string` | `null` | no |
+| backend_oidc_additional_valid_client_ids | Comma-separated additional valid client IDs | `string` | `null` | no |
+| backend_oidc_additional_valid_issuers | Comma-separated additional valid issuers | `string` | `null` | no |
+
+### Connector
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| connector_deployment_method | `"buildpack"` or `"container"` | `string` | `"container"` | no |
+| connector_imageref | Container image reference (container deployment) | `string` | `"ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-connector:latest"` | no |
+| connector_local_path | Path to local connector source (buildpack deployment) | `string` | `"service-connector"` | yes (buildpack) |
+| connector_python_version | Python version for the connector buildpack | `string` | `"python-3.12.x"` | no |
+| connector_instances | Number of connector instances | `number` | `1` | no |
+| connector_memory | Memory for the connector app | `string` | `"128M"` | no |
+| connector_disk | Disk quota for the connector app | `string` | `"3G"` | no |
+| connector_additional_service_bindings | Map of additional service instance names → JSON parameter strings | `map(string)` | `{}` | no |
+
+### Frontend
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| frontend_imageref | Container image reference for the frontend | `string` | `"ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-frontend:latest"` | no |
+| frontend_instances | Number of frontend instances | `number` | `1` | no |
+| frontend_memory | Memory for the frontend app | `string` | `"256M"` | no |
+| frontend_task_metadata | Variable path for human task metadata extraction | `string` | `""` | no |
+| frontend_url_override | Custom domain override (e.g. `my-domain.gov` instead of `*.app.cloud.gov`) | `string` | `""` | no |
 
 ## Outputs
 
