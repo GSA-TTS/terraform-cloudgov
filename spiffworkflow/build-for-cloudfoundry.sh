@@ -25,29 +25,32 @@ trap cleanup_on_error ERR
 
 fatal() { FAILURE_REASON="$1"; echo "ERROR: $1" >&2; exit 1; }
 
-# This script prepares the content for the SpiffWorkflow backend application
-# It is used only for buildpack-based deployment (backend_deployment_method = "buildpack")
+# This script prepares a deployment zip for the SpiffWorkflow backend application
+# for buildpack-based deployment on Cloud Foundry (cloud.gov).
 # 
 # It handles:
-# - Downloading the source code from GitHub at the specified reference (backend_gitref)
-# - Copying process models from the local directory (backend_process_models_path)
+# - Downloading the source code from GitHub at the specified reference
+# - Copying process models from a local directory
 # - Generating requirements.txt using uv
+# - Optionally including supplemental scripts (init process, profile hooks)
 # - Adding files and configuration necessary for the Python buildpack
 #
-# USAGE EXAMPLES:
+# This script should be run BEFORE terraform plan/apply. The resulting zip is
+# passed to the Terraform module via the backend_zip_path variable.
 #
-#   ./build-backend.sh <path_root> <backend_gitref> <backend_process_models_path> <backend_python_version> <package_path>
+# USAGE:
+#
+#   ./build-for-cloudfoundry.sh <output_zip> <backend_gitref> <process_models_path> [python_version] [scripts_path]
 #
 # Example:
-#   ./build-backend.sh /Users/you/project v1.0.0 /Users/you/project/process_models python-3.12.x /Users/you/project/dist/spiffarena-backend.zip
+#   ./build-for-cloudfoundry.sh /tmp/backend.zip github.com/sartography/spiff-arena?ref=v1.1.5 ./process_models python-3.12.x ./scripts
 #
-#   - <path_root>:                The root directory of your project (e.g., /Users/you/project)
-#   - <backend_gitref>:           The git tag, branch, or commit to fetch from the upstream repo (e.g., v1.0.0)
-#   - <backend_process_models_path>: Path to your local process_models directory (e.g., /Users/you/project/process_models)
-#   - <backend_python_version>:   Python version string for buildpack (e.g., python-3.12.x)
-#   - <package_path>:             Output path for the generated zip file (e.g., /Users/you/project/dist/spiffarena-backend.zip)
-#
-# This script is typically invoked by Terraform, but you can run it manually for debugging or local packaging.
+# Arguments:
+#   output_zip          - Output path for the generated zip file
+#   backend_gitref      - Source URL in URL?ref=REF format (e.g. github.com/org/repo?ref=COMMIT)
+#   process_models_path - Path to local process_models directory
+#   python_version      - (optional) Python version string for buildpack (default: python-3.12.x)
+#   scripts_path        - (optional) Path to supplemental scripts directory
 
 
 # Cross-platform sed function that works on both BSD (macOS) and GNU (Linux) sed
@@ -72,37 +75,29 @@ safe_sed() {
 }
 
 # Required parameters
-if [ $# -lt 6 ]; then
-  fatal "Usage: $0 <path_root> <backend_gitref> <backend_process_models_path> <backend_python_version> <package_path> <backend_scripts_path>"
+if [ $# -lt 3 ] || [ $# -gt 5 ]; then
+  fatal "Usage: $0 <output_zip> <backend_gitref> <process_models_path> [python_version] [scripts_path]"
 fi
 
 # Parse arguments
-PATH_ROOT="$1"
-# Second argument now may be a composite like: github.com/sartography/spiff-arena?ref=v1.1.2
+PACKAGE_PATH="$1"
+# Second argument may be a composite like: github.com/sartography/spiff-arena?ref=v1.1.2
 # or it may still be a simple ref (legacy usage). We derive GIT_URL and GIT_REF.
 RAW_GIT_SPEC="$2"
 PROCESS_MODELS_PATH="$3"
-PYTHON_VERSION="$4"
-PACKAGE_PATH="$5"
-BACKEND_SCRIPTS_PATH="$6"
+PYTHON_VERSION="${4:-python-3.10.x}"
+BACKEND_SCRIPTS_PATH="${5:-}"
 
-echo "Using scripts path: ${BACKEND_SCRIPTS_PATH}"
-
-if [ ! -d "${BACKEND_SCRIPTS_PATH}" ]; then
-  fatal "backend_scripts_path does not exist or is not a directory: ${BACKEND_SCRIPTS_PATH}"
-fi
+# Resolve PACKAGE_PATH to absolute so we can cd later without losing it
+PACKAGE_PATH="$(cd "$(dirname "$PACKAGE_PATH")" 2>/dev/null && pwd)/$(basename "$PACKAGE_PATH")" || fatal "Cannot resolve output path: $1"
 
 # Derive GIT_URL and GIT_REF from RAW_GIT_SPEC
-# Accept inputs with or without scheme (http/https). Default to https.
-if [[ "$RAW_GIT_SPEC" == *"?ref="* ]]; then
-  # Split on ?ref=
-  BASE_PART="${RAW_GIT_SPEC%%\?ref=*}"
-  REF_PART="${RAW_GIT_SPEC##*?ref=}"  # everything after last ?ref=
-else
-  # Legacy: argument itself is the ref; use default repo
-  BASE_PART="github.com/sartography/spiff-arena"
-  REF_PART="$RAW_GIT_SPEC"
+# Requires URL?ref=REF format. Accept with or without https:// scheme.
+if [[ "$RAW_GIT_SPEC" != *"?ref="* ]]; then
+  fatal "backend_gitref must be in URL?ref=REF format (e.g. github.com/org/repo?ref=COMMIT), got: $RAW_GIT_SPEC"
 fi
+BASE_PART="${RAW_GIT_SPEC%%\?ref=*}"
+REF_PART="${RAW_GIT_SPEC##*?ref=}"  # everything after last ?ref=
 
 # Normalize scheme
 if [[ "$BASE_PART" =~ ^https?:// ]]; then
@@ -118,29 +113,19 @@ GIT_REF="$REF_PART"
 
 [[ -z "$GIT_REF" ]] && fatal "Could not determine GIT_REF from backend_gitref argument: $RAW_GIT_SPEC"
 
-echo "Build trigger..."
-echo "Build script starting with parameters:"
-echo "  PATH_ROOT: $PATH_ROOT"
-echo "  backend_gitref (raw): $RAW_GIT_SPEC"
-echo "  GIT_URL: $GIT_URL"
-echo "  GIT_REF: $GIT_REF"
-echo "  PROCESS_MODELS_PATH: $PROCESS_MODELS_PATH"
-echo "  PYTHON_VERSION: $PYTHON_VERSION"
-echo "  PACKAGE_PATH: $PACKAGE_PATH"
-echo "  BACKEND_SCRIPTS_PATH: ${BACKEND_SCRIPTS_PATH}"
-echo "  Current working directory: $(pwd)"
-
-# Remove any existing zip file to ensure we create a fresh one
-if [ -f "$PACKAGE_PATH" ]; then
-  echo "Removing existing zip file: $PACKAGE_PATH"
-  rm -f "$PACKAGE_PATH"
-fi
-
-# Validate inputs
+# ---------------------------------------------------------------------------
+# Validate all local inputs and tools before downloading anything
+# ---------------------------------------------------------------------------
 echo "Validating inputs..."
 
+if [ -n "${BACKEND_SCRIPTS_PATH}" ]; then
+  echo "Using scripts path: ${BACKEND_SCRIPTS_PATH}"
+  if [ ! -d "${BACKEND_SCRIPTS_PATH}" ]; then
+    fatal "scripts_path does not exist or is not a directory: ${BACKEND_SCRIPTS_PATH}"
+  fi
+fi
+
 # Check if process models directory exists and is accessible
-echo "Checking if process models directory exists:"
 if [ ! -d "$PROCESS_MODELS_PATH" ]; then
   fatal "Process models path does not exist: $PROCESS_MODELS_PATH (abs: $(readlink -f "$PROCESS_MODELS_PATH" 2>/dev/null || echo "Path resolution failed"))"
 fi
@@ -149,95 +134,54 @@ fi
 
 echo "✓ Process models directory validated: $PROCESS_MODELS_PATH"
 
-# Validate other required tools
+# Validate required tools
 echo "Checking required tools..."
 
 # Check for git (required, no auto-install - should be in all CI/CD environments)
 if ! command -v git >/dev/null 2>&1; then
-  echo "ERROR: Required tool 'git' is not installed or not in PATH"
-  exit 1
+  fatal "Required tool 'git' is not installed or not in PATH"
 fi
 echo "✓ Found git"
 
-# Check for zip and auto-install if missing
+# Check for zip
 if ! command -v zip >/dev/null 2>&1; then
-  echo "⚠ zip not found, attempting to install..."
-  
-  # Detect OS and install zip accordingly
-  if [ -f /etc/debian_version ]; then
-    # Debian/Ubuntu
-    echo "Installing zip via apt..."
-    apt-get update && apt-get install -y zip
-  elif [ -f /etc/redhat-release ]; then
-    # RHEL/CentOS/Fedora
-    echo "Installing zip via yum/dnf..."
-    if command -v dnf >/dev/null 2>&1; then
-      dnf install -y zip
-    else
-      yum install -y zip
-    fi
-  elif [ "$(uname)" = "Darwin" ]; then
-    # macOS
-    echo "Installing zip via Homebrew..."
-    if command -v brew >/dev/null 2>&1; then
-      brew install zip
-    else
-      echo "ERROR: Homebrew not found. Please install zip manually: brew install zip"
-      exit 1
-    fi
-  else
-    echo "ERROR: Unable to determine package manager for auto-installing zip"
-    echo "Please install zip manually for your system"
-    exit 1
-  fi
-  
-  # Verify installation succeeded
-  if ! command -v zip >/dev/null 2>&1; then
-    echo "ERROR: Failed to install zip automatically"
-    echo "Please install zip manually for your system"
-    exit 1
-  fi
-  
-  echo "✓ zip installed successfully"
-else
-  echo "✓ Found zip"
+  fatal "Required tool 'zip' is not installed or not in PATH"
 fi
+echo "✓ Found zip"
 
-# Check for uv and auto-install if missing
+# Check for uv
 if ! command -v uv >/dev/null 2>&1; then
-  echo "⚠ UV not found, attempting to install..."
-  
-    # Fall back to curl installation
-    echo "Installing UV via curl..."
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-    
-    # Add cargo bin to PATH
-    if [ -d "$HOME/.cargo/bin" ]; then
-      export PATH="$HOME/.cargo/bin:$PATH"
-    fi
-  
-  # source install path
-  source $HOME/.local/bin/env  
-  
-  # Verify installation succeeded
-  if ! command -v uv >/dev/null 2>&1; then
-    echo "ERROR: Failed to install UV automatically"
-    echo "Please install UV manually using one of these methods:"
-    echo "  1. pip install uv"
-    echo "  2. curl -LsSf https://astral.sh/uv/install.sh | sh"
-    echo "  3. Visit https://docs.astral.sh/uv/getting-started/installation/"
-    exit 1
-  fi
-  
-  echo "✓ UV installed successfully"
-else
-  echo "✓ Found uv"
+  fatal "Required tool 'uv' is not installed or not in PATH. Install from: https://docs.astral.sh/uv/getting-started/installation/"
+fi
+echo "✓ Found uv"
+
+# ---------------------------------------------------------------------------
+# Local validation passed — set up working directory and begin build
+# ---------------------------------------------------------------------------
+
+# Use a temporary working directory to avoid polluting the caller's tree
+WORK_DIR="$(mktemp -d)"
+trap 'rm -rf "$WORK_DIR"' EXIT
+
+echo "Build script starting with parameters:"
+echo "  backend_gitref (raw): $RAW_GIT_SPEC"
+echo "  GIT_URL: $GIT_URL"
+echo "  GIT_REF: $GIT_REF"
+echo "  PROCESS_MODELS_PATH: $PROCESS_MODELS_PATH"
+echo "  PYTHON_VERSION: $PYTHON_VERSION"
+echo "  PACKAGE_PATH: $PACKAGE_PATH"
+echo "  BACKEND_SCRIPTS_PATH: ${BACKEND_SCRIPTS_PATH:-<none>}"
+echo "  WORK_DIR: $WORK_DIR"
+
+# Remove any existing zip file to ensure we create a fresh one
+if [ -f "$PACKAGE_PATH" ]; then
+  echo "Removing existing zip file: $PACKAGE_PATH"
+  rm -f "$PACKAGE_PATH"
 fi
 
-# Set up standard directories
-DIST_DIR="${PATH_ROOT}/dist/spiffworkflow"
-DOWNLOAD_DIR="${DIST_DIR}/temp-spiff-arena"
-BACKEND_DIR="${DIST_DIR}/backend"
+# Set up standard directories inside the temp working directory
+DOWNLOAD_DIR="${WORK_DIR}/download"
+BACKEND_DIR="${WORK_DIR}/backend"
 PROCESS_MODELS_DEST="${BACKEND_DIR}/process_models"
 
 # Include git_ref in the zip filename to identify the version
@@ -245,34 +189,15 @@ SAFE_GIT_REF=$(echo "${GIT_REF}" | tr '/' '_')
 DOWNLOAD_ZIP="${DOWNLOAD_DIR}/spiff-arena-${SAFE_GIT_REF}.zip"
 
 echo "Preparing SpiffWorkflow backend content..."
-echo "Project root: ${PATH_ROOT}"
-echo "Distribution directory: ${DIST_DIR}"
 echo "Backend directory: ${BACKEND_DIR}"
 echo "Package path: ${PACKAGE_PATH}"
-echo "Expected package directory: $(dirname "$PACKAGE_PATH")"
-
-# Verify the directories match expectations
-if [ "$(dirname "$PACKAGE_PATH")" != "$DIST_DIR" ]; then
-  echo "WARNING: Package path directory doesn't match DIST_DIR"
-  echo "  DIST_DIR: $DIST_DIR" 
-  echo "  Package directory: $(dirname "$PACKAGE_PATH")"
-fi
 echo "Git reference: ${GIT_REF}"
 echo "Process models path: ${PROCESS_MODELS_PATH}"
 echo "Python version: ${PYTHON_VERSION}"
 
-# Create the dist directory if it doesn't exist
-mkdir -p "${DIST_DIR}"
+# Create directories
 mkdir -p "${DOWNLOAD_DIR}"
 mkdir -p "${BACKEND_DIR}"
-
-echo "Created directories: ${DIST_DIR} and ${DOWNLOAD_DIR}"
-
-# Cleanup any existing backend directory from previous runs
-if [ -d "${BACKEND_DIR}" ]; then
-  echo "Removing existing backend directory..."
-  rm -rf "${BACKEND_DIR}"
-fi
 
 # Download the source code directly as a ZIP file if it doesn't exist
 if [ -f "${DOWNLOAD_ZIP}" ]; then
@@ -356,18 +281,36 @@ echo "Removing any .bpmn.png files from process models directory..."
 find "${PROCESS_MODELS_DEST}" -type f -name "*.bpmn.png" -delete
 
 # ----------------------------------------------------------------------------
+# Create the .profile.d init script that ensures the bootstrap process model
+# env var is only active on the first app instance (index 0).
+# ----------------------------------------------------------------------------
+mkdir -p "${BACKEND_DIR}/.profile.d"
+cat > "${BACKEND_DIR}/.profile.d/10-init-process.sh" << 'INITEOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Ensure base .profile is sourced (not automatically sourced before profile.d scripts!)
+if [ -f /home/vcap/app/.profile ]; then
+  # shellcheck disable=SC1091
+  source /home/vcap/app/.profile || true
+fi
+
+if [[ "${CF_INSTANCE_INDEX:-0}" != "0" ]]; then
+  echo "Skipping bootstrap process for app at index ${CF_INSTANCE_INDEX} by unsetting env variable SPIFFWORKFLOW_BACKEND_BOOTSTRAP_PROCESS_MODEL"
+  unset SPIFFWORKFLOW_BACKEND_BOOTSTRAP_PROCESS_MODEL
+  return 0 2>/dev/null || exit 0
+fi
+INITEOF
+chmod +x "${BACKEND_DIR}/.profile.d/10-init-process.sh"
+echo "✓ Created .profile.d/10-init-process.sh"
+
+# ----------------------------------------------------------------------------
 # Include content of custom scripts directory (eg profile hooks)
 # Note these are copied relative to the root of the application!
 # ----------------------------------------------------------------------------
 if [ -n "${BACKEND_SCRIPTS_PATH}" ] && [ -d "${BACKEND_SCRIPTS_PATH}" ]; then
   echo "Including custom scripts from ${BACKEND_SCRIPTS_PATH} ..."
   cp -R "${BACKEND_SCRIPTS_PATH}/." "${BACKEND_DIR}/"
-  if ls "${BACKEND_DIR}/.profile.d"/*.sh >/dev/null 2>&1; then
-    echo "Found profile hook scripts:"
-    ls -1 "${BACKEND_DIR}/.profile.d"/*.sh || true
-  else
-    echo "No .profile.d hook scripts found in scripts directory (optional)."
-  fi
 else
   echo "Scripts path not present or not a directory: ${BACKEND_SCRIPTS_PATH} (skipping script vendoring)"
 fi
@@ -375,14 +318,6 @@ fi
 # Generate requirements.txt from uv.lock
 echo "Generating requirements.txt from uv files..."
 if [ -f "${BACKEND_DIR}/uv.lock" ] && [ -f "${BACKEND_DIR}/pyproject.toml" ]; then
-  # Ensure uv is installed
-  if ! command -v uv &> /dev/null; then
-    echo "ERROR: uv is required but not installed"
-    echo "Please install uv using one of the methods documented here:"
-    echo "https://docs.astral.sh/uv/getting-started/installation/"
-    exit 1
-  fi
-  
   # Use uv to export requirements
   echo "Using uv to generate requirements.txt..."
   (cd "${BACKEND_DIR}" && uv pip compile --output-file requirements.txt pyproject.toml > /dev/null 2>&1) || fatal "uv pip compile failed"
@@ -400,11 +335,10 @@ else
 fi
 
 # Add a Procfile for the Python buildpack, which requires that one exist
-# However, we're specifying the start commands in the cloudfoundry_app processes attributes
 if [ ! -f "${BACKEND_DIR}/Procfile" ]; then
   echo "Creating Procfile for Python buildpack..."
   cat > "${BACKEND_DIR}/Procfile" << EOF
-web: specify-the-command-in-the-processes-attribute
+web: ./bin/boot_server_in_docker
 EOF
   if [ ! -f "${BACKEND_DIR}/Procfile" ]; then
     echo "ERROR: Failed to create Procfile"
@@ -512,7 +446,7 @@ echo "✓ Created .profile"
 # Final validation - ensure all critical files were created
 echo "Performing final validation of build artifacts..."
 missing_files=""
-for required_file in "Procfile" "requirements.txt" "bin/boot_server_in_docker" ".profile" "runtime.txt"; do
+for required_file in "Procfile" "requirements.txt" "bin/boot_server_in_docker" ".profile" "runtime.txt" ".profile.d/10-init-process.sh"; do
   if [ ! -f "${BACKEND_DIR}/$required_file" ]; then
     echo "ERROR: Required file $required_file is missing from ${BACKEND_DIR}" >&2
     missing_files="$missing_files $required_file"
@@ -538,28 +472,13 @@ echo "Creating deployment zip file: $PACKAGE_PATH"
 # Verify the backend directory exists and has content
 [ -d "$BACKEND_DIR" ] || fatal "Backend directory does not exist: $BACKEND_DIR"
 
-
-echo "Checking for required files in backend directory:"
-for required_file in "Procfile" "requirements.txt" "bin/boot_server_in_docker" ".profile" "runtime.txt"; do
-  if [ -f "$BACKEND_DIR/$required_file" ]; then
-    echo "✓ Found $required_file in backend directory"
-  else
-    echo "✗ Missing $required_file in backend directory"
-  fi
-done
-
 # Create the output directory if it doesn't exist
 echo "Creating output directory: $(dirname "$PACKAGE_PATH")"
 mkdir -p "$(dirname "$PACKAGE_PATH")"
 
-# Create the zip file
-# Ensure the zip file is created outside the backend directory to avoid recursion and path issues
-[[ "$PACKAGE_PATH" == "$BACKEND_DIR"* ]] && fatal "PACKAGE_PATH ($PACKAGE_PATH) must not be inside BACKEND_DIR ($BACKEND_DIR)"
-
-# shellcheck disable=SC2164
-PACKAGE_BASENAME="$(basename "$PACKAGE_PATH")"
-echo "Zipping backend contents to parent directory as $PACKAGE_BASENAME ..."
-(cd "$BACKEND_DIR" && zip -rq "../$PACKAGE_BASENAME" .)
+# Create the zip file from the backend directory contents
+echo "Zipping backend contents to $PACKAGE_PATH ..."
+(cd "$BACKEND_DIR" && zip -rq "$PACKAGE_PATH" .)
 
 # Verify the zip file was created successfully
 [ -f "$PACKAGE_PATH" ] || fatal "Zip file $PACKAGE_PATH was not created"
@@ -567,31 +486,5 @@ echo "Zipping backend contents to parent directory as $PACKAGE_BASENAME ..."
 # Check zip file integrity
 zip -T "$PACKAGE_PATH" >/dev/null 2>&1 || fatal "Created zip file $PACKAGE_PATH failed integrity test"
 
-echo "Successfully created $PACKAGE_PATH with size: $(du -h "$PACKAGE_PATH" | cut -f1)"
-
-# Verify the zip contains the critical files
-# Use unzip -Z1 to get normalized file paths (no sed)
-critical_files=("Procfile" "requirements.txt" "bin/boot_server_in_docker" ".profile" "runtime.txt")
-missing_count=0
-
-zip_file_list=$(unzip -Z1 "$PACKAGE_PATH")
-
-for required_file in "${critical_files[@]}"; do
-  echo "Checking for: $required_file"
-  # Show the grep command and result
-  match=$(echo "$zip_file_list" | grep -E "/$required_file$|^$required_file$")
-  if [ -n "$match" ]; then
-    echo "✓ Found: $required_file as: $match"
-  else
-    echo "✗ Missing: $required_file (no match for /$required_file$ or ^$required_file$)" >&2
-    ((missing_count++))
-  fi
-done
-
-if [ $missing_count -gt 0 ]; then
-  rm -f "$PACKAGE_PATH" || true
-  fatal "$missing_count critical files missing from zip"
-fi
-
-echo "✓ Zip file validation completed successfully"
+echo "✓ Successfully created $PACKAGE_PATH with size: $(du -h "$PACKAGE_PATH" | cut -f1)"
 echo "Build preparation complete!"

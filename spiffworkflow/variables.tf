@@ -78,10 +78,10 @@ variable "backend_deployment_method" {
   }
 }
 
-variable "backend_gitref" {
-  description = "Git reference (branch, tag, or commit hash) for the upstream spiffworkflow-backend source. Only used when backend_deployment_method = 'buildpack'."
+variable "backend_zip_path" {
+  description = "Path to a pre-built zip file for buildpack deployment. Required when backend_deployment_method = 'buildpack'. Produce this with build-for-cloudfoundry.sh."
   type        = string
-  default     = "github.com/sartography/spiff-arena?ref=v1.1.5"
+  default     = null
 }
 
 variable "backend_imageref" {
@@ -90,39 +90,10 @@ variable "backend_imageref" {
   default     = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-backend:latest"
 }
 
-variable "backend_process_models_path" {
-  description = "Path to the local process_models directory to include in the backend. Only used when backend_deployment_method = 'buildpack'."
-  type        = string
-  default     = "process_models"
-
-  validation {
-    condition     = var.backend_process_models_path != "" || var.backend_deployment_method == "container"
-    error_message = "backend_process_models_path must be provided when using backend_deployment_method = 'buildpack'."
-  }
-}
-
 variable "backend_bootstrap_process_model" {
   description = "Initialization BPMN process model identifier to run once at startup (empty to disable)."
   type        = string
   default     = ""
-}
-
-variable "backend_scripts_path" {
-  description = "Path to a directory of supplemental backend scripts. Ignored for container deployment."
-  type        = string
-  default     = ""
-}
-
-variable "backend_build_id" {
-  description = "Optional identifier (for example, a CI run id) that forces a backend package rebuild when it changes."
-  type        = string
-  default     = ""
-}
-
-variable "backend_python_version" {
-  description = "Python version to use for the backend when using buildpack deployment"
-  type        = string
-  default     = "python-3.12.x"
 }
 
 variable "backend_web_disk" {
