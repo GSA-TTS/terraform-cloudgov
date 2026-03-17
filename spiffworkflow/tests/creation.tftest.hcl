@@ -87,6 +87,56 @@ run "test_spiff_instances" {
     condition     = cloudfoundry_app.backend.health_check_http_endpoint == var.health_check_endpoint
     error_message = "Health check endpoint must match backend health check endpoint"
   }
+
+  # Network policy: backend → connector on port 61443
+  assert {
+    condition     = cloudfoundry_network_policy.connector-network-policy.policies[0].port == "61443"
+    error_message = "Network policy must use port 61443 for backend→connector communication"
+  }
+  assert {
+    condition     = cloudfoundry_network_policy.connector-network-policy.policies[0].source_app == cloudfoundry_app.backend.id
+    error_message = "Network policy source must be the backend app"
+  }
+  assert {
+    condition     = cloudfoundry_network_policy.connector-network-policy.policies[0].destination_app == cloudfoundry_app.connector.id
+    error_message = "Network policy destination must be the connector app"
+  }
+
+  # Backend environment wiring
+  assert {
+    condition     = cloudfoundry_app.backend.environment["SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL"] == local.connector_url
+    error_message = "Backend must point to the connector URL"
+  }
+  assert {
+    condition     = cloudfoundry_app.backend.environment["SPIFFWORKFLOW_BACKEND_URL"] == local.backend_url
+    error_message = "Backend must know its own URL"
+  }
+  assert {
+    condition     = cloudfoundry_app.backend.environment["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"] == local.frontend_url
+    error_message = "Backend must know the frontend URL"
+  }
+
+  # Database service binding is always first
+  assert {
+    condition     = cloudfoundry_app.backend.service_bindings[0].service_instance == var.backend_database_service_instance
+    error_message = "First service binding must be the database"
+  }
+
+  # Internal OIDC defaults when no external provider configured
+  assert {
+    condition     = endswith(cloudfoundry_app.backend.environment["SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL"], "/openid")
+    error_message = "Internal OIDC should use the backend's own /openid endpoint"
+  }
+  assert {
+    condition     = cloudfoundry_app.backend.environment["SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID"] == "spiffworkflow-backend"
+    error_message = "Internal OIDC should use default client ID"
+  }
+
+  # Connector health check
+  assert {
+    condition     = cloudfoundry_app.connector.health_check_http_endpoint == "/liveness"
+    error_message = "Connector health check must use /liveness"
+  }
 }
 
 run "test_spiff_instances_with_space_object" {
