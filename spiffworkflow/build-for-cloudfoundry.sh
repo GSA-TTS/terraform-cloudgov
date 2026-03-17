@@ -196,21 +196,28 @@ else
   echo "Downloading source code (trying tag, branch, generic) for ref: ${GIT_REF}..."
   TMP_ZIP="${DOWNLOAD_ZIP}.tmp"
   rm -f "$TMP_ZIP"
-  set +e
-  curl -fsSL -o "$TMP_ZIP" "${GIT_URL}/archive/refs/tags/${GIT_REF}.zip" || \
-  curl -fsSL -o "$TMP_ZIP" "${GIT_URL}/archive/refs/heads/${GIT_REF}.zip" || \
-  curl -fsSL -o "$TMP_ZIP" "${GIT_URL}/archive/${GIT_REF}.zip"
-  CURL_RC=$?
-  set -e
-  if [ $CURL_RC -ne 0 ]; then
+
+  DOWNLOAD_URLS=(
+    "${GIT_URL}/archive/refs/tags/${GIT_REF}.zip"
+    "${GIT_URL}/archive/refs/heads/${GIT_REF}.zip"
+    "${GIT_URL}/archive/${GIT_REF}.zip"
+  )
+
+  DOWNLOADED=false
+  for url in "${DOWNLOAD_URLS[@]}"; do
+    if curl -fsSL -o "$TMP_ZIP" "$url" 2>/dev/null; then
+      DOWNLOADED=true
+      break
+    fi
+  done
+
+  if [ "$DOWNLOADED" = false ]; then
     echo "ERROR: Could not download a valid archive for ref '${GIT_REF}' from ${GIT_URL}" >&2
-    echo "Tried URLs:" >&2
-    echo "  ${GIT_URL}/archive/refs/tags/${GIT_REF}.zip" >&2
-    echo "  ${GIT_URL}/archive/refs/heads/${GIT_REF}.zip" >&2
-    echo "  ${GIT_URL}/archive/${GIT_REF}.zip" >&2
+    printf "  Tried: %s\n" "${DOWNLOAD_URLS[@]}" >&2
     rm -f "$TMP_ZIP" || true
     fatal "Could not download a valid archive for ref '${GIT_REF}' from ${GIT_URL}"
   fi
+
   # Ensure non-empty & valid zip
   if [ ! -s "$TMP_ZIP" ]; then
     rm -f "$TMP_ZIP"
