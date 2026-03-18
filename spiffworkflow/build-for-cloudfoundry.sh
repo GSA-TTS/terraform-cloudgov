@@ -32,7 +32,7 @@ fatal() { FAILURE_REASON="$1"; echo "ERROR: $1" >&2; exit 1; }
 # - Downloading the source code from GitHub at the specified reference
 # - Copying process models from a local directory
 # - Generating requirements.txt using uv
-# - Optionally including supplemental scripts (init process, profile hooks)
+# - Optionally including supplemental scripts
 # - Adding files and configuration necessary for the Python buildpack
 #
 # This script should be run BEFORE terraform plan/apply. The resulting zip is
@@ -71,8 +71,8 @@ fi
 
 # Parse arguments
 PACKAGE_PATH="$1"
-# Second argument may be a composite like: github.com/sartography/spiff-arena?ref=v1.1.2
-# or it may still be a simple ref (legacy usage). We derive GIT_URL and GIT_REF.
+# Second argument should be a composite like: github.com/sartography/spiff-arena?ref=v1.1.2
+# We derive GIT_URL and GIT_REF.
 RAW_GIT_SPEC="$2"
 PROCESS_MODELS_PATH="$3"
 PYTHON_VERSION="${4:-python-3.10.x}"
