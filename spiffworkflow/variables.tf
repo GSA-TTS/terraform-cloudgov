@@ -75,10 +75,15 @@ variable "backend_deployment_method" {
   }
 }
 
-variable "backend_gitref" {
-  description = "Git reference (branch, tag, or commit hash) for the upstream spiffworkflow-backend source. Only used when backend_deployment_method = 'buildpack'."
+variable "backend_zip_path" {
+  description = "Path to a pre-built zip file for buildpack deployment. Required when backend_deployment_method = 'buildpack'. Produce this with build-for-cloudfoundry.sh."
   type        = string
-  default     = "github.com/sartography/spiff-arena?ref=v1.1.5"
+  default     = null
+
+  validation {
+    condition     = var.backend_deployment_method != "buildpack" || (var.backend_zip_path != null && var.backend_zip_path != "")
+    error_message = "backend_zip_path is required when backend_deployment_method is 'buildpack'. Run build-for-cloudfoundry.sh first."
+  }
 }
 
 variable "backend_imageref" {
@@ -87,39 +92,10 @@ variable "backend_imageref" {
   default     = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-backend:latest"
 }
 
-variable "backend_process_models_path" {
-  description = "Path to the local process_models directory to include in the backend. Only used when backend_deployment_method = 'buildpack'."
-  type        = string
-  default     = "process_models"
-
-  validation {
-    condition     = var.backend_process_models_path != "" || var.backend_deployment_method == "container"
-    error_message = "backend_process_models_path must be provided when using backend_deployment_method = 'buildpack'."
-  }
-}
-
 variable "backend_bootstrap_process_model" {
   description = "Initialization BPMN process model identifier to run once at startup (empty to disable)."
   type        = string
   default     = ""
-}
-
-variable "backend_scripts_path" {
-  description = "Path to a directory of supplemental backend scripts. Ignored for container deployment."
-  type        = string
-  default     = ""
-}
-
-variable "backend_build_id" {
-  description = "Optional identifier (for example, a CI run id) that forces a backend package rebuild when it changes."
-  type        = string
-  default     = ""
-}
-
-variable "backend_python_version" {
-  description = "Python version to use for the backend when using buildpack deployment"
-  type        = string
-  default     = "python-3.12.x"
 }
 
 variable "backend_web_disk" {
@@ -156,10 +132,6 @@ variable "backend_worker_instances" {
   description = "Number of instances for the SpiffWorkflow backend worker app"
   type        = number
   default     = 0
-  validation {
-    condition     = var.backend_queue_service_instance == "" || (var.backend_worker_instances >= 1)
-    error_message = "If backend_queue_service_instance is set, backend_worker_instances must be at least 1."
-  }
 }
 
 variable "backend_scheduler_disk" {
@@ -195,6 +167,11 @@ variable "backend_queue_service_instance" {
   description = "Name of the message queue service instance to bind to the backend app. Currently only Redis is supported. Leave empty to disable queue functionality."
   type        = string
   default     = ""
+
+  validation {
+    condition     = var.backend_queue_service_instance == "" || var.backend_worker_instances >= 1
+    error_message = "backend_worker_instances must be at least 1 when backend_queue_service_instance is set."
+  }
 }
 
 variable "backend_queue_service_params" {
@@ -241,12 +218,22 @@ variable "backend_oidc_client_secret" {
   type        = string
   sensitive   = true
   default     = null
+
+  validation {
+    condition     = var.backend_oidc_client_id == null || var.backend_oidc_client_secret != null
+    error_message = "backend_oidc_client_secret is required when backend_oidc_client_id is provided."
+  }
 }
 
 variable "backend_oidc_server_url" {
   description = "Optional OIDC server URL for external authentication provider. Required if backend_oidc_client_id is provided."
   type        = string
   default     = null
+
+  validation {
+    condition     = var.backend_oidc_client_id == null || var.backend_oidc_server_url != null
+    error_message = "backend_oidc_server_url is required when backend_oidc_client_id is provided."
+  }
 }
 
 variable "backend_oidc_additional_valid_client_ids" {
