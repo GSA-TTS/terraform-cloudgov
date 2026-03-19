@@ -139,6 +139,26 @@ echo "✓ Required tools: git, zip, uv"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
+# Extract GitHub org/repo from the URL for API calls (e.g. https://github.com/org/repo -> org/repo)
+GITHUB_REPO_PATH=$(echo "$GIT_URL" | sed -n 's|https://github.com/||p')
+
+# Fetch the commit timestamp for reproducible builds (SOURCE_DATE_EPOCH pattern).
+# This ensures the zip hash is deterministic for a given GIT_REF while keeping
+# meaningful timestamps that reflect the actual source code version.
+if [ -n "$GITHUB_REPO_PATH" ]; then
+  echo "Fetching commit timestamp for ${GIT_REF}..."
+  COMMIT_DATE=$(curl -fsSL "https://api.github.com/repos/${GITHUB_REPO_PATH}/commits/${GIT_REF}" \
+    | python3 -c "import sys,json; print(json.load(sys.stdin)['commit']['committer']['date'])" 2>/dev/null) || true
+fi
+if [ -n "${COMMIT_DATE:-}" ]; then
+  # Convert ISO 8601 (2024-01-15T12:34:56Z) to touch format (YYYYMMDDhhmm.ss)
+  SOURCE_TOUCH_TS=$(python3 -c "from datetime import datetime; d=datetime.fromisoformat('${COMMIT_DATE}'.replace('Z','+00:00')); print(d.strftime('%Y%m%d%H%M.%S'))")
+  echo "✓ Using commit timestamp: ${COMMIT_DATE} (touch: ${SOURCE_TOUCH_TS})"
+else
+  echo "⚠ Could not fetch commit timestamp; falling back to fixed epoch for reproducibility"
+  SOURCE_TOUCH_TS="200001010000.00"
+fi
+
 echo "Build starting: GIT_REF=${GIT_REF} PYTHON_VERSION=${PYTHON_VERSION} PACKAGE_PATH=${PACKAGE_PATH}"
 
 # Remove any existing zip file to ensure we create a fresh one
@@ -274,7 +294,7 @@ echo "Generating requirements.txt from uv files..."
 if [ -f "${BACKEND_DIR}/uv.lock" ] && [ -f "${BACKEND_DIR}/pyproject.toml" ]; then
   # Use uv to export requirements
   echo "Using uv to generate requirements.txt..."
-  (cd "${BACKEND_DIR}" && uv pip compile --output-file requirements.txt pyproject.toml > /dev/null 2>&1) || fatal "uv pip compile failed"
+  (cd "${BACKEND_DIR}" && uv pip compile --no-header --output-file requirements.txt pyproject.toml > /dev/null 2>&1) || fatal "uv pip compile failed"
 
   # Verify requirements.txt was created
   [ ! -f "${BACKEND_DIR}/requirements.txt" ] && fatal "requirements.txt was not created by uv export"
@@ -370,10 +390,13 @@ fi
 echo "✓ All required files created successfully"
 
 # Create the zip file at the expected path
+# Normalize timestamps and strip extra attributes so the zip is reproducible
+# given the same inputs, which lets Terraform detect real content changes.
 echo "Creating deployment zip file: $PACKAGE_PATH"
 mkdir -p "$(dirname "$PACKAGE_PATH")"
 
-(cd "$BACKEND_DIR" && zip -rq "$PACKAGE_PATH" .)
+find "$BACKEND_DIR" -exec touch -t "$SOURCE_TOUCH_TS" {} +
+(cd "$BACKEND_DIR" && TZ=UTC zip -rqX "$PACKAGE_PATH" .)
 
 # Verify the zip file was created successfully
 [ -f "$PACKAGE_PATH" ] || fatal "Zip file $PACKAGE_PATH was not created"
