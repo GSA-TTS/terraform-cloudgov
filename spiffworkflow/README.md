@@ -67,19 +67,19 @@ Use this approach when you have pre-built container images for the backend and c
 ```hcl
 module "spiffworkflow" {
   source = "github.com/GSA-TTS/terraform-cloudgov//spiffworkflow"
-  
+
   cf_org_name   = "my-org"
   cf_space_name = "my-space"
-  
+
   # Use container-based deployment for the backend
   backend_deployment_method = "container"  # This is the default
 
   # Modify this to point to an image that includes your process models
   backend_imageref = "ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-backend:latest"
-  
+
   # Required PostgreSQL database service instance
   backend_database_service_instance = "my-postgres-db"
-  
+
   # Optional: enable background task queue with Redis
   backend_queue_service_instance = "my-redis-service"
   backend_worker_instances       = 1
@@ -112,22 +112,22 @@ Then reference the zip in your Terraform configuration:
 ```hcl
 module "spiffworkflow" {
   source = "github.com/GSA-TTS/terraform-cloudgov//spiffworkflow"
-  
+
   cf_org_name   = "my-org"
   cf_space_name = "my-space"
-  
+
   # Use buildpack-based deployment for the backend
   backend_deployment_method = "buildpack"
   backend_zip_path = "/tmp/spiff-backend.zip"
-  
+
   # Use buildpack-based deployment for the connector
   connector_deployment_method = "buildpack"
   connector_local_path = "service-connector"  # Local path to connector source
   connector_python_version = "python-3.12.x"  # Python version for the buildpack
-  
+
   # Required PostgreSQL database service instance
   backend_database_service_instance = "my-postgres-db"
-  
+
   # Optional: enable background task queue with Redis
   backend_queue_service_instance = "my-redis-service"
   backend_worker_instances       = 1
@@ -146,18 +146,19 @@ You must have a valid git key pairing. Generate with `ssh-keygen -t rsa -b 4096 
 ```hcl
 module "spiffworkflow" {
   source = "github.com/GSA-TTS/terraform-cloudgov//spiffworkflow"
-  
+
   cf_org_name   = "my-org"
   cf_space_name = "my-space"
-  
+
   backend_database_service_instance = "my-postgres-db"
-  
+
   # Git sync configuration
   process_models_repository        = "git@github.com:my-org/my-process-models.git"
   process_models_ssh_key           = var.process_models_ssh_key  # SSH private key (sensitive)
   source_branch_for_example_models = "main"   # Branch to read models from (default: "main")
   target_branch_for_saving_changes = "draft"  # Branch to push saved changes to (default: "draft")
-  
+  global_scripts_dir               = "/my/global/helpers/dir" (defaults: "")
+
   # [other configuration]
 }
 ```
@@ -169,18 +170,18 @@ By default, SpiffWorkflow uses an internal OIDC provider for authentication. You
 ```hcl
 module "spiffworkflow" {
   source = "github.com/GSA-TTS/terraform-cloudgov//spiffworkflow"
-  
+
   cf_org_name   = "my-org"
   cf_space_name = "my-space"
-  
+
   backend_database_service_instance = "my-postgres-db"
-  
+
   # External OIDC Configuration (e.g., cloud.gov identity provider)
   backend_oidc_client_id           = "your-client-id"
   backend_oidc_client_secret       = "your-client-secret"
   backend_oidc_server_url          = "https://login.fr.cloud.gov"
   backend_oidc_authentication_providers = "default:openid"
-  
+
   # Optional: Additional client IDs and issuers
   backend_oidc_additional_valid_client_ids = "astro-frontend,other-client"
   backend_oidc_additional_valid_issuers   = "https://login.fr.cloud.gov"
@@ -212,88 +213,88 @@ module "spiffworkflow" {
 
 ### General
 
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
-| cf_org_name | cloud.gov organization name | `string` | n/a | yes |
-| cf_space_name | cloud.gov space in which to deploy the apps | `string` | n/a | yes |
-| name | Prefix for app names and route hostnames. Must be DNS-compatible, 3–53 chars. Auto-generated if omitted. | `string` | `null` | no |
-| tags | Tags to add to the module's resources | `set(string)` | `[]` | no |
-| https_proxy | Full URL of the HTTPS egress proxy (e.g. from the `egress_proxy` module) | `string` | `""` | no |
+| Name          | Description                                                                                              | Type          | Default | Required |
+| ------------- | -------------------------------------------------------------------------------------------------------- | ------------- | ------- | :------: |
+| cf_org_name   | cloud.gov organization name                                                                              | `string`      | n/a     |   yes    |
+| cf_space_name | cloud.gov space in which to deploy the apps                                                              | `string`      | n/a     |   yes    |
+| name          | Prefix for app names and route hostnames. Must be DNS-compatible, 3–53 chars. Auto-generated if omitted. | `string`      | `null`  |    no    |
+| tags          | Tags to add to the module's resources                                                                    | `set(string)` | `[]`    |    no    |
+| https_proxy   | Full URL of the HTTPS egress proxy (e.g. from the `egress_proxy` module)                                 | `string`      | `""`    |    no    |
 
 ### Git Sync (saving / publishing)
 
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
-| process_models_repository | Git repository with process models (use SSH-style `git@github.com:…`) | `string` | `""` | no |
-| process_models_ssh_key | Private SSH key with read/write access to the repository | `string` | `""` | no |
-| source_branch_for_example_models | Branch for reading process models | `string` | `"main"` | no |
-| target_branch_for_saving_changes | Branch for publishing process model changes | `string` | `"draft"` | no |
+| Name                             | Description                                                           | Type     | Default   | Required |
+| -------------------------------- | --------------------------------------------------------------------- | -------- | --------- | :------: |
+| process_models_repository        | Git repository with process models (use SSH-style `git@github.com:…`) | `string` | `""`      |    no    |
+| process_models_ssh_key           | Private SSH key with read/write access to the repository              | `string` | `""`      |    no    |
+| source_branch_for_example_models | Branch for reading process models                                     | `string` | `"main"`  |    no    |
+| target_branch_for_saving_changes | Branch for publishing process model changes                           | `string` | `"draft"` |    no    |
 
 ### Backend
 
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
-| backend_deployment_method | `"buildpack"` or `"container"` | `string` | `"container"` | no |
-| backend_imageref | Container image reference (container deployment) | `string` | `"ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-backend:latest"` | no |
-| backend_zip_path | Path to the pre-built zip produced by `build-for-cloudfoundry.sh` (buildpack deployment) | `string` | `null` | yes (buildpack) |
-| backend_bootstrap_process_model | Init BPMN process model identifier to run at startup (empty to disable) | `string` | `""` | no |
-| backend_database_service_instance | Postgres service instance name to bind to the backend | `string` | n/a | yes |
-| backend_database_params | JSON parameters for the database service binding | `string` | `""` | no |
-| backend_queue_service_instance | Redis service instance name for background task queue (empty to disable) | `string` | `""` | no |
-| backend_queue_service_params | JSON parameters for the queue service binding | `string` | `""` | no |
-| backend_web_instances | Number of backend web instances | `number` | `1` | no |
-| backend_web_memory | Memory for each backend web instance | `string` | `"512M"` | no |
-| backend_web_disk | Disk quota for each backend web instance | `string` | `"1024M"` | no |
-| backend_worker_instances | Number of backend worker instances (must be ≥ 1 if queue is set) | `number` | `0` | no |
-| backend_worker_memory | Memory for each backend worker instance | `string` | `"1024M"` | no |
-| backend_worker_disk | Disk quota for each backend worker instance | `string` | `"1024M"` | no |
-| backend_scheduler_memory | Memory for the backend scheduler instance | `string` | `"512M"` | no |
-| backend_scheduler_disk | Disk quota for the backend scheduler instance | `string` | `"1024M"` | no |
-| backend_environment | Additional environment variables for the backend app | `map(string)` | `{}` | no |
-| backend_additional_service_bindings | Map of additional service instance names → JSON parameter strings | `map(string)` | `{}` | no |
+| Name                                | Description                                                                              | Type          | Default                                                          |    Required     |
+| ----------------------------------- | ---------------------------------------------------------------------------------------- | ------------- | ---------------------------------------------------------------- | :-------------: |
+| backend_deployment_method           | `"buildpack"` or `"container"`                                                           | `string`      | `"container"`                                                    |       no        |
+| backend_imageref                    | Container image reference (container deployment)                                         | `string`      | `"ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-backend:latest"` |       no        |
+| backend_zip_path                    | Path to the pre-built zip produced by `build-for-cloudfoundry.sh` (buildpack deployment) | `string`      | `null`                                                           | yes (buildpack) |
+| backend_bootstrap_process_model     | Init BPMN process model identifier to run at startup (empty to disable)                  | `string`      | `""`                                                             |       no        |
+| backend_database_service_instance   | Postgres service instance name to bind to the backend                                    | `string`      | n/a                                                              |       yes       |
+| backend_database_params             | JSON parameters for the database service binding                                         | `string`      | `""`                                                             |       no        |
+| backend_queue_service_instance      | Redis service instance name for background task queue (empty to disable)                 | `string`      | `""`                                                             |       no        |
+| backend_queue_service_params        | JSON parameters for the queue service binding                                            | `string`      | `""`                                                             |       no        |
+| backend_web_instances               | Number of backend web instances                                                          | `number`      | `1`                                                              |       no        |
+| backend_web_memory                  | Memory for each backend web instance                                                     | `string`      | `"512M"`                                                         |       no        |
+| backend_web_disk                    | Disk quota for each backend web instance                                                 | `string`      | `"1024M"`                                                        |       no        |
+| backend_worker_instances            | Number of backend worker instances (must be ≥ 1 if queue is set)                         | `number`      | `0`                                                              |       no        |
+| backend_worker_memory               | Memory for each backend worker instance                                                  | `string`      | `"1024M"`                                                        |       no        |
+| backend_worker_disk                 | Disk quota for each backend worker instance                                              | `string`      | `"1024M"`                                                        |       no        |
+| backend_scheduler_memory            | Memory for the backend scheduler instance                                                | `string`      | `"512M"`                                                         |       no        |
+| backend_scheduler_disk              | Disk quota for the backend scheduler instance                                            | `string`      | `"1024M"`                                                        |       no        |
+| backend_environment                 | Additional environment variables for the backend app                                     | `map(string)` | `{}`                                                             |       no        |
+| backend_additional_service_bindings | Map of additional service instance names → JSON parameter strings                        | `map(string)` | `{}`                                                             |       no        |
 
 ### Backend OIDC
 
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
-| backend_oidc_client_id | OIDC client ID for an external auth provider. Omit to use the built-in provider. | `string` | `null` | no |
-| backend_oidc_client_secret | OIDC client secret (required when `backend_oidc_client_id` is set) | `string` | `null` | conditional |
-| backend_oidc_server_url | OIDC server URL (required when `backend_oidc_client_id` is set) | `string` | `null` | conditional |
-| backend_oidc_scope | OAuth scopes | `string` | `"openid"` | no |
-| backend_oidc_authentication_providers | Authentication providers config (e.g. `"default:openid"`) | `string` | `null` | no |
-| backend_oidc_additional_valid_client_ids | Comma-separated additional valid client IDs | `string` | `null` | no |
-| backend_oidc_additional_valid_issuers | Comma-separated additional valid issuers | `string` | `null` | no |
+| Name                                     | Description                                                                      | Type     | Default    |  Required   |
+| ---------------------------------------- | -------------------------------------------------------------------------------- | -------- | ---------- | :---------: |
+| backend_oidc_client_id                   | OIDC client ID for an external auth provider. Omit to use the built-in provider. | `string` | `null`     |     no      |
+| backend_oidc_client_secret               | OIDC client secret (required when `backend_oidc_client_id` is set)               | `string` | `null`     | conditional |
+| backend_oidc_server_url                  | OIDC server URL (required when `backend_oidc_client_id` is set)                  | `string` | `null`     | conditional |
+| backend_oidc_scope                       | OAuth scopes                                                                     | `string` | `"openid"` |     no      |
+| backend_oidc_authentication_providers    | Authentication providers config (e.g. `"default:openid"`)                        | `string` | `null`     |     no      |
+| backend_oidc_additional_valid_client_ids | Comma-separated additional valid client IDs                                      | `string` | `null`     |     no      |
+| backend_oidc_additional_valid_issuers    | Comma-separated additional valid issuers                                         | `string` | `null`     |     no      |
 
 ### Connector
 
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
-| connector_deployment_method | `"buildpack"` or `"container"` | `string` | `"container"` | no |
-| connector_imageref | Container image reference (container deployment) | `string` | `"ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-connector:latest"` | no |
-| connector_local_path | Path to local connector source (buildpack deployment) | `string` | `"service-connector"` | yes (buildpack) |
-| connector_python_version | Python version for the connector buildpack | `string` | `"python-3.12.x"` | no |
-| connector_instances | Number of connector instances | `number` | `1` | no |
-| connector_memory | Memory for the connector app | `string` | `"128M"` | no |
-| connector_disk | Disk quota for the connector app | `string` | `"3G"` | no |
-| connector_additional_service_bindings | Map of additional service instance names → JSON parameter strings | `map(string)` | `{}` | no |
+| Name                                  | Description                                                       | Type          | Default                                                            |    Required     |
+| ------------------------------------- | ----------------------------------------------------------------- | ------------- | ------------------------------------------------------------------ | :-------------: |
+| connector_deployment_method           | `"buildpack"` or `"container"`                                    | `string`      | `"container"`                                                      |       no        |
+| connector_imageref                    | Container image reference (container deployment)                  | `string`      | `"ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-connector:latest"` |       no        |
+| connector_local_path                  | Path to local connector source (buildpack deployment)             | `string`      | `"service-connector"`                                              | yes (buildpack) |
+| connector_python_version              | Python version for the connector buildpack                        | `string`      | `"python-3.12.x"`                                                  |       no        |
+| connector_instances                   | Number of connector instances                                     | `number`      | `1`                                                                |       no        |
+| connector_memory                      | Memory for the connector app                                      | `string`      | `"128M"`                                                           |       no        |
+| connector_disk                        | Disk quota for the connector app                                  | `string`      | `"3G"`                                                             |       no        |
+| connector_additional_service_bindings | Map of additional service instance names → JSON parameter strings | `map(string)` | `{}`                                                               |       no        |
 
 ### Frontend
 
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
-| frontend_imageref | Container image reference for the frontend | `string` | `"ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-frontend:latest"` | no |
-| frontend_instances | Number of frontend instances | `number` | `1` | no |
-| frontend_memory | Memory for the frontend app | `string` | `"256M"` | no |
-| frontend_task_metadata | Variable path for human task metadata extraction | `string` | `""` | no |
-| frontend_url_override | Custom domain override (e.g. `my-domain.gov` instead of `*.app.cloud.gov`) | `string` | `""` | no |
+| Name                   | Description                                                                | Type     | Default                                                           | Required |
+| ---------------------- | -------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------- | :------: |
+| frontend_imageref      | Container image reference for the frontend                                 | `string` | `"ghcr.io/gsa-tts/terraform-cloudgov/spiffarena-frontend:latest"` |    no    |
+| frontend_instances     | Number of frontend instances                                               | `number` | `1`                                                               |    no    |
+| frontend_memory        | Memory for the frontend app                                                | `string` | `"256M"`                                                          |    no    |
+| frontend_task_metadata | Variable path for human task metadata extraction                           | `string` | `""`                                                              |    no    |
+| frontend_url_override  | Custom domain override (e.g. `my-domain.gov` instead of `*.app.cloud.gov`) | `string` | `""`                                                              |    no    |
 
 ## Outputs
 
-| Name | Description |
-|------|-------------|
-| frontend_url | URL to access the SpiffWorkflow frontend |
-| backend_url | URL for the backend API |
-| connector_url | Internal URL for the connector service |
+| Name          | Description                              |
+| ------------- | ---------------------------------------- |
+| frontend_url  | URL to access the SpiffWorkflow frontend |
+| backend_url   | URL for the backend API                  |
+| connector_url | Internal URL for the connector service   |
 
 ## Notes
 
@@ -302,27 +303,26 @@ module "spiffworkflow" {
   - You can specify parameters for the database service binding using the `backend_database_params` variable.
 - When using container-based deployment, the process models must be included in the container image.
 
-
 ## File Layout
 
-| File | Purpose |
-|------|---------|
-| `main.tf` | Frontend app, shared locals (prefix, URLs, app IDs), random resources |
-| `backend.tf` | Backend app (web/worker/scheduler processes), environment variables, service bindings |
-| `connector.tf` | Connector app with buildpack and container deployment, null_resource for buildpack zip |
-| `routing.tf` | Route modules (frontend + backend share a hostname with `/api` path prefix; connector on `apps.internal`), network policy (backend → connector on port 61443) |
-| `variables.tf` | All input variables with cross-variable validations |
-| `outputs.tf` | URLs and app IDs for all three components |
-| `providers.tf` | Required providers (`cloudfoundry/cloudfoundry`, `kreuzwerker/docker`) |
-| `build-for-cloudfoundry.sh` | Pre-build script that produces a zip for buildpack deployment |
-| `templates/` | Shell scripts copied into the buildpack zip at build time (see [Templates](#templates-buildpack-deployment)) |
-| `tests/` | `terraform test` files with mock providers |
+| File                        | Purpose                                                                                                                                                       |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `main.tf`                   | Frontend app, shared locals (prefix, URLs, app IDs), random resources                                                                                         |
+| `backend.tf`                | Backend app (web/worker/scheduler processes), environment variables, service bindings                                                                         |
+| `connector.tf`              | Connector app with buildpack and container deployment, null_resource for buildpack zip                                                                        |
+| `routing.tf`                | Route modules (frontend + backend share a hostname with `/api` path prefix; connector on `apps.internal`), network policy (backend → connector on port 61443) |
+| `variables.tf`              | All input variables with cross-variable validations                                                                                                           |
+| `outputs.tf`                | URLs and app IDs for all three components                                                                                                                     |
+| `providers.tf`              | Required providers (`cloudfoundry/cloudfoundry`, `kreuzwerker/docker`)                                                                                        |
+| `build-for-cloudfoundry.sh` | Pre-build script that produces a zip for buildpack deployment                                                                                                 |
+| `templates/`                | Shell scripts copied into the buildpack zip at build time (see [Templates](#templates-buildpack-deployment))                                                  |
+| `tests/`                    | `terraform test` files with mock providers                                                                                                                    |
 
 ### Templates (buildpack deployment)
 
 The `templates/` directory contains shell scripts that `build-for-cloudfoundry.sh` copies into the buildpack zip. These scripts run at app startup inside the Cloud Foundry container:
 
-| File | Installed as | Purpose |
-|------|-------------|---------|
-| `profile.sh` | `.profile` | Sets `PYTHONPATH`, extracts the database URI from `VCAP_SERVICES`, configures `HTTPS_PROXY`, and discovers a Redis queue service for Celery. Sourced by the Diego launcher before the start command. |
-| `10-init-process.sh` | `.profile.d/10-init-process.sh` | Ensures the bootstrap process model only runs on instance index `0`.
+| File                 | Installed as                    | Purpose                                                                                                                                                                                              |
+| -------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `profile.sh`         | `.profile`                      | Sets `PYTHONPATH`, extracts the database URI from `VCAP_SERVICES`, configures `HTTPS_PROXY`, and discovers a Redis queue service for Celery. Sourced by the Diego launcher before the start command. |
+| `10-init-process.sh` | `.profile.d/10-init-process.sh` | Ensures the bootstrap process model only runs on instance index `0`.                                                                                                                                 |
