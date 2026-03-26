@@ -63,6 +63,12 @@ variable "target_branch_for_saving_changes" {
   default     = "draft"
 }
 
+variable "global_scripts_dir" {
+  type        = string
+  description = "directory outside spiff that holds your global script helpers"
+  default     = ""
+}
+
 ###############################################################################
 # Backend Variables
 ###############################################################################
