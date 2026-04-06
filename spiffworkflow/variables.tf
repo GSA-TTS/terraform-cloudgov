@@ -66,6 +66,12 @@ variable "global_scripts_dir" {
   default     = ""
 }
 
+variable "enable_hsts" {
+  type        = bool
+  description = "set to true to require HSTS headers on all backend responses"
+  default     = false
+}
+
 ###############################################################################
 # Backend Variables
 ###############################################################################
