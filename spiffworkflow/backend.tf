@@ -48,6 +48,7 @@ locals {
     SPIFFWORKFLOW_BACKEND_EXTENSIONS_API_ENABLED : "true"
     SPIFFWORKFLOW_BACKEND_BOOTSTRAP_PROCESS_MODEL : var.backend_bootstrap_process_model
     SPIFFWORKFLOW_BACKEND_BOOTSTRAP_USERNAME : "adminX@bootstrap"
+    SPIFFWORKFLOW_BACKEND_ENABLE_HSTS : var.enable_hsts
 
     # TODO: Can we turn this back on to enable a hosted development instance?
     # This branch needs to exist, otherwise we can't clone it at startup and startup fails
