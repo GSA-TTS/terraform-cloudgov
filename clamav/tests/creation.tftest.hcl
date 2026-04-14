@@ -97,7 +97,7 @@ run "test_with_proxy" {
     proxy_server   = "proxy.server"
     proxy_port     = "8900"
     proxy_username = "username"
-    proxy_password = "not-a-real-password"
+    proxy_password = "not-a-secret-password"
   }
 
   assert {
