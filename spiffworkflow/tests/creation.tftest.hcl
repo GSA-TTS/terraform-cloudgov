@@ -84,7 +84,7 @@ run "test_spiff_instances" {
     error_message = "App ID output must match the Backend app ID"
   }
   assert {
-    condition     = cloudfoundry_app.backend.health_check_http_endpoint == var.health_check_endpoint
+    condition     = [for p in local.backend_processes : p.health_check_http_endpoint if p.type == "web"][0] == var.health_check_endpoint
     error_message = "Health check endpoint must match backend health check endpoint"
   }
 
@@ -116,10 +116,10 @@ run "test_spiff_instances" {
     error_message = "Backend must know the frontend URL"
   }
 
-  # Database service binding is always first
+  # Database service binding is present
   assert {
-    condition     = cloudfoundry_app.backend.service_bindings[0].service_instance == var.backend_database_service_instance
-    error_message = "First service binding must be the database"
+    condition     = anytrue([for b in cloudfoundry_app.backend.service_bindings : b.service_instance == var.backend_database_service_instance])
+    error_message = "Backend must have a service binding for the database"
   }
 
   # Internal OIDC defaults when no external provider configured
