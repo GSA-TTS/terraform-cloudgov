@@ -181,7 +181,7 @@ resource "null_resource" "create_connector_zip" {
 resource "cloudfoundry_app" "connector" {
   name                       = "${local.prefix}-connector"
   org_name                   = var.cf_org_name
-  space_name                 = var.cf_space_name
+  space_name                 = var.space.name
   memory                     = var.connector_memory
   instances                  = var.connector_instances
   disk_quota                 = var.connector_disk

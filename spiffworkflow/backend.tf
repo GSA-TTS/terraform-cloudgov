@@ -156,7 +156,7 @@ data "docker_registry_image" "backend" {
 resource "cloudfoundry_app" "backend" {
   name       = "${local.prefix}-backend"
   org_name   = var.cf_org_name
-  space_name = var.cf_space_name
+  space_name = var.space.name
 
   # Commented out until the provider supports it
   # app_lifecycle = var.backend_deployment_method
