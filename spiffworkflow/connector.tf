@@ -233,13 +233,13 @@ resource "cloudfoundry_app" "connector" {
     } : {}
   )
 
-  # Service bindings - only include if there are additional bindings specified
-  service_bindings = length(var.connector_additional_service_bindings) > 0 ? [
+  # Service bindings - always include any additional bindings specified
+  service_bindings = [
     for service_name, params in var.connector_additional_service_bindings : {
       service_instance = service_name
       params           = (params == "" ? "{}" : params) # Empty string -> Minimal JSON
     }
-  ] : null
+  ]
 }
 
 # Clean up connector artifacts when the module is destroyed - only for buildpack deployment
