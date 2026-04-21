@@ -19,9 +19,9 @@ jobs:
       fail-fast: false
       matrix:
         image:
-          - name: ghcr.io/sartography/spiffworkflow-backend:v2.2.0
+          - name: ghcr.io/GSA-TTS/spiffworkflow-backend:main-2026-04-17_20-30-12-4c42bdc
             short-name: spiffarena-backend
-          - name: ghcr.io/sartography/spiffworkflow-frontend:v2.2.0
+          - name: ghcr.io/GSA-TTS/spiffworkflow-frontend:main-2026-04-17_20-30-12-4c42bdc
             short-name: spiffarena-frontend
           - name: ghcr.io/gsa-tts/spiffworkflow-connector:latest
             short-name: spiffarena-connector
