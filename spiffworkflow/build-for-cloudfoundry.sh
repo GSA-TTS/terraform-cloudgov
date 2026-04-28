@@ -375,9 +375,9 @@ if [ -f "${BACKEND_DIR}/uv.lock" ] && [ -f "${BACKEND_DIR}/pyproject.toml" ]; th
 
   echo "Using uv to generate requirements.txt..."
   if [ -n "$COMPILE_PYTHON_VERSION" ]; then
-    (cd "${BACKEND_DIR}" && uv pip compile --quiet --no-header --frozen --python-version "$COMPILE_PYTHON_VERSION" --output-file requirements.txt pyproject.toml > /dev/null 2>&1) || fatal "uv pip compile failed"
+    (cd "${BACKEND_DIR}" && uv pip compile --quiet --no-header --python-version "$COMPILE_PYTHON_VERSION" --output-file requirements.txt pyproject.toml > /dev/null 2>&1) || fatal "uv pip compile failed"
   else
-    (cd "${BACKEND_DIR}" && uv pip compile --quiet --no-header --frozen --output-file requirements.txt pyproject.toml > /dev/null 2>&1) || fatal "uv pip compile failed"
+    (cd "${BACKEND_DIR}" && uv pip compile --quiet --no-header --output-file requirements.txt pyproject.toml > /dev/null 2>&1) || fatal "uv pip compile failed"
   fi
 
   [ ! -f "${BACKEND_DIR}/requirements.txt" ] && fatal "requirements.txt was not created by uv export"
