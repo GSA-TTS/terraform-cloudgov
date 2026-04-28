@@ -1,29 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# Robust error handling
-FAILURE_REASON=""
-cleanup_on_error() {
-  local ec=$?
-  if [ $ec -ne 0 ]; then
-    echo "\n============================================================" >&2
-    echo "BUILD SCRIPT FAILED (exit code $ec)" >&2
-    if [ -n "$FAILURE_REASON" ]; then
-      echo "Reason: $FAILURE_REASON" >&2
-    fi
-    echo "Working directory: $(pwd)" >&2
-    echo "PACKAGE_PATH: ${PACKAGE_PATH:-<unset>}" >&2
-    if [ -n "${BACKEND_DIR:-}" ] && [ -d "${BACKEND_DIR:-}" ]; then
-      echo "Listing backend dir for diagnostics:" >&2
-      ls -al "${BACKEND_DIR}" || true
-    fi
-    echo "============================================================\n" >&2
-  fi
-  exit $ec
-}
-trap cleanup_on_error ERR
-
-fatal() { FAILURE_REASON="$1"; echo "ERROR: $1" >&2; exit 1; }
 
 # This script prepares a deployment zip for the SpiffWorkflow backend application
 # for buildpack-based deployment on Cloud Foundry (cloud.gov).
@@ -51,6 +28,63 @@ fatal() { FAILURE_REASON="$1"; echo "ERROR: $1" >&2; exit 1; }
 #   process_models_path - Path to local process_models directory
 #   python_version      - (optional) Python version string for buildpack (default: python-3.10.x)
 #   scripts_path        - (optional) Path to supplemental scripts directory
+
+umask 022
+export TZ=UTC
+export LANG=C
+export LC_ALL=C
+export PYTHONHASHSEED=0
+
+# Robust error handling
+FAILURE_REASON=""
+cleanup_on_error() {
+  local ec=$?
+  if [ $ec -ne 0 ]; then
+    echo "\n============================================================" >&2
+    echo "BUILD SCRIPT FAILED (exit code $ec)" >&2
+    if [ -n "$FAILURE_REASON" ]; then
+      echo "Reason: $FAILURE_REASON" >&2
+    fi
+    echo "Working directory: $(pwd)" >&2
+    echo "PACKAGE_PATH: ${PACKAGE_PATH:-<unset>}" >&2
+    if [ -n "${BACKEND_DIR:-}" ] && [ -d "${BACKEND_DIR:-}" ]; then
+      echo "Listing backend dir for diagnostics:" >&2
+      ls -al "${BACKEND_DIR}" || true
+    fi
+    echo "============================================================\n" >&2
+  fi
+  exit $ec
+}
+trap cleanup_on_error ERR
+
+fatal() { FAILURE_REASON="$1"; echo "ERROR: $1" >&2; exit 1; }
+
+strip_transient_files() {
+  local root_dir="$1"
+
+  find "$root_dir" -type d -name "__pycache__" -prune -exec rm -rf {} +
+  find "$root_dir" -type d -name ".pytest_cache" -prune -exec rm -rf {} +
+  find "$root_dir" -type d -name ".mypy_cache" -prune -exec rm -rf {} +
+  find "$root_dir" -type f \( -name "*.pyc" -o -name "*.pyo" -o -name ".DS_Store" \) -delete
+}
+
+derive_python_major_minor() {
+  local version_source="$1"
+
+  echo "$version_source" | sed -E 's/^python-([0-9]+)\.([0-9]+).*/\1.\2/'
+}
+
+create_reproducible_zip() {
+  local source_dir="$1"
+  local output_path="$2"
+
+  strip_transient_files "$source_dir"
+  find "$source_dir" -exec touch -t "$SOURCE_TOUCH_TS" {} +
+  (
+    cd "$source_dir"
+    LC_ALL=C find . -type f | sort | zip -qX "$output_path" -@
+  )
+}
 
 
 # Cross-platform sed -i that works on both BSD (macOS) and GNU (Linux).
@@ -139,25 +173,9 @@ echo "✓ Required tools: git, zip, uv"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
-# Extract GitHub org/repo from the URL for API calls (e.g. https://github.com/org/repo -> org/repo)
-GITHUB_REPO_PATH=$(echo "$GIT_URL" | sed -n 's|https://github.com/||p')
-
-# Fetch the commit timestamp for reproducible builds (SOURCE_DATE_EPOCH pattern).
-# This ensures the zip hash is deterministic for a given GIT_REF while keeping
-# meaningful timestamps that reflect the actual source code version.
-if [ -n "$GITHUB_REPO_PATH" ]; then
-  echo "Fetching commit timestamp for ${GIT_REF}..."
-  COMMIT_DATE=$(curl -fsSL "https://api.github.com/repos/${GITHUB_REPO_PATH}/commits/${GIT_REF}" \
-    | python3 -c "import sys,json; print(json.load(sys.stdin)['commit']['committer']['date'])" 2>/dev/null) || true
-fi
-if [ -n "${COMMIT_DATE:-}" ]; then
-  # Convert ISO 8601 (2024-01-15T12:34:56Z) to touch format (YYYYMMDDhhmm.ss)
-  SOURCE_TOUCH_TS=$(python3 -c "from datetime import datetime; d=datetime.fromisoformat('${COMMIT_DATE}'.replace('Z','+00:00')); print(d.strftime('%Y%m%d%H%M.%S'))")
-  echo "✓ Using commit timestamp: ${COMMIT_DATE} (touch: ${SOURCE_TOUCH_TS})"
-else
-  echo "⚠ Could not fetch commit timestamp; falling back to fixed epoch for reproducibility"
-  SOURCE_TOUCH_TS="200001010000.00"
-fi
+# Use a fixed timestamp so archive metadata is deterministic without external API calls.
+SOURCE_TOUCH_TS="200001010000.00"
+echo "✓ Using fixed reproducible timestamp: ${SOURCE_TOUCH_TS}"
 
 echo "Build starting: GIT_REF=${GIT_REF} PYTHON_VERSION=${PYTHON_VERSION} PACKAGE_PATH=${PACKAGE_PATH}"
 
@@ -289,25 +307,6 @@ else
   echo "Scripts path not present or not a directory: ${BACKEND_SCRIPTS_PATH} (skipping script vendoring)"
 fi
 
-# Generate requirements.txt from uv.lock
-echo "Generating requirements.txt from uv files..."
-if [ -f "${BACKEND_DIR}/uv.lock" ] && [ -f "${BACKEND_DIR}/pyproject.toml" ]; then
-  # Use uv to export requirements
-  echo "Using uv to generate requirements.txt..."
-  (cd "${BACKEND_DIR}" && uv pip compile --no-header --output-file requirements.txt pyproject.toml > /dev/null 2>&1) || fatal "uv pip compile failed"
-
-  # Verify requirements.txt was created
-  [ ! -f "${BACKEND_DIR}/requirements.txt" ] && fatal "requirements.txt was not created by uv export"
-
-  echo "✓ Generated requirements.txt with $(wc -l < "${BACKEND_DIR}/requirements.txt") dependencies"
-  
-  # Display the first few lines for reference
-  # echo "First 10 lines of requirements.txt:"
-  # head -n 10 "${BACKEND_DIR}/requirements.txt"
-else
-  fatal "Missing uv.lock or pyproject.toml required for dependency generation"
-fi
-
 # Add a Procfile for the Python buildpack, which requires that one exist
 if [ ! -f "${BACKEND_DIR}/Procfile" ]; then
   echo "Creating Procfile for Python buildpack..."
@@ -362,6 +361,31 @@ else
   echo "✓ runtime.txt already exists"
 fi
 
+# Generate requirements.txt from uv.lock
+echo "Generating requirements.txt from uv files..."
+if [ -f "${BACKEND_DIR}/uv.lock" ] && [ -f "${BACKEND_DIR}/pyproject.toml" ]; then
+  COMPILE_PYTHON_VERSION=""
+  if [ -f "${BACKEND_DIR}/runtime.txt" ]; then
+    RUNTIME_VALUE="$(tr -d '[:space:]' < "${BACKEND_DIR}/runtime.txt")"
+    COMPILE_PYTHON_VERSION="$(derive_python_major_minor "$RUNTIME_VALUE")"
+    if ! [[ "$COMPILE_PYTHON_VERSION" =~ ^[0-9]+\.[0-9]+$ ]]; then
+      COMPILE_PYTHON_VERSION=""
+    fi
+  fi
+
+  echo "Using uv to generate requirements.txt..."
+  if [ -n "$COMPILE_PYTHON_VERSION" ]; then
+    (cd "${BACKEND_DIR}" && uv pip compile --quiet --no-header --frozen --python-version "$COMPILE_PYTHON_VERSION" --output-file requirements.txt pyproject.toml > /dev/null 2>&1) || fatal "uv pip compile failed"
+  else
+    (cd "${BACKEND_DIR}" && uv pip compile --quiet --no-header --frozen --output-file requirements.txt pyproject.toml > /dev/null 2>&1) || fatal "uv pip compile failed"
+  fi
+
+  [ ! -f "${BACKEND_DIR}/requirements.txt" ] && fatal "requirements.txt was not created by uv export"
+  echo "✓ Generated requirements.txt with $(wc -l < "${BACKEND_DIR}/requirements.txt") dependencies"
+else
+  fatal "Missing uv.lock or pyproject.toml required for dependency generation"
+fi
+
 echo "Creating .profile file with environment setup..."
 cp "${SCRIPT_DIR}/templates/profile.sh" "${BACKEND_DIR}/.profile"
 chmod +x "${BACKEND_DIR}/.profile"
@@ -395,8 +419,7 @@ echo "✓ All required files created successfully"
 echo "Creating deployment zip file: $PACKAGE_PATH"
 mkdir -p "$(dirname "$PACKAGE_PATH")"
 
-find "$BACKEND_DIR" -exec touch -t "$SOURCE_TOUCH_TS" {} +
-(cd "$BACKEND_DIR" && TZ=UTC zip -rqX "$PACKAGE_PATH" .)
+create_reproducible_zip "$BACKEND_DIR" "$PACKAGE_PATH"
 
 # Verify the zip file was created successfully
 [ -f "$PACKAGE_PATH" ] || fatal "Zip file $PACKAGE_PATH was not created"
