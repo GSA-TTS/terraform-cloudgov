@@ -77,7 +77,7 @@ locals {
     # We should probably generate credentials only for the admin
     # and have everything else be specified via DMN as described here:
     #   https://spiff-arena.readthedocs.io/en/latest/DevOps_installation_integration/admin_and_permissions.html#site-administration
-    SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME : "example.yml"
+    SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME : var.backend_baseline_permissions_file
     SPIFFWORKFLOW_BACKEND_PORT : "8080"
     SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP : "true"
     SPIFFWORKFLOW_BACKEND_UPGRADE_DB : "true"

@@ -218,6 +218,12 @@ variable "backend_additional_service_bindings" {
   default     = {}
 }
 
+variable "backend_baseline_permissions_file" {
+  description = "The yml file to establish initial permissions, e.g., admin and bootstrap permissions"
+  type        = string
+  default     = "example.yml"
+}
+
 ###############################################################################
 # Backend OIDC Authentication Variables
 ###############################################################################

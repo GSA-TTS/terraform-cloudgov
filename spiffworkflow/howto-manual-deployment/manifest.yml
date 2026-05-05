@@ -83,7 +83,7 @@ applications:
       SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID: "spiffworkflow-backend"
       SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY: "((openid-secret))"
       SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL: "https://spiffworkflow((slug)).app.cloud.gov/api/openid"
-      SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME: "example.yml"
+      SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME: ((backend-baseline-permissions-file))
       SPIFFWORKFLOW_BACKEND_PORT: "8080"
       SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER_IN_CREATE_APP: "true"
       SPIFFWORKFLOW_BACKEND_UPGRADE_DB: "true"
