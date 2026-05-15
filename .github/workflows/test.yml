@@ -23,6 +23,8 @@ jobs:
         module: ["s3", "database", "redis", "cg_space", "domain", "clamav", "spiffworkflow"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: terraform test ${{ matrix.module }}
         uses: dflook/terraform-test@v1
@@ -50,6 +52,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: terraform test ${{ matrix.module }}
         uses: dflook/terraform-test@v1
         env:
