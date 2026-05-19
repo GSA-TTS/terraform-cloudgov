@@ -32,3 +32,4 @@ override.tf.json
 
 # Any zip files
 *.zip
+spiffworkflow/backend_paths.txt

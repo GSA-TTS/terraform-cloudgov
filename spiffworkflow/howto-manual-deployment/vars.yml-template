@@ -9,6 +9,10 @@ git-process-models-repo: git@github.com:GSA-TTS/gsa-process-models.git
 openid-secret: REPLACE_ME_WITH_OPENID_SECRET
 source-branch: process-models-playground
 target-branch-for-publish: publish-staging-branch
+backend-baseline-permissions-file: REPLACE_ME_WITH_YML_FILE_NAME
+
+# Optional
+https-proxy: Specify the URI of your proxy, otherwise remove this line
 
 # Generate a Key to be used for pulling and pushing commits to the bpmn process models repo (refer to git-process-models-repo var above):
 # ssh-keygen -t rsa -b 4096 -C "my-git@email.blah"
