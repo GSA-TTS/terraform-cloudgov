@@ -62,9 +62,13 @@ data "archive_file" "src" {
 
     ".DS_Store",
 
-    "credentials-*.json",
-    "*.pem",
-    "*.crt",
+    # archive_file matches each pattern against the path relative to
+    # source_dir, not against the basename, so these need a "**/" prefix the
+    # way the entries above do. Written bare they only excluded a secret
+    # sitting at the top level of the app.
+    "**/credentials-*.json",
+    "**/*.pem",
+    "**/*.crt",
   ])
 }
 
