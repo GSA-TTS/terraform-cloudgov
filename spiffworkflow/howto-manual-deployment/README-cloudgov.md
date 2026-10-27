@@ -1,4 +1,5 @@
 ### Cloudgov Sandbox Necessities
+
 Create a rds instance for use with the system called `spiffworkflow-db`:
 `cf create-service aws-rds micro-psql spiffworkflow-db`
 
@@ -15,12 +16,16 @@ In order to enable the backend to connect to the connector proxy, run the follow
 For example, if your value for `slug` in `vars.yml` was `-abc123` then this command would be:
 `cf add-network-policy spiffworkflow-abc123-backend spiffworkflow-abc123-connector --port 61443 --protocol tcp`
 
+If you have an egress proxy, you can specify its URI as the value for `https-proxy` in the vars file.
+
 ### Generating a Github SSH Key
+
 In order to utilize some of the processes in this application, we utilize a forked process model repo, accessible via ssh endpoint.
 `git@github.com:GSA-TTS/gsa-process-models.git`.
 Generate a new ssh key pairing for use with git, using `ssh-keygen -t rsa -b 4096 -C "my-git@email.blah"`. Once this has been created, navigate to the location where the keys are stored, usually `~/.ssh/` and copy the `<my_key_name>.pub` to [Github SSH Keys](https://github.com/settings/keys). Then, copy the plaintext `<my_key_name>` private key to `vars.yml` under the variable `github_ssh_key`. Alternatively, if you wish to use the actual keyfile and copy it onto the deployed instance for use, you can use the environment var `SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH:`
 
 ### Deploying
+
 - Create a database service
 - Copy vars.yml-template to `vars.yml`
 - `cf push --vars-file vars.yml`
