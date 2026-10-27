@@ -68,11 +68,30 @@ strip_transient_files() {
   find "$root_dir" -type f \( -name "*.pyc" -o -name "*.pyo" -o -name ".DS_Store" \) -delete
 }
 
-derive_python_major_minor() {
-  local version_source="$1"
-
-  echo "$version_source" | sed -E 's/^python-([0-9]+)\.([0-9]+).*/\1.\2/'
+# Detect whether pyproject.toml declares a "postgres" key under
+# [project.optional-dependencies]. Used to decide whether `uv export` needs
+# an explicit --extra postgres to pull in the Postgres driver (see the
+# requirements.txt generation step below for why this matters). Handles
+# quoted keys ("postgres" = [...]), indented section headers, and the
+# dotted-key form (optional-dependencies.postgres = [...]) in addition to
+# the plain form. If this detection ever misses a real-world shape, the
+# downstream "no Postgres driver found" check below still fails loudly
+# rather than silently shipping without a driver.
+has_postgres_extra() {
+  local pyproject_file="$1"
+  awk '
+    /^[[:space:]]*\[project\.optional-dependencies\]/ { in_section=1; next }
+    /^[[:space:]]*\[/ { in_section=0 }
+    in_section && /^[[:space:]]*"?postgres"?[[:space:]]*=/ { found=1 }
+    /^[[:space:]]*optional-dependencies\.postgres[[:space:]]*=/ { found=1 }
+    END { exit !found }
+  ' "$pyproject_file"
 }
+
+# Recognized Postgres driver package names (lowercased, PEP 503 style).
+# Used only to fail loudly if none of them end up in the exported
+# requirements.txt - see the requirements.txt generation step below.
+POSTGRES_DRIVER_PATTERN='^(psycopg2|psycopg2-binary|psycopg|psycopg-binary|asyncpg)(==| @|;| )'
 
 create_reproducible_zip() {
   local source_dir="$1"
@@ -361,26 +380,69 @@ else
   echo "✓ runtime.txt already exists"
 fi
 
-# Generate requirements.txt from uv.lock
-echo "Generating requirements.txt from uv files..."
+# Generate requirements.txt by EXPORTING the already-tested uv.lock, not by
+# re-resolving pyproject.toml against live PyPI. Re-resolving (the old
+# `uv pip compile pyproject.toml` approach) meant the deployed dependency
+# set was never actually the set anyone tested, and a patched uv.lock
+# upstream would not reliably reach cloud.gov. See terraform-cloudgov#130.
+echo "Generating requirements.txt from the tested uv.lock..."
 if [ -f "${BACKEND_DIR}/uv.lock" ] && [ -f "${BACKEND_DIR}/pyproject.toml" ]; then
-  COMPILE_PYTHON_VERSION=""
-  if [ -f "${BACKEND_DIR}/runtime.txt" ]; then
-    RUNTIME_VALUE="$(tr -d '[:space:]' < "${BACKEND_DIR}/runtime.txt")"
-    COMPILE_PYTHON_VERSION="$(derive_python_major_minor "$RUNTIME_VALUE")"
-    if ! [[ "$COMPILE_PYTHON_VERSION" =~ ^[0-9]+\.[0-9]+$ ]]; then
-      COMPILE_PYTHON_VERSION=""
-    fi
+  # --locked makes uv fail loudly (non-zero exit) if uv.lock is missing or
+  # out of sync with pyproject.toml, instead of silently re-resolving. That
+  # silent-fallback behavior is exactly the bug this script is fixing, so we
+  # never fall back to `uv pip compile` here under any circumstance.
+  #
+  # --no-dev drops the [dependency-groups].dev group (e.g. mypy, pytest,
+  # ruff), which is never needed at runtime. Note: sqlalchemy-stubs is a
+  # hard runtime dependency in this fork's pyproject.toml (not part of the
+  # dev group) despite its name, so --no-dev does not affect it; it is
+  # exported like any other dependency.
+  #
+  # --no-emit-project excludes the spiffworkflow-backend project entry
+  # itself; only its dependencies are needed in requirements.txt.
+  #
+  # Extras (e.g. --extra postgres) are requested explicitly when the
+  # backend's pyproject.toml declares them, to stay correct regardless of
+  # whether the backend fork has psycopg2 as a hard dependency (as it does
+  # today) or as an optional "postgres" extra (as upstream Arena v4.0.0
+  # does). See has_postgres_extra() above.
+  EXPORT_EXTRA_ARGS=()
+  if has_postgres_extra "${BACKEND_DIR}/pyproject.toml"; then
+    echo "pyproject.toml declares a 'postgres' extra; requesting it explicitly."
+    EXPORT_EXTRA_ARGS+=(--extra postgres)
   fi
 
-  echo "Using uv to generate requirements.txt..."
-  if [ -n "$COMPILE_PYTHON_VERSION" ]; then
-    (cd "${BACKEND_DIR}" && uv pip compile --quiet --no-header --python-version "$COMPILE_PYTHON_VERSION" --output-file requirements.txt pyproject.toml > /dev/null 2>&1) || fatal "uv pip compile failed"
-  else
-    (cd "${BACKEND_DIR}" && uv pip compile --quiet --no-header --output-file requirements.txt pyproject.toml > /dev/null 2>&1) || fatal "uv pip compile failed"
-  fi
+  # Hashes are intentionally omitted. uv export's hashes only cover
+  # registry-resolved packages; it cannot hash git-sourced dependencies
+  # (SpiffWorkflow, spiffworkflow-connector-command), so the output would
+  # contain a mix of hashed and unhashed entries. pip - which the Cloud
+  # Foundry Python buildpack uses to install requirements.txt - refuses to
+  # install ANY package without a hash as soon as ANY entry in the file has
+  # one ("Can't verify hashes for these requirements because we don't have
+  # a way to hash version control repositories"), which would hard-fail the
+  # buildpack. Confirmed empirically with pip 25.0.1 against this file's
+  # git dependencies. If the backend ever drops its git dependencies,
+  # hashes can be re-enabled with --no-emit-package carve-outs reconsidered.
+  echo "Using uv export to generate requirements.txt from uv.lock..."
+  (
+    cd "${BACKEND_DIR}" &&
+      uv export --quiet --locked --no-dev --no-emit-project --no-hashes --no-header \
+        ${EXPORT_EXTRA_ARGS[@]+"${EXPORT_EXTRA_ARGS[@]}"} \
+        --format requirements-txt --output-file requirements.txt
+  ) || fatal "uv export failed: uv.lock is missing, out of sync with pyproject.toml, or the export itself failed. Run 'uv lock' in the backend source to refresh it."
 
   [ ! -f "${BACKEND_DIR}/requirements.txt" ] && fatal "requirements.txt was not created by uv export"
+
+  # Fail loudly rather than silently deploying a backend with no database
+  # driver at all. PIC deploys Postgres (small-psql); if no Postgres driver
+  # made it into the exported set (e.g. the fork moves psycopg2 behind an
+  # extra we didn't detect, or the extra name changes), that is a
+  # deploy-time misconfiguration we must not ship silently.
+  if ! grep -qE "$POSTGRES_DRIVER_PATTERN" "${BACKEND_DIR}/requirements.txt"; then
+    fatal "No Postgres driver (psycopg2/psycopg) found in exported requirements.txt. Check whether pyproject.toml moved it behind a differently-named extra."
+  fi
+  echo "✓ Confirmed Postgres driver present in requirements.txt"
+
   echo "✓ Generated requirements.txt with $(wc -l < "${BACKEND_DIR}/requirements.txt") dependencies"
 else
   fatal "Missing uv.lock or pyproject.toml required for dependency generation"
