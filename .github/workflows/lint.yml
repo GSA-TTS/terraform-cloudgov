@@ -20,12 +20,12 @@ jobs:
         path: ["cg_space", "clamav", "database", "domain", "redis", "s3", "egress_proxy", "drupal", "spiffworkflow", "application"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
 
       - name: terraform validate ${{ matrix.path }}
-        uses: dflook/terraform-validate@v1
+        uses: dflook/terraform-validate@cfdea12135be7eb8960fbb272fb2f99c63a872f1 # v1.49.0
         with:
           path: ${{ matrix.path }}
 
@@ -38,11 +38,11 @@ jobs:
         path: ["cg_space", "clamav", "database", "domain", "redis", "s3", "egress_proxy", "drupal", "spiffworkflow", "application"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
 
       - name: terraform fmt ${{ matrix.path }}
-        uses: dflook/terraform-fmt-check@v1
+        uses: dflook/terraform-fmt-check@eae6e6f9fd083ea1f4af2323d8feeb5feed96e1d # v1.49.0
         with:
           path: ${{ matrix.path }}
