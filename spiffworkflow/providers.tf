@@ -1,13 +1,13 @@
 terraform {
-  required_version = "~> 1.0"
+  required_version = "1.17.1"
   required_providers {
     cloudfoundry = {
       source  = "cloudfoundry/cloudfoundry"
-      version = ">=1.4.0"
+      version = "1.18.0"
     }
     docker = {
       source  = "kreuzwerker/docker"
-      version = "~>3.0.2"
+      version = "3.0.2"
     }
   }
 }
