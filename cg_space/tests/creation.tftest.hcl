@@ -84,7 +84,7 @@ run "test_deployer_permissions" {
 
   assert {
     condition = output.developer_role_ids == {
-      "mark.boyd@gsa.gov"   = cloudfoundry_space_role.developers["mark.boyd@gsa.gov"].id,
+      "mark.boyd@gsa.gov"        = cloudfoundry_space_role.developers["mark.boyd@gsa.gov"].id,
       "peter.burkholder@gsa.gov" = cloudfoundry_space_role.developers["peter.burkholder@gsa.gov"].id
     }
     error_message = "Output includes the developer role ids"
