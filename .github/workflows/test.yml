@@ -22,12 +22,12 @@ jobs:
       matrix:
         module: ["s3", "database", "redis", "cg_space", "domain", "clamav", "spiffworkflow"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
 
       - name: terraform test ${{ matrix.module }}
-        uses: dflook/terraform-test@v1
+        uses: dflook/terraform-test@20c7fac3730330df7c2421d8767d15b2719b5148 # v1.49.0
         env:
           CF_API_URL: "https://api.fr-stage.cloud.gov"
           CF_USER: ${{ secrets.CF_USER }}
@@ -51,11 +51,11 @@ jobs:
         apt-get install -y zip
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
       - name: terraform test ${{ matrix.module }}
-        uses: dflook/terraform-test@v1
+        uses: dflook/terraform-test@20c7fac3730330df7c2421d8767d15b2719b5148 # v1.49.0
         env:
           CF_API_URL: "https://api.fr-stage.cloud.gov"
           CF_USER: ${{ secrets.CF_USER }}
